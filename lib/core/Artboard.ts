@@ -189,7 +189,21 @@ export class Artboard {
    * ```
    */
   render(): string {
-    // Simplified implementation
-    return `<svg width="${this.size.width}" height="${this.size.height}"></svg>`;
+    const size = this.size;
+    const width = size.width === "auto" ? 800 : size.width;
+    const height = size.height === "auto" ? 600 : size.height;
+    const bgColor = this.config.backgroundColor || "transparent";
+
+    // Render all elements
+    const elementsHTML = this.elements
+      .map((element: any) => element.render())
+      .join("\n    ");
+
+    return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  ${bgColor !== "transparent" ? `<rect width="${width}" height="${height}" fill="${bgColor}"/>` : ""}
+  <g>
+    ${elementsHTML}
+  </g>
+</svg>`;
   }
 }

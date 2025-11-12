@@ -1,0 +1,21 @@
+{
+  "name": "w2l-playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "w2l": "file:..",
+    "monaco-editor": "^0.45.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}
+

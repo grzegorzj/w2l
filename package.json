@@ -18,7 +18,8 @@
     "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
     "dev": "tsc -p tsconfig.build.json --watch",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "playground": "cd playground && npm run dev"
   },
   "keywords": [
     "svg",
