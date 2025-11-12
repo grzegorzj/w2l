@@ -1,11 +1,11 @@
-import * as monaco from 'monaco-editor';
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import * as monaco from "monaco-editor";
+import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 
 // Configure Monaco workers
 self.MonacoEnvironment = {
   getWorker(_: string, label: string) {
-    if (label === 'typescript' || label === 'javascript') {
+    if (label === "typescript" || label === "javascript") {
       return new tsWorker();
     }
     return new editorWorker();
@@ -49,7 +49,7 @@ artboard.render();
 
 // State
 let editor: monaco.editor.IStandaloneCodeEditor;
-let currentSVG: string = '';
+let currentSVG: string = "";
 let zoom = 1;
 let panX = 0;
 let panY = 0;
@@ -68,7 +68,7 @@ function init() {
 
 // Setup Monaco Editor
 function setupEditor() {
-  const container = document.getElementById('editor-container')!;
+  const container = document.getElementById("editor-container")!;
 
   // Configure TypeScript compiler options
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -76,107 +76,59 @@ function setupEditor() {
     module: monaco.languages.typescript.ModuleKind.ESNext,
     moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
     allowNonTsExtensions: true,
-    lib: ['ES2020'],
+    allowSyntheticDefaultImports: true,
+    esModuleInterop: true,
+    lib: ["ES2020"],
+    baseUrl: ".",
+    paths: {
+      w2l: ["w2l"],
+    },
   });
 
-  // Add W2L type definitions
-  monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    `
-declare module 'w2l' {
-  export interface Point {
-    x: string | number;
-    y: string | number;
-  }
+  // Load all W2L type definitions from the parent dist/ folder
+  // Use Vite's glob import to automatically discover all .d.ts files
+  const typeModules = import.meta.glob("../../dist/**/*.d.ts", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  });
 
-  export interface Size {
-    width: string | number | "auto";
-    height: string | number | "auto";
-  }
+  // Load each type definition into Monaco
+  Object.entries(typeModules).forEach(([path, content]) => {
+    // Extract relative path from dist/ onwards (e.g., "core/Artboard.d.ts")
+    const relativePath = path.replace(/^.*\/dist\//, "");
 
-  export interface ArtboardConfig {
-    size: Size | "auto";
-    padding?: string;
-    backgroundColor?: string;
-  }
+    // Remove sourcemap comments
+    let cleaned = (content as string)
+      .replace(/\/\/# sourceMappingURL=.*$/m, "")
+      .trim();
 
-  export interface PositionReference {
-    relativeFrom: Point;
-    relativeTo: Point;
-    x: string | number;
-    y: string | number;
-  }
+    // For the main index.d.ts, wrap it in declare module 'w2l' to make Monaco recognize it
+    if (relativePath === "index.d.ts") {
+      cleaned = `declare module 'w2l' {\n${cleaned}\n}`;
+    }
 
-  export interface RotateConfig {
-    relativeTo: any;
-    deg: number;
-  }
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(
+      cleaned,
+      `file:///node_modules/@types/w2l/${relativePath}`
+    );
+  });
 
-  export interface TranslateConfig {
-    along: Point;
-    distance: string | number;
-  }
-
-  export interface TriangleConfig {
-    type: "right" | "equilateral" | "isosceles" | "scalene";
-    a: string | number;
-    b?: string | number;
-    c?: string | number;
-    orientation?: "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
-    fill?: string;
-    stroke?: string;
-    strokeWidth?: string | number;
-  }
-
-  export interface TriangleSide {
-    length: number;
-    center: Point;
-    start: Point;
-    end: Point;
-    outwardNormal: Point;
-  }
-
-  export class Artboard {
-    constructor(config: ArtboardConfig);
-    get center(): Point;
-    get size(): Size;
-    addElement(element: any): void;
-    render(): string;
-  }
-
-  export abstract class Shape {
-    abstract get center(): Point;
-    position(config: PositionReference): void;
-    rotate(config: RotateConfig): void;
-    translate(config: TranslateConfig): void;
-    abstract render(): string;
-  }
-
-  export class Triangle extends Shape {
-    constructor(config: TriangleConfig);
-    get center(): Point;
-    get sides(): [TriangleSide, TriangleSide, TriangleSide];
-    render(): string;
-  }
-  
-  export function parseUnit(value: string | number, baseValue?: number): number;
-  export function isValidUnit(value: string | number): boolean;
-  export function formatUnit(pixels: number, unit?: string): string;
-}
-    `,
-    'file:///node_modules/@types/w2l/index.d.ts'
+  console.log(
+    `[Playground] ✅ Loaded ${Object.keys(typeModules).length} w2l type definition files from dist/`
   );
 
   // Create the editor
   editor = monaco.editor.create(container, {
     value: DEFAULT_CODE,
-    language: 'typescript',
-    theme: 'vs-dark',
+    language: "typescript",
+    theme: "vs-dark",
     automaticLayout: true,
     fontSize: 14,
     minimap: { enabled: true },
     scrollBeyondLastLine: false,
     tabSize: 2,
-    wordWrap: 'on',
+    wordWrap: "on",
     quickSuggestions: {
       other: true,
       comments: false,
@@ -184,8 +136,8 @@ declare module 'w2l' {
     },
     suggestOnTriggerCharacters: true,
     acceptSuggestionOnCommitCharacter: true,
-    acceptSuggestionOnEnter: 'on',
-    snippetSuggestions: 'inline',
+    acceptSuggestionOnEnter: "on",
+    snippetSuggestions: "inline",
   });
 
   // Add keyboard shortcut for running code (Cmd/Ctrl+Enter)
@@ -196,16 +148,16 @@ declare module 'w2l' {
 
 // Setup SVG renderer
 function setupRenderer() {
-  const container = document.getElementById('svg-container')!;
-  const wrapper = document.getElementById('svg-wrapper')!;
+  const container = document.getElementById("svg-container")!;
+  const wrapper = document.getElementById("svg-wrapper")!;
 
   // Mouse wheel zoom
-  container.addEventListener('wheel', (e) => {
+  container.addEventListener("wheel", (e) => {
     e.preventDefault();
-    
+
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
     const newZoom = Math.max(0.1, Math.min(5, zoom + delta));
-    
+
     if (newZoom !== zoom) {
       zoom = newZoom;
       updateTransform();
@@ -214,16 +166,16 @@ function setupRenderer() {
   });
 
   // Pan functionality
-  container.addEventListener('mousedown', (e) => {
+  container.addEventListener("mousedown", (e) => {
     if (e.button === 0) {
       isPanning = true;
       startX = e.clientX - panX;
       startY = e.clientY - panY;
-      container.style.cursor = 'grabbing';
+      container.style.cursor = "grabbing";
     }
   });
 
-  container.addEventListener('mousemove', (e) => {
+  container.addEventListener("mousemove", (e) => {
     if (isPanning) {
       panX = e.clientX - startX;
       panY = e.clientY - startY;
@@ -231,34 +183,34 @@ function setupRenderer() {
     }
   });
 
-  container.addEventListener('mouseup', () => {
+  container.addEventListener("mouseup", () => {
     if (isPanning) {
       isPanning = false;
-      container.style.cursor = 'grab';
+      container.style.cursor = "grab";
     }
   });
 
-  container.addEventListener('mouseleave', () => {
+  container.addEventListener("mouseleave", () => {
     if (isPanning) {
       isPanning = false;
-      container.style.cursor = 'grab';
+      container.style.cursor = "grab";
     }
   });
 
   // Zoom controls
-  document.getElementById('zoom-in')!.addEventListener('click', () => {
+  document.getElementById("zoom-in")!.addEventListener("click", () => {
     zoom = Math.min(5, zoom + 0.25);
     updateTransform();
     updateZoomLevel();
   });
 
-  document.getElementById('zoom-out')!.addEventListener('click', () => {
+  document.getElementById("zoom-out")!.addEventListener("click", () => {
     zoom = Math.max(0.1, zoom - 0.25);
     updateTransform();
     updateZoomLevel();
   });
 
-  document.getElementById('zoom-reset')!.addEventListener('click', () => {
+  document.getElementById("zoom-reset")!.addEventListener("click", () => {
     zoom = 1;
     panX = 0;
     panY = 0;
@@ -269,35 +221,35 @@ function setupRenderer() {
 
 // Update SVG transform
 function updateTransform() {
-  const wrapper = document.getElementById('svg-wrapper')!;
+  const wrapper = document.getElementById("svg-wrapper")!;
   wrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
 }
 
 // Update zoom level display
 function updateZoomLevel() {
-  const zoomLevel = document.getElementById('zoom-level')!;
+  const zoomLevel = document.getElementById("zoom-level")!;
   zoomLevel.textContent = `${Math.round(zoom * 100)}%`;
 }
 
 // Setup resizable panes
 function setupResizer() {
-  const resizer = document.getElementById('resizer')!;
-  const editorPane = document.getElementById('editor-pane')!;
-  const rendererPane = document.getElementById('renderer-pane')!;
-  
+  const resizer = document.getElementById("resizer")!;
+  const editorPane = document.getElementById("editor-pane")!;
+  const rendererPane = document.getElementById("renderer-pane")!;
+
   let isResizing = false;
   let startX = 0;
   let startEditorWidth = 0;
 
-  resizer.addEventListener('mousedown', (e) => {
+  resizer.addEventListener("mousedown", (e) => {
     isResizing = true;
     startX = e.clientX;
     startEditorWidth = editorPane.offsetWidth;
-    document.body.style.cursor = 'ew-resize';
+    document.body.style.cursor = "ew-resize";
     e.preventDefault();
   });
 
-  document.addEventListener('mousemove', (e) => {
+  document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
 
     const delta = e.clientX - startX;
@@ -305,198 +257,264 @@ function setupResizer() {
     const newEditorWidth = startEditorWidth + delta;
     const minWidth = 200;
 
-    if (newEditorWidth >= minWidth && newEditorWidth <= containerWidth - minWidth) {
+    if (
+      newEditorWidth >= minWidth &&
+      newEditorWidth <= containerWidth - minWidth
+    ) {
       const editorPercent = (newEditorWidth / containerWidth) * 100;
       const rendererPercent = 100 - editorPercent;
-      
+
       editorPane.style.flex = `0 0 ${editorPercent}%`;
       rendererPane.style.flex = `0 0 ${rendererPercent}%`;
     }
   });
 
-  document.addEventListener('mouseup', () => {
+  document.addEventListener("mouseup", () => {
     if (isResizing) {
       isResizing = false;
-      document.body.style.cursor = '';
+      document.body.style.cursor = "";
     }
   });
 }
 
 // Setup event listeners
 function setupEventListeners() {
-  document.getElementById('load-file-btn')!.addEventListener('click', () => {
-    document.getElementById('file-input')!.click();
+  document.getElementById("load-file-btn")!.addEventListener("click", () => {
+    document.getElementById("file-input")!.click();
   });
-  document.getElementById('file-input')!.addEventListener('change', handleFileLoad);
-  document.getElementById('run-btn')!.addEventListener('click', runCode);
-  document.getElementById('save-svg-btn')!.addEventListener('click', saveSVG);
-  document.getElementById('save-code-btn')!.addEventListener('click', saveCode);
+  document
+    .getElementById("file-input")!
+    .addEventListener("change", handleFileLoad);
+  document.getElementById("run-btn")!.addEventListener("click", runCode);
+  document.getElementById("save-svg-btn")!.addEventListener("click", saveSVG);
+  document.getElementById("save-code-btn")!.addEventListener("click", saveCode);
 }
 
 // Run the user's code
 async function runCode() {
   const code = editor.getValue();
-  const svgContent = document.getElementById('svg-content')!;
-  const saveSvgBtn = document.getElementById('save-svg-btn') as HTMLButtonElement;
-  
+  const svgContent = document.getElementById("svg-content")!;
+  const saveSvgBtn = document.getElementById(
+    "save-svg-btn"
+  ) as HTMLButtonElement;
+
   // Clear previous output
   clearMessages();
-  
+
   try {
     // Import W2L dynamically
-    const w2l = await import('w2l');
-    
+    const w2l = await import("w2l");
+
     // Create a sandboxed environment
+    // Spread all w2l exports so any new primitives are automatically available
     const sandbox = {
-      Artboard: w2l.Artboard,
-      Triangle: w2l.Triangle,
-      Shape: w2l.Shape,
+      ...w2l,
       console: {
-        log: (...args: any[]) => console.log('[User Code]', ...args),
-        error: (...args: any[]) => console.error('[User Code]', ...args),
-        warn: (...args: any[]) => console.warn('[User Code]', ...args),
+        log: (...args: any[]) => console.log("[User Code]", ...args),
+        error: (...args: any[]) => console.error("[User Code]", ...args),
+        warn: (...args: any[]) => console.warn("[User Code]", ...args),
       },
     };
-    
+
     // Transform the code to remove imports and use sandbox
     let transformedCode = code
-      .replace(/import\s+{[^}]+}\s+from\s+['"]w2l['"];?\s*/g, '')
+      .replace(/import\s+{[^}]+}\s+from\s+['"]w2l['"];?\s*/g, "")
       .trim();
-    
+
     // If the code doesn't end with a return statement, add one
     // First, check if there are any explicit render() calls in the code (excluding comments)
-    const lines = transformedCode.split('\n');
-    const activeRenderCalls: { line: string; artboardName: string; lineIndex: number }[] = [];
-    
+    const lines = transformedCode.split("\n");
+    const activeRenderCalls: {
+      line: string;
+      artboardName: string;
+      lineIndex: number;
+    }[] = [];
+
     lines.forEach((line, index) => {
       const trimmedLine = line.trim();
       // Skip commented lines
-      if (trimmedLine.startsWith('//') || trimmedLine.startsWith('/*') || trimmedLine.startsWith('*')) {
+      if (
+        trimmedLine.startsWith("//") ||
+        trimmedLine.startsWith("/*") ||
+        trimmedLine.startsWith("*")
+      ) {
         return;
       }
-      
+
       // Check for render() calls not in comments
       const renderMatch = line.match(/(\w+)\.render\(\)/);
       if (renderMatch) {
         // Make sure it's not in a comment at the end of the line
-        const commentIndex = line.indexOf('//');
+        const commentIndex = line.indexOf("//");
         const renderIndex = line.indexOf(renderMatch[0]);
         if (commentIndex === -1 || renderIndex < commentIndex) {
           activeRenderCalls.push({
             line: line.trim(),
             artboardName: renderMatch[1],
-            lineIndex: index
+            lineIndex: index,
           });
         }
       }
     });
-    
+
     const lastLine = lines[lines.length - 1].trim();
-    
-    if (!lastLine.startsWith('return ') && !lastLine.includes('return')) {
+
+    if (!lastLine.startsWith("return ") && !lastLine.includes("return")) {
       // Check if there are explicit render() calls
       if (activeRenderCalls.length > 0) {
-        console.log('[Playground] Found explicit render calls:', activeRenderCalls.map(r => r.artboardName));
-        
+        console.log(
+          "[Playground] Found explicit render calls:",
+          activeRenderCalls.map((r) => r.artboardName)
+        );
+
         if (activeRenderCalls.length === 1) {
           // Single render call - convert it to return
-          console.log('[Playground] Converting single render() to return');
+          console.log("[Playground] Converting single render() to return");
           const renderCall = activeRenderCalls[0];
-          const renderPattern = new RegExp(`${renderCall.artboardName}\\.render\\(\\);?\\s*$`);
-          transformedCode = transformedCode.replace(renderPattern, `return ${renderCall.artboardName}.render();`);
+          const renderPattern = new RegExp(
+            `${renderCall.artboardName}\\.render\\(\\);?\\s*$`
+          );
+          transformedCode = transformedCode.replace(
+            renderPattern,
+            `return ${renderCall.artboardName}.render();`
+          );
         } else {
           // Multiple render calls - remove them and return array at the end
-          console.log('[Playground] Converting multiple render() calls to return array');
-          
+          console.log(
+            "[Playground] Converting multiple render() calls to return array"
+          );
+
           // Remove all the render() calls from their original locations
-          activeRenderCalls.forEach(renderCall => {
-            const renderPattern = new RegExp(`^\\s*${renderCall.artboardName}\\.render\\(\\);?\\s*$`, 'gm');
-            transformedCode = transformedCode.replace(renderPattern, '');
+          activeRenderCalls.forEach((renderCall) => {
+            const renderPattern = new RegExp(
+              `^\\s*${renderCall.artboardName}\\.render\\(\\);?\\s*$`,
+              "gm"
+            );
+            transformedCode = transformedCode.replace(renderPattern, "");
           });
-          
+
           // Add return array at the end
-          const returnArray = activeRenderCalls.map(r => `${r.artboardName}.render()`).join(', ');
+          const returnArray = activeRenderCalls
+            .map((r) => `${r.artboardName}.render()`)
+            .join(", ");
           transformedCode += `\n\n// Auto-added return for explicit renders\nreturn [${returnArray}];`;
         }
       } else {
         // No explicit render calls - detect artboards and auto-render
-        const artboardMatches = transformedCode.match(/const\s+(\w+)\s*=\s*new\s+Artboard/g);
-        const artboardNames = artboardMatches 
-          ? artboardMatches.map(m => m.match(/const\s+(\w+)/)?.[1]).filter(Boolean)
+        const artboardMatches = transformedCode.match(
+          /const\s+(\w+)\s*=\s*new\s+Artboard/g
+        );
+        const artboardNames = artboardMatches
+          ? artboardMatches
+              .map((m) => m.match(/const\s+(\w+)/)?.[1])
+              .filter(Boolean)
           : [];
-        
-        console.log('[Playground] No explicit renders. Detected artboards:', artboardNames);
-        
+
+        console.log(
+          "[Playground] No explicit renders. Detected artboards:",
+          artboardNames
+        );
+
         if (artboardNames.length > 1) {
           // Multiple artboards detected - return array
-          const returnArray = artboardNames.map(name => `${name}.render()`).join(', ');
-          console.log('[Playground] Adding return for all detected artboards:', artboardNames);
+          const returnArray = artboardNames
+            .map((name) => `${name}.render()`)
+            .join(", ");
+          console.log(
+            "[Playground] Adding return for all detected artboards:",
+            artboardNames
+          );
           transformedCode += `\n\n// Auto-added return for multiple artboards\nreturn [${returnArray}];`;
         } else if (artboardNames.length === 1) {
           // Single artboard detected - return it
           const artboardName = artboardNames[0];
-          console.log('[Playground] Adding return for single artboard:', artboardName);
+          console.log(
+            "[Playground] Adding return for single artboard:",
+            artboardName
+          );
           transformedCode += `\n\n// Auto-added return\nreturn ${artboardName}.render();`;
         } else {
           // Last resort: assume 'artboard' exists
-          console.log('[Playground] Using last resort: assuming artboard exists');
-          transformedCode += '\n\n// Auto-added return\nreturn artboard.render();';
+          console.log(
+            "[Playground] Using last resort: assuming artboard exists"
+          );
+          transformedCode +=
+            "\n\n// Auto-added return\nreturn artboard.render();";
         }
       }
-    } else if (!lastLine.startsWith('return ') && lastLine.includes('.render()')) {
+    } else if (
+      !lastLine.startsWith("return ") &&
+      lastLine.includes(".render()")
+    ) {
       // Single line with render() but no return keyword
-      console.log('[Playground] Converting render() to return');
-      transformedCode = transformedCode.replace(/([^;]+\.render\(\));?\s*$/, 'return $1;');
+      console.log("[Playground] Converting render() to return");
+      transformedCode = transformedCode.replace(
+        /([^;]+\.render\(\));?\s*$/,
+        "return $1;"
+      );
     }
-    
-    console.log('[Playground] Transformed code (last 200 chars):', transformedCode.slice(-200));
-    
+
+    console.log(
+      "[Playground] Transformed code (last 200 chars):",
+      transformedCode.slice(-200)
+    );
+
     // Wrap in function and execute
     const func = new Function(...Object.keys(sandbox), transformedCode);
     const result = func(...Object.values(sandbox));
-    
+
     // Check if result is a single SVG string or an array of SVG strings
     let svgsToRender: string[] = [];
-    
-    if (typeof result === 'string' && result.includes('<svg')) {
+
+    if (typeof result === "string" && result.includes("<svg")) {
       // Single SVG
       svgsToRender = [result];
     } else if (Array.isArray(result)) {
       // Array of SVGs (multiple artboards)
-      svgsToRender = result.filter((item: any) => typeof item === 'string' && item.includes('<svg'));
+      svgsToRender = result.filter(
+        (item: any) => typeof item === "string" && item.includes("<svg")
+      );
     }
-    
+
     if (svgsToRender.length > 0) {
       // Render all SVGs
-      currentSVG = svgsToRender.join('\n');
-      
+      currentSVG = svgsToRender.join("\n");
+
       if (svgsToRender.length === 1) {
         // Single artboard - render with shadow
         svgContent.innerHTML = `<div class="artboard-item">${svgsToRender[0]}</div>`;
       } else {
         // Multiple artboards - render each in separate containers
         const artboardsHTML = svgsToRender
-          .map((svg, index) => `
+          .map(
+            (svg, index) => `
             <div class="artboard-item">
               <div class="artboard-label">Artboard ${index + 1}</div>
               ${svg}
             </div>
-          `)
-          .join('');
+          `
+          )
+          .join("");
         svgContent.innerHTML = `<div class="artboards-container">${artboardsHTML}</div>`;
       }
-      
+
       saveSvgBtn.disabled = false;
-      showSuccess(`Code executed successfully! ${svgsToRender.length > 1 ? `Rendered ${svgsToRender.length} artboards.` : ''}`);
+      showSuccess(
+        `Code executed successfully! ${svgsToRender.length > 1 ? `Rendered ${svgsToRender.length} artboards.` : ""}`
+      );
     } else {
-      showError('Code did not return an SVG string or array of SVGs. Make sure to return artboard.render() or an array of renders.');
-      svgContent.innerHTML = '<div class="empty-state">No valid SVG output. Check console for details.</div>';
+      showError(
+        "Code did not return an SVG string or array of SVGs. Make sure to return artboard.render() or an array of renders."
+      );
+      svgContent.innerHTML =
+        '<div class="empty-state">No valid SVG output. Check console for details.</div>';
       saveSvgBtn.disabled = true;
     }
   } catch (error: any) {
-    console.error('Error executing code:', error);
+    console.error("Error executing code:", error);
     showError(`Error: ${error.message}`);
-    svgContent.innerHTML = '<div class="empty-state">Error executing code. Check console for details.</div>';
+    svgContent.innerHTML =
+      '<div class="empty-state">Error executing code. Check console for details.</div>';
     saveSvgBtn.disabled = true;
   }
 }
@@ -504,55 +522,55 @@ async function runCode() {
 // Save SVG to file
 async function saveSVG() {
   if (!currentSVG) return;
-  
+
   try {
-    const response = await fetch('/api/save-svg', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/save-svg", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ svg: currentSVG }),
     });
-    
+
     if (response.ok) {
       const { filename } = await response.json();
       showSuccess(`SVG saved as ${filename}`);
     } else {
       // Fallback to browser download if server endpoint doesn't exist
-      downloadFile(currentSVG, `w2l-output-${Date.now()}.svg`, 'image/svg+xml');
-      showSuccess('SVG downloaded successfully!');
+      downloadFile(currentSVG, `w2l-output-${Date.now()}.svg`, "image/svg+xml");
+      showSuccess("SVG downloaded successfully!");
     }
   } catch (error) {
     // Fallback to browser download
-    downloadFile(currentSVG, `w2l-output-${Date.now()}.svg`, 'image/svg+xml');
-    showSuccess('SVG downloaded successfully!');
+    downloadFile(currentSVG, `w2l-output-${Date.now()}.svg`, "image/svg+xml");
+    showSuccess("SVG downloaded successfully!");
   }
 }
 
 // Save code to file
 async function saveCode() {
   const code = editor.getValue();
-  
+
   try {
-    const response = await fetch('/api/save-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/save-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code }),
     });
-    
+
     if (response.ok) {
       const { filename } = await response.json();
       showSuccess(`Code saved as ${filename}`);
-      localStorage.setItem('w2l-playground-code', code);
+      localStorage.setItem("w2l-playground-code", code);
     } else {
       // Fallback to browser download
-      downloadFile(code, `w2l-code-${Date.now()}.ts`, 'text/typescript');
-      localStorage.setItem('w2l-playground-code', code);
-      showSuccess('Code downloaded successfully!');
+      downloadFile(code, `w2l-code-${Date.now()}.ts`, "text/typescript");
+      localStorage.setItem("w2l-playground-code", code);
+      showSuccess("Code downloaded successfully!");
     }
   } catch (error) {
     // Fallback to browser download and localStorage
-    downloadFile(code, `w2l-code-${Date.now()}.ts`, 'text/typescript');
-    localStorage.setItem('w2l-playground-code', code);
-    showSuccess('Code downloaded successfully!');
+    downloadFile(code, `w2l-code-${Date.now()}.ts`, "text/typescript");
+    localStorage.setItem("w2l-playground-code", code);
+    showSuccess("Code downloaded successfully!");
   }
 }
 
@@ -560,7 +578,7 @@ async function saveCode() {
 function downloadFile(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
@@ -571,7 +589,7 @@ function downloadFile(content: string, filename: string, mimeType: string) {
 
 // Load saved code from localStorage
 function loadSavedCode() {
-  const savedCode = localStorage.getItem('w2l-playground-code');
+  const savedCode = localStorage.getItem("w2l-playground-code");
   if (savedCode) {
     editor.setValue(savedCode);
   }
@@ -581,24 +599,26 @@ function loadSavedCode() {
 function handleFileLoad(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
-  
+
   if (!file) {
     return;
   }
-  
+
   // Check file extension
   const fileName = file.name.toLowerCase();
-  const validExtensions = ['.ts', '.js', '.tsx', '.jsx'];
-  const isValid = validExtensions.some(ext => fileName.endsWith(ext));
-  
+  const validExtensions = [".ts", ".js", ".tsx", ".jsx"];
+  const isValid = validExtensions.some((ext) => fileName.endsWith(ext));
+
   if (!isValid) {
-    showError('Please select a valid TypeScript or JavaScript file (.ts, .js, .tsx, .jsx)');
+    showError(
+      "Please select a valid TypeScript or JavaScript file (.ts, .js, .tsx, .jsx)"
+    );
     return;
   }
-  
+
   // Read the file
   const reader = new FileReader();
-  
+
   reader.onload = (e) => {
     const content = e.target?.result as string;
     if (content) {
@@ -607,25 +627,25 @@ function handleFileLoad(event: Event) {
       // Don't save to localStorage automatically, let user run it first
     }
   };
-  
+
   reader.onerror = () => {
     showError(`Failed to read file: ${file.name}`);
   };
-  
+
   reader.readAsText(file);
-  
+
   // Reset the input so the same file can be loaded again if needed
-  input.value = '';
+  input.value = "";
 }
 
 // Show error message
 function showError(message: string) {
   clearMessages();
-  const errorDiv = document.createElement('div');
-  errorDiv.className = 'error-message';
+  const errorDiv = document.createElement("div");
+  errorDiv.className = "error-message";
   errorDiv.textContent = message;
   document.body.appendChild(errorDiv);
-  
+
   setTimeout(() => {
     errorDiv.remove();
   }, 5000);
@@ -634,11 +654,11 @@ function showError(message: string) {
 // Show success message
 function showSuccess(message: string) {
   clearMessages();
-  const successDiv = document.createElement('div');
-  successDiv.className = 'success-message';
+  const successDiv = document.createElement("div");
+  successDiv.className = "success-message";
   successDiv.textContent = message;
   document.body.appendChild(successDiv);
-  
+
   setTimeout(() => {
     successDiv.remove();
   }, 3000);
@@ -646,13 +666,14 @@ function showSuccess(message: string) {
 
 // Clear all messages
 function clearMessages() {
-  document.querySelectorAll('.error-message, .success-message').forEach(el => el.remove());
+  document
+    .querySelectorAll(".error-message, .success-message")
+    .forEach((el) => el.remove());
 }
 
 // Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
 } else {
   init();
 }
-

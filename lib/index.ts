@@ -67,6 +67,15 @@ export { Artboard, Shape } from "./core/index.js";
 export type { Point, Size, ArtboardConfig, PositionReference, RotateConfig, TranslateConfig } from "./core/index.js";
 
 // Geometry exports
-export { Triangle } from "./geometry/index.js";
-export type { TriangleConfig, TriangleSide } from "./geometry/index.js";
+export { Side, Triangle, Circle, Rectangle, Square } from "./geometry/index.js";
+export type {
+  SideConfig,
+  TriangleConfig,
+  TriangleSide,
+  CircleConfig,
+  RectangleConfig,
+  RectangleSide,
+  CornerStyle,
+  SquareConfig,
+} from "./geometry/index.js";
 

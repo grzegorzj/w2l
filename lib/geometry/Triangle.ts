@@ -10,6 +10,7 @@
 import { Shape } from "../core/Shape.js";
 import type { Point } from "../core/Artboard.js";
 import { parseUnit } from "../core/units.js";
+import { Side } from "./Side.js";
 
 /**
  * Configuration for creating a Triangle.
@@ -75,8 +76,12 @@ export interface TriangleConfig {
  *
  * Provides access to geometric properties of the side that are useful
  * for positioning adjacent elements.
+ *
+ * @remarks
+ * This interface extends the Side class with any triangle-specific properties.
+ * It provides both inward and outward normal vectors for flexible positioning.
  */
-export interface TriangleSide {
+export interface TriangleSide extends Side {
   /** Length of the side in pixels */
   length: number;
 
@@ -97,6 +102,15 @@ export interface TriangleSide {
    * to the triangle.
    */
   outwardNormal: Point;
+
+  /**
+   * Inward-facing normal vector.
+   *
+   * This unit vector points perpendicular to the side, toward
+   * the triangle's interior. Useful for positioning elements inside
+   * the triangle or for internal geometric calculations.
+   */
+  inwardNormal: Point;
 }
 
 /**
@@ -241,29 +255,11 @@ export class Triangle extends Shape {
       start: { x: number; y: number },
       end: { x: number; y: number }
     ): TriangleSide => {
-      const dx = end.x - start.x;
-      const dy = end.y - start.y;
-      const length = Math.sqrt(dx * dx + dy * dy);
-
-      return {
-        length,
-        start: {
-          x: `${start.x + this.currentPosition.x}px`,
-          y: `${start.y + this.currentPosition.y}px`,
-        },
-        end: {
-          x: `${end.x + this.currentPosition.x}px`,
-          y: `${end.y + this.currentPosition.y}px`,
-        },
-        center: {
-          x: `${(start.x + end.x) / 2 + this.currentPosition.x}px`,
-          y: `${(start.y + end.y) / 2 + this.currentPosition.y}px`,
-        },
-        outwardNormal: {
-          x: `${-dy / length}px`,
-          y: `${dx / length}px`,
-        },
-      };
+      return new Side({
+        start,
+        end,
+        positionOffset: this.currentPosition,
+      }) as TriangleSide;
     };
 
     return [createSide(v1, v2), createSide(v2, v3), createSide(v3, v1)];

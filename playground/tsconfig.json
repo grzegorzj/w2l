@@ -13,6 +13,11 @@
     "isolatedModules": true,
     "noEmit": true,
 
+    /* Path mapping for w2l source */
+    "paths": {
+      "w2l": ["../lib/index.ts"]
+    },
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
