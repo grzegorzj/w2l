@@ -1,0 +1,14 @@
+{
+  "entryPoints": ["lib/index.ts"],
+  "out": "docs",
+  "plugin": [],
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeExternals": true,
+  "readme": "README.md",
+  "name": "W2L - Write to Layout",
+  "navigationLinks": {
+    "GitHub": "https://github.com/yourusername/w2l"
+  }
+}
+
