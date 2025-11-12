@@ -20,7 +20,8 @@
     "dev": "tsc -p tsconfig.build.json --watch",
     "dev:docs": "typedoc --watch",
     "dev:playground": "cd playground && npm run dev",
-    "dev:all": "concurrently -n \"docs,playground\" -c \"green,yellow\" \"npm run dev:docs\" \"npm run dev:playground\"",
+    "dev:lib": "concurrently -n \"tsc,types\" -c \"blue,cyan\" \"tsc -p tsconfig.build.json --watch\" \"node scripts/watch-and-generate-types.js\"",
+    "dev:all": "concurrently -n \"lib,docs,playground\" -c \"blue,green,yellow\" \"npm run dev:lib\" \"npm run dev:docs\" \"npm run dev:playground\"",
     "prepare": "npm run build",
     "playground": "cd playground && npm run dev"
   },

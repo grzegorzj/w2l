@@ -304,7 +304,8 @@ export class Rectangle extends Shape {
   /**
    * Gets the four sides of the rectangle with their geometric properties.
    *
-   * The sides are returned in clockwise order: top, right, bottom, left.
+   * Each side's direction follows counter-clockwise vertex ordering (see CONVENTIONS.md).
+   * The sides are returned in logical order: top, left, bottom, right.
    *
    * @returns Array of four rectangle sides
    *
@@ -312,7 +313,13 @@ export class Rectangle extends Shape {
    * Access rectangle sides
    * ```typescript
    * const rect = new Rectangle({ width: 200, height: 100 });
-   * const [top, right, bottom, left] = rect.sides;
+   * const [top, left, bottom, right] = rect.sides;
+   *
+   * // Outward normals point away from the rectangle:
+   * // - top.outwardNormal points up
+   * // - left.outwardNormal points left
+   * // - bottom.outwardNormal points down
+   * // - right.outwardNormal points right
    * ```
    */
   get sides(): [RectangleSide, RectangleSide, RectangleSide, RectangleSide] {
@@ -332,12 +339,13 @@ export class Rectangle extends Shape {
       }) as RectangleSide;
     };
 
-    // Top, Right, Bottom, Left (clockwise)
+    // Counter-clockwise vertex order: TL → BL → BR → TR
+    // Each side follows this ordering for correct outward normals
     return [
-      createSide({ x, y }, { x: x + w, y }),
-      createSide({ x: x + w, y }, { x: x + w, y: y + h }),
-      createSide({ x: x + w, y: y + h }, { x, y: y + h }),
-      createSide({ x, y: y + h }, { x, y }),
+      createSide({ x: x + w, y }, { x, y }), // Top: TR → TL (going left)
+      createSide({ x, y }, { x, y: y + h }), // Left: TL → BL (going down)
+      createSide({ x, y: y + h }, { x: x + w, y: y + h }), // Bottom: BL → BR (going right)
+      createSide({ x: x + w, y: y + h }, { x: x + w, y }), // Right: BR → TR (going up)
     ];
   }
 
@@ -404,8 +412,10 @@ export class Rectangle extends Shape {
     }
 
     // Rounded or sharp corners
-    const r = cornerStyle === "rounded" ? Math.min(this._cornerRadius, w / 2, h / 2) : 0;
+    const r =
+      cornerStyle === "rounded"
+        ? Math.min(this._cornerRadius, w / 2, h / 2)
+        : 0;
     return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ry="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"${transform} />`;
   }
 }
-

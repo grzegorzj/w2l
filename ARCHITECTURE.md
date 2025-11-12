@@ -4,6 +4,8 @@
 
 W2L (Write to Layout) is a TypeScript library designed to enable Large Language Models (LLMs) to create structured visual compositions without dealing with low-level SVG geometry. This document describes the architectural decisions and project structure.
 
+**See also**: [CONVENTIONS.md](./CONVENTIONS.md) for mathematical conventions, coordinate systems, and polygon winding order standards.
+
 ## Core Philosophy
 
 ### LLM-First Design
@@ -52,6 +54,7 @@ w2l/
 **Components**:
 
 - **Artboard**: The canvas where all elements are placed
+
   - Manages coordinate system
   - Provides sizing (fixed or auto)
   - Exposes reference points (e.g., center) for positioning
@@ -62,6 +65,7 @@ w2l/
   - Enforces consistent API across all shapes
 
 **Key Interfaces**:
+
 - `Point`: 2D coordinate representation
 - `Size`: Dimension specification
 - `PositionReference`: Relative positioning configuration
@@ -81,6 +85,7 @@ w2l/
 
 **Design Pattern**:
 Each shape:
+
 1. Extends the `Shape` base class
 2. Implements required abstract methods (`center`, `render`)
 3. Provides shape-specific properties (e.g., `Triangle.sides`)
@@ -91,6 +96,7 @@ Each shape:
 ### ES Modules
 
 The library uses ES modules (`type: "module"` in package.json) with explicit `.js` extensions in imports. This ensures:
+
 - Native Node.js compatibility
 - Proper browser module support
 - Clear module boundaries
@@ -99,10 +105,10 @@ The library uses ES modules (`type: "module"` in package.json) with explicit `.j
 
 ```json
 {
-  "target": "ES2020",           // Modern JavaScript features
-  "module": "ESNext",           // Latest module system
+  "target": "ES2020", // Modern JavaScript features
+  "module": "ESNext", // Latest module system
   "moduleResolution": "bundler", // Flexible resolution
-  "strict": true                // Maximum type safety
+  "strict": true // Maximum type safety
 }
 ```
 
@@ -114,14 +120,15 @@ Instead of absolute coordinates, elements are positioned relative to other eleme
 
 ```typescript
 shape.position({
-  relativeFrom: shape.center,    // Point on this shape
-  relativeTo: artboard.center,   // Target point
-  x: 0,                          // X offset
-  y: 0                           // Y offset
+  relativeFrom: shape.center, // Point on this shape
+  relativeTo: artboard.center, // Target point
+  x: 0, // X offset
+  y: 0, // Y offset
 });
 ```
 
 This approach:
+
 - Is more intuitive for spatial reasoning
 - Allows layouts to adapt to content changes
 - Reduces the need for manual coordinate calculations
@@ -134,10 +141,10 @@ Shapes automatically calculate and expose geometric properties:
 const triangle = new Triangle({ type: "right", a: 3, b: 4 });
 
 // Automatically provides:
-triangle.center           // Geometric centroid
-triangle.sides           // Array of sides with properties
-triangle.sides[0].center // Center of each side
-triangle.sides[0].outwardNormal // Normal vector for positioning
+triangle.center; // Geometric centroid
+triangle.sides; // Array of sides with properties
+triangle.sides[0].center; // Center of each side
+triangle.sides[0].outwardNormal; // Normal vector for positioning
 ```
 
 ### Transformation Pipeline
@@ -162,6 +169,7 @@ npm run build:docs
 ```
 
 This creates:
+
 - Searchable HTML documentation
 - API reference with examples
 - Type hierarchies
@@ -170,6 +178,7 @@ This creates:
 ### Documentation Structure
 
 Each documented element includes:
+
 - **Description**: What it does
 - **Remarks**: Additional context and behavior notes
 - **Examples**: Code samples showing usage
@@ -181,6 +190,7 @@ Each documented element includes:
 ### Compilation
 
 TypeScript compiles to JavaScript with:
+
 - Declaration files (`.d.ts`) for type information
 - Source maps for debugging
 - ES module output
@@ -188,6 +198,7 @@ TypeScript compiles to JavaScript with:
 ### Distribution
 
 The library is distributed as:
+
 - ES modules in `dist/`
 - TypeScript declaration files for type checking
 - Source maps for debugging
@@ -195,6 +206,7 @@ The library is distributed as:
 ### Local Development
 
 The example project uses the library via `file:..` dependency, allowing:
+
 - Real-time testing during development
 - Verification of the public API
 - Example code that serves as documentation
@@ -215,6 +227,7 @@ To add a new shape:
 ### Adding New Modules
 
 Future modules might include:
+
 - **text/**: Text elements with typography
 - **containers/**: Layout containers (flex, grid)
 - **paths/**: Bezier curves and custom paths
@@ -223,11 +236,13 @@ Future modules might include:
 ## Testing Strategy
 
 The example project serves as:
+
 - Integration test
 - API demonstration
 - Documentation by example
 
 Future testing could include:
+
 - Unit tests for geometric calculations
 - Visual regression tests for rendering
 - API contract tests
@@ -237,6 +252,7 @@ Future testing could include:
 ### Lazy Calculation
 
 Geometric properties are calculated on-demand where possible:
+
 - Centers are computed when accessed
 - Sides are generated when needed
 - Transformations are accumulated and applied at render time
@@ -244,6 +260,7 @@ Geometric properties are calculated on-demand where possible:
 ### Memory Efficiency
 
 The library prioritizes simplicity over optimization:
+
 - Small object graphs
 - No heavy dependencies
 - Minimal runtime overhead
@@ -253,6 +270,7 @@ The library prioritizes simplicity over optimization:
 ### Rendering Backends
 
 Currently, shapes implement their own SVG rendering. Future versions might:
+
 - Abstract rendering to a backend interface
 - Support multiple output formats (SVG, Canvas, WebGL)
 - Provide render optimization
@@ -260,6 +278,7 @@ Currently, shapes implement their own SVG rendering. Future versions might:
 ### Layout Engine
 
 Future versions might include:
+
 - Constraint-based layout
 - Automatic spacing and alignment
 - Grid and flexbox-like containers
@@ -267,6 +286,7 @@ Future versions might include:
 ### Interactivity
 
 Potential additions:
+
 - Event handling
 - Animation support
 - State management
@@ -274,9 +294,9 @@ Potential additions:
 ## Conclusion
 
 This architecture prioritizes:
+
 - **LLM Usability**: Easy for AI to understand and use
 - **Type Safety**: Full TypeScript support
 - **Self-Documentation**: Comprehensive inline documentation
 - **Extensibility**: Easy to add new shapes and features
 - **Simplicity**: Minimal configuration and setup
-

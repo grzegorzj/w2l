@@ -30,20 +30,23 @@ export interface SideConfig {
  *
  * @remarks
  * Sides automatically calculate both inward and outward normal vectors.
- * The "outward" direction is determined by the right-hand rule: if you
- * walk from start to end, outward is to your right.
+ * 
+ * **Important**: This class assumes counter-clockwise vertex ordering (see CONVENTIONS.md).
+ * The "outward" direction is determined by the right-hand rule: if you walk from start 
+ * to end along a counter-clockwise polygon, outward is to your right (90° clockwise rotation).
  *
  * @example
- * Create a side and access its properties
+ * Create a horizontal side pointing right (e.g., top edge of a rectangle)
  * ```typescript
+ * // For a counter-clockwise rectangle, top edge goes right-to-left
  * const side = new Side({
- *   start: { x: 0, y: 0 },
- *   end: { x: 100, y: 0 }
+ *   start: { x: 100, y: 0 },  // top-right
+ *   end: { x: 0, y: 0 }        // top-left
  * });
  *
  * console.log(side.length);          // 100
- * console.log(side.outwardNormal);   // { x: "0px", y: "1px" }
- * console.log(side.inwardNormal);    // { x: "0px", y: "-1px" }
+ * console.log(side.outwardNormal);   // { x: "0px", y: "-1px" } - points up
+ * console.log(side.inwardNormal);    // { x: "0px", y: "1px" } - points down
  * ```
  */
 export class Side {
@@ -113,9 +116,13 @@ export class Side {
    * Gets the outward-facing unit normal vector.
    *
    * The outward normal points perpendicular to the side, away from
-   * the shape's interior (determined by right-hand rule).
+   * the shape's interior (determined by right-hand rule with counter-clockwise winding).
    *
    * @returns A unit vector pointing outward from the side
+   *
+   * @remarks
+   * Formula: For edge direction (dx, dy), outward normal = (-dy, dx) / length
+   * This is a 90° clockwise rotation of the edge direction.
    *
    * @example
    * Position an element outward from a side
@@ -131,7 +138,7 @@ export class Side {
     const dy = this._end.y - this._start.y;
     const length = this.length;
 
-    // Perpendicular vector (rotated 90° clockwise)
+    // Perpendicular vector (rotated 90° clockwise from edge direction)
     return {
       x: `${-dy / length}px`,
       y: `${dx / length}px`,
@@ -145,6 +152,10 @@ export class Side {
    * the shape's interior (opposite of the outward normal).
    *
    * @returns A unit vector pointing inward toward the side
+   *
+   * @remarks
+   * Formula: For edge direction (dx, dy), inward normal = (dy, -dx) / length
+   * This is a 90° counter-clockwise rotation of the edge direction.
    *
    * @example
    * Position an element inward from a side
@@ -160,7 +171,7 @@ export class Side {
     const dy = this._end.y - this._start.y;
     const length = this.length;
 
-    // Perpendicular vector (rotated 90° counter-clockwise)
+    // Perpendicular vector (rotated 90° counter-clockwise from edge direction)
     return {
       x: `${dy / length}px`,
       y: `${-dx / length}px`,

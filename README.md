@@ -80,6 +80,8 @@ All documentation is written inline within the TypeScript source files using TSD
 - No separate markdown files to maintain
 - Professional documentation is generated automatically via TypeDoc
 
+**Important**: See [CONVENTIONS.md](./CONVENTIONS.md) for mathematical conventions including coordinate systems, polygon winding order, and normal vector calculations
+
 ## Key Concepts
 
 ### Artboard

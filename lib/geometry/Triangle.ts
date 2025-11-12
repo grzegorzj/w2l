@@ -177,6 +177,8 @@ export class Triangle extends Shape {
   /**
    * Calculates the vertices of the triangle based on configuration.
    *
+   * Vertices are ordered counter-clockwise for correct normal calculation (see CONVENTIONS.md).
+   *
    * @returns The three vertices of the triangle
    * @internal
    */
@@ -192,18 +194,19 @@ export class Triangle extends Shape {
 
     if (type === "right") {
       const c = Math.sqrt(aPx * aPx + bPx * bPx);
+      // Counter-clockwise order: origin → down → right
       return [
-        { x: 0, y: 0 },
-        { x: aPx, y: 0 },
-        { x: 0, y: bPx },
+        { x: 0, y: 0 }, // v0: top-left (right angle)
+        { x: 0, y: bPx }, // v1: bottom-left
+        { x: aPx, y: 0 }, // v2: top-right
       ];
     }
 
-    // Placeholder for other triangle types
+    // Placeholder for other triangle types (also counter-clockwise)
     return [
       { x: 0, y: 0 },
+      { x: 0, y: aPx },
       { x: aPx, y: 0 },
-      { x: aPx / 2, y: aPx },
     ];
   }
 
@@ -228,22 +231,29 @@ export class Triangle extends Shape {
    * Gets the three sides of the triangle with their geometric properties.
    *
    * Each side includes its length, center point, endpoints, and outward normal vector.
+   * Sides follow counter-clockwise vertex ordering (see CONVENTIONS.md).
    * This makes it easy to position elements adjacent to or along the triangle's edges.
    *
-   * @returns Array of three triangle sides
+   * @returns Array of three triangle sides in counter-clockwise order
    *
    * @example
-   * Position squares on each side of a triangle
+   * Position squares on each side of a triangle (Pythagorean theorem)
    * ```typescript
    * const triangle = new Triangle({ type: "right", a: 3, b: 4 });
    *
    * triangle.sides.forEach(side => {
    *   const square = new Square({ a: side.length });
+   *   // Position square at side center
    *   square.position({
    *     relativeTo: side.center,
    *     relativeFrom: square.center,
    *     x: 0,
    *     y: 0
+   *   });
+   *   // Move square outward from triangle
+   *   square.translate({
+   *     along: side.outwardNormal,
+   *     distance: side.length / 2
    *   });
    * });
    * ```
