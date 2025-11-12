@@ -25,9 +25,11 @@ const triangle1 = new Triangle({
   type: "right",
   a: 150,
   b: 200,
-  fill: "#3498db",
-  stroke: "#2c3e50",
-  strokeWidth: 2
+  style: {
+    fill: "#3498db",
+    stroke: "#2c3e50",
+    strokeWidth: 2
+  }
 });
 
 triangle1.position({
@@ -42,9 +44,11 @@ const triangle2 = new Triangle({
   type: "right",
   a: 100,
   b: 150,
-  fill: "#e74c3c",
-  stroke: "#c0392b",
-  strokeWidth: 2
+  style: {
+    fill: "#e74c3c",
+    stroke: "#c0392b",
+    strokeWidth: 2
+  }
 });
 
 triangle2.position({
@@ -59,9 +63,11 @@ const triangle3 = new Triangle({
   type: "right",
   a: 120,
   b: 180,
-  fill: "#2ecc71",
-  stroke: "#27ae60",
-  strokeWidth: 2
+  style: {
+    fill: "#2ecc71",
+    stroke: "#27ae60",
+    strokeWidth: 2
+  }
 });
 
 triangle3.position({

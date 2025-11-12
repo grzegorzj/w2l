@@ -13,9 +13,11 @@ const triangle = new Triangle({
   a: "180px",  // 3 units
   b: "240px",  // 4 units
   orientation: "bottomLeft",
-  fill: "rgba(52, 152, 219, 0.2)",
-  stroke: "#2c3e50",
-  strokeWidth: "4px"
+  style: {
+    fill: "rgba(52, 152, 219, 0.2)",
+    stroke: "#2c3e50",
+    strokeWidth: "4px"
+  }
 });
 
 // Position the triangle at the center
@@ -44,9 +46,11 @@ sides.forEach((side, i) => {
     a: side.length,
     cornerStyle: "rounded",
     cornerRadius: "8px",
-    fill: `rgba(${i === 0 ? '52, 152, 219' : i === 1 ? '231, 76, 60' : '46, 204, 113'}, 0.6)`,
-    stroke: colors[i],
-    strokeWidth: "3px"
+    style: {
+      fill: `rgba(${i === 0 ? '52, 152, 219' : i === 1 ? '231, 76, 60' : '46, 204, 113'}, 0.6)`,
+      stroke: colors[i],
+      strokeWidth: "3px"
+    }
   });
 
   // Position square at side center
@@ -82,9 +86,11 @@ const vertices = [
 sides.forEach((side) => {
   const startCircle = new Circle({
     radius: "8px",
-    fill: "#2c3e50",
-    stroke: "#ecf0f1",
-    strokeWidth: "2px"
+    style: {
+      fill: "#2c3e50",
+      stroke: "#ecf0f1",
+      strokeWidth: "2px"
+    }
   });
   
   startCircle.position({
@@ -110,9 +116,11 @@ labelPositions.forEach((pos, i) => {
     size: "30px",
     cornerStyle: "squircle",
     cornerRadius: "8px",
-    fill: labelColors[i],
-    stroke: "#2c3e50",
-    strokeWidth: "2px"
+    style: {
+      fill: labelColors[i],
+      stroke: "#2c3e50",
+      strokeWidth: "2px"
+    }
   });
   
   label.position({

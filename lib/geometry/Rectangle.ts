@@ -11,6 +11,8 @@ import { Shape } from "../core/Shape.js";
 import type { Point } from "../core/Artboard.js";
 import { parseUnit } from "../core/units.js";
 import { Side } from "./Side.js";
+import type { Style } from "../core/Stylable.js";
+import { styleToSVGAttributes } from "../core/Stylable.js";
 
 /**
  * Size specification for rectangular dimensions.
@@ -44,6 +46,7 @@ export type CornerStyle = "sharp" | "rounded" | "squircle";
  * Configuration for creating a Rectangle.
  *
  * Supports different corner styles and flexible sizing options.
+ * Visual styling is handled through the style property using CSS/SVG properties.
  */
 export interface RectangleConfig {
   /**
@@ -71,22 +74,20 @@ export interface RectangleConfig {
   cornerRadius?: string | number;
 
   /**
-   * Fill color of the rectangle.
-   * @defaultValue "#000000"
+   * Visual styling properties (fill, stroke, opacity, etc.).
+   * Uses standard CSS/SVG property names.
+   *
+   * @example
+   * ```typescript
+   * {
+   *   fill: "#3498db",
+   *   stroke: "#2c3e50",
+   *   strokeWidth: 2,
+   *   opacity: 0.8
+   * }
+   * ```
    */
-  fill?: string;
-
-  /**
-   * Stroke color for the rectangle outline.
-   * @defaultValue "none"
-   */
-  stroke?: string;
-
-  /**
-   * Stroke width (supports units like "2px" or numbers).
-   * @defaultValue 1
-   */
-  strokeWidth?: string | number;
+  style?: Partial<Style>;
 }
 
 /**
@@ -442,10 +443,16 @@ export class Rectangle extends Shape {
     const y = this.currentPosition.y;
     const w = this._width;
     const h = this._height;
-    const fill = this.config.fill || "#000000";
-    const stroke = this.config.stroke || "none";
-    const strokeWidth = parseUnit(this.config.strokeWidth || 1);
     const cornerStyle = this.config.cornerStyle || "sharp";
+
+    // Default style if none provided
+    const defaultStyle: Partial<Style> = {
+      fill: "#000000",
+      stroke: "none",
+      strokeWidth: "1",
+    };
+    const style = { ...defaultStyle, ...this.config.style };
+    const styleAttrs = styleToSVGAttributes(style);
 
     let transform = "";
     if (this.rotation !== 0) {
@@ -457,7 +464,7 @@ export class Rectangle extends Shape {
     // Squircle corners
     if (cornerStyle === "squircle" && this._cornerRadius > 0) {
       const path = this.generateSquirclePath();
-      return `<path d="${path}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"${transform} />`;
+      return `<path d="${path}" ${styleAttrs}${transform} />`;
     }
 
     // Rounded or sharp corners
@@ -465,6 +472,6 @@ export class Rectangle extends Shape {
       cornerStyle === "rounded"
         ? Math.min(this._cornerRadius, w / 2, h / 2)
         : 0;
-    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ry="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"${transform} />`;
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ry="${r}" ${styleAttrs}${transform} />`;
   }
 }

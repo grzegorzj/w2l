@@ -12,9 +12,11 @@ const sharpRect = new Rectangle({
   width: "300px",
   height: "200px",
   cornerStyle: "sharp",
-  fill: "#3498db",
-  stroke: "#2980b9",
-  strokeWidth: "3px"
+  style: {
+    fill: "#3498db",
+    stroke: "#2980b9",
+    strokeWidth: "3px"
+  }
 });
 
 sharpRect.position({
@@ -32,9 +34,11 @@ const roundedRect = new Rectangle({
   height: "200px",
   cornerStyle: "rounded",
   cornerRadius: "30px",
-  fill: "#e74c3c",
-  stroke: "#c0392b",
-  strokeWidth: "3px"
+  style: {
+    fill: "#e74c3c",
+    stroke: "#c0392b",
+    strokeWidth: "3px"
+  }
 });
 
 roundedRect.position({
@@ -52,9 +56,11 @@ const squircleRect = new Rectangle({
   height: "200px",
   cornerStyle: "squircle",
   cornerRadius: "50px",
-  fill: "#2ecc71",
-  stroke: "#27ae60",
-  strokeWidth: "3px"
+  style: {
+    fill: "#2ecc71",
+    stroke: "#27ae60",
+    strokeWidth: "3px"
+  }
 });
 
 squircleRect.position({
@@ -72,9 +78,11 @@ const wideSquircle = new Rectangle({
   height: "120px",
   cornerStyle: "squircle",
   cornerRadius: "35px",
-  fill: "#9b59b6",
-  stroke: "#8e44ad",
-  strokeWidth: "3px"
+  style: {
+    fill: "#9b59b6",
+    stroke: "#8e44ad",
+    strokeWidth: "3px"
+  }
 });
 
 wideSquircle.position({
@@ -92,9 +100,11 @@ const tallRect = new Rectangle({
   height: "280px",
   cornerStyle: "rounded",
   cornerRadius: "25px",
-  fill: "#f39c12",
-  stroke: "#e67e22",
-  strokeWidth: "3px"
+  style: {
+    fill: "#f39c12",
+    stroke: "#e67e22",
+    strokeWidth: "3px"
+  }
 });
 
 tallRect.position({
@@ -114,9 +124,11 @@ for (let i = 0; i < 3; i++) {
     height: "80px",
     cornerStyle: "squircle",
     cornerRadius: "20px",
-    fill: accentColors[i],
-    stroke: "#2c3e50",
-    strokeWidth: "2px"
+    style: {
+      fill: accentColors[i],
+      stroke: "#2c3e50",
+      strokeWidth: "2px"
+    }
   });
   
   accent.position({

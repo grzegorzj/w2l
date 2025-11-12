@@ -10,9 +10,11 @@ const artboard = new Artboard({
 // Create a large central circle
 const centerCircle = new Circle({
   radius: "150px",
-  fill: "rgba(52, 152, 219, 0.2)",
-  stroke: "#3498db",
-  strokeWidth: "4px"
+  style: {
+    fill: "rgba(52, 152, 219, 0.2)",
+    stroke: "#3498db",
+    strokeWidth: "4px"
+  }
 });
 
 centerCircle.position({
@@ -38,9 +40,11 @@ trianglePositions.forEach((pos, i) => {
   const tri = new Triangle({
     type: "equilateral",
     a: "120px",
-    fill: `rgba(${i === 0 ? '231, 76, 60' : i === 1 ? '243, 156, 18' : i === 2 ? '46, 204, 113' : '155, 89, 182'}, 0.8)`,
-    stroke: triangleColors[i],
-    strokeWidth: "3px"
+    style: {
+      fill: `rgba(${i === 0 ? '231, 76, 60' : i === 1 ? '243, 156, 18' : i === 2 ? '46, 204, 113' : '155, 89, 182'}, 0.8)`,
+      stroke: triangleColors[i],
+      strokeWidth: "3px"
+    }
   });
   
   tri.position({
@@ -73,9 +77,11 @@ squarePositions.forEach((pos, i) => {
     size: "80px",
     cornerStyle: "squircle",
     cornerRadius: "20px",
-    fill: squareColors[i],
-    stroke: "#ecf0f1",
-    strokeWidth: "3px"
+    style: {
+      fill: squareColors[i],
+      stroke: "#ecf0f1",
+      strokeWidth: "3px"
+    }
   });
   
   sq.position({
@@ -96,8 +102,10 @@ for (let i = 0; i < numCircles; i++) {
   const angle = (i * 360) / numCircles;
   const circle = new Circle({
     radius: "15px",
-    fill: "#ecf0f1",
-    stroke: "none"
+    style: {
+      fill: "#ecf0f1",
+      stroke: "none"
+    }
   });
   
   // Use the center circle's pointAt to position around it
@@ -127,9 +135,11 @@ cornerRects.forEach((rect, i) => {
     height: rect.height,
     cornerStyle: "rounded",
     cornerRadius: "15px",
-    fill: "rgba(236, 240, 241, 0.1)",
-    stroke: "#ecf0f1",
-    strokeWidth: "2px"
+    style: {
+      fill: "rgba(236, 240, 241, 0.1)",
+      stroke: "#ecf0f1",
+      strokeWidth: "2px"
+    }
   });
   
   r.position({
@@ -145,9 +155,11 @@ cornerRects.forEach((rect, i) => {
 // Add a small accent circle in the very center
 const accentCircle = new Circle({
   radius: "25px",
-  fill: "#e74c3c",
-  stroke: "#c0392b",
-  strokeWidth: "3px"
+  style: {
+    fill: "#e74c3c",
+    stroke: "#c0392b",
+    strokeWidth: "3px"
+  }
 });
 
 accentCircle.position({

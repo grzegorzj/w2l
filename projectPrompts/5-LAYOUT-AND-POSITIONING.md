@@ -43,7 +43,7 @@ container.position({ // centers the layout element in the center of the artboard
   y: 0,
 });
 
-const columns = new Columns({ // columns are now inside of our container and fill it
+const columns = new ColumnsLayout({ // columns are now inside of our container and fill it
   gutter: "20px",
   count: 3,
   style: // add style like in SVG CSS - this should be a propery of something like StylableObject
@@ -54,3 +54,5 @@ container.addElement(columns); // this automatically makes the columns fill the 
 ```
 
 So we see a lot to implement here.
+
+3. Let's implement the column logic as visible

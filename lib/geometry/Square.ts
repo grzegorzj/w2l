@@ -7,12 +7,18 @@
  * @module geometry
  */
 
-import { Rectangle, type RectangleConfig, type CornerStyle } from "./Rectangle.js";
+import {
+  Rectangle,
+  type RectangleConfig,
+  type CornerStyle,
+} from "./Rectangle.js";
+import type { Style } from "../core/Stylable.js";
 
 /**
  * Configuration for creating a Square.
  *
  * Squares use a single size parameter instead of separate width and height.
+ * Visual styling is handled through the style property using CSS/SVG properties.
  */
 export interface SquareConfig {
   /**
@@ -41,22 +47,19 @@ export interface SquareConfig {
   cornerRadius?: string | number;
 
   /**
-   * Fill color of the square.
-   * @defaultValue "#000000"
+   * Visual styling properties (fill, stroke, opacity, etc.).
+   * Uses standard CSS/SVG property names.
+   *
+   * @example
+   * ```typescript
+   * {
+   *   fill: "#e74c3c",
+   *   stroke: "#c0392b",
+   *   strokeWidth: 2
+   * }
+   * ```
    */
-  fill?: string;
-
-  /**
-   * Stroke color for the square outline.
-   * @defaultValue "none"
-   */
-  stroke?: string;
-
-  /**
-   * Stroke width (supports units like "2px" or numbers).
-   * @defaultValue 1
-   */
-  strokeWidth?: string | number;
+  style?: Partial<Style>;
 }
 
 /**
@@ -140,9 +143,7 @@ export class Square extends Rectangle {
       height: sideLength,
       cornerStyle: config.cornerStyle,
       cornerRadius: config.cornerRadius,
-      fill: config.fill,
-      stroke: config.stroke,
-      strokeWidth: config.strokeWidth,
+      style: config.style,
     };
 
     super(rectangleConfig);
@@ -166,4 +167,3 @@ export class Square extends Rectangle {
     return this._width * Math.sqrt(2);
   }
 }
-

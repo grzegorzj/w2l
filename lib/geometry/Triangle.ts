@@ -11,12 +11,15 @@ import { Shape } from "../core/Shape.js";
 import type { Point } from "../core/Artboard.js";
 import { parseUnit } from "../core/units.js";
 import { Side } from "./Side.js";
+import type { Style } from "../core/Stylable.js";
+import { styleToSVGAttributes } from "../core/Stylable.js";
 
 /**
  * Configuration for creating a Triangle.
  *
  * Supports different triangle types with intuitive parameters
  * that are easy for LLMs to work with.
+ * Visual styling is handled through the style property using CSS/SVG properties.
  */
 export interface TriangleConfig {
   /**
@@ -53,22 +56,19 @@ export interface TriangleConfig {
   orientation?: "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
 
   /**
-   * Fill color of the triangle.
-   * @defaultValue "#000000"
+   * Visual styling properties (fill, stroke, opacity, etc.).
+   * Uses standard CSS/SVG property names.
+   *
+   * @example
+   * ```typescript
+   * {
+   *   fill: "#2ecc71",
+   *   stroke: "#27ae60",
+   *   strokeWidth: 2
+   * }
+   * ```
    */
-  fill?: string;
-
-  /**
-   * Stroke color for the triangle outline.
-   * @defaultValue "none"
-   */
-  stroke?: string;
-
-  /**
-   * Stroke width (supports units like "2px" or numbers).
-   * @defaultValue 1
-   */
-  strokeWidth?: string | number;
+  style?: Partial<Style>;
 }
 
 /**
@@ -290,9 +290,15 @@ export class Triangle extends Shape {
     const y3 = v3.y + this.currentPosition.y;
 
     const points = `${x1},${y1} ${x2},${y2} ${x3},${y3}`;
-    const fill = this.config.fill || "#000000";
-    const stroke = this.config.stroke || "none";
-    const strokeWidth = parseUnit(this.config.strokeWidth || 1);
+
+    // Default style if none provided
+    const defaultStyle: Partial<Style> = {
+      fill: "#000000",
+      stroke: "none",
+      strokeWidth: "1",
+    };
+    const style = { ...defaultStyle, ...this.config.style };
+    const styleAttrs = styleToSVGAttributes(style);
 
     let transform = "";
     if (this.rotation !== 0) {
@@ -302,6 +308,6 @@ export class Triangle extends Shape {
       transform = ` transform="rotate(${this.rotation} ${centerX} ${centerY})"`;
     }
 
-    return `<polygon points="${points}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"${transform} />`;
+    return `<polygon points="${points}" ${styleAttrs}${transform} />`;
   }
 }

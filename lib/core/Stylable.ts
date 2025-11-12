@@ -4,68 +4,34 @@
  * This module provides interfaces and types for elements that can have
  * CSS-like visual styling properties such as fill, stroke, opacity, etc.
  *
+ * Uses the csstype library for comprehensive SVG presentation attribute types.
+ *
  * @module core
  */
 
+import type * as CSS from "csstype";
+
 /**
- * CSS-like style properties for visual elements.
+ * SVG style properties for visual elements.
  *
- * This interface defines common visual styling properties that can be
- * applied to shapes and other renderable elements.
+ * This type uses the csstype library's SVG properties, providing comprehensive
+ * type safety for all SVG presentation attributes. It includes properties like
+ * fill, stroke, opacity, and many more.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/Presentation
+ *
+ * @example
+ * ```typescript
+ * const style: Style = {
+ *   fill: "#3498db",
+ *   stroke: "#2c3e50",
+ *   strokeWidth: 2,
+ *   opacity: 0.8,
+ *   strokeDasharray: "5,5"
+ * };
+ * ```
  */
-export interface Style {
-  /**
-   * Fill color (CSS color value).
-   * @example "#3498db", "rgb(52, 152, 219)", "blue"
-   */
-  fill?: string;
-
-  /**
-   * Stroke (outline) color (CSS color value).
-   * @example "#e74c3c", "rgb(231, 76, 60)", "red"
-   */
-  stroke?: string;
-
-  /**
-   * Stroke width (supports units).
-   * @example "2px", 2, "0.5rem"
-   */
-  strokeWidth?: string | number;
-
-  /**
-   * Opacity (0 to 1).
-   * @example 0.5, 1, 0
-   */
-  opacity?: number;
-
-  /**
-   * Fill opacity (0 to 1).
-   * @example 0.8, 1, 0
-   */
-  fillOpacity?: number;
-
-  /**
-   * Stroke opacity (0 to 1).
-   * @example 0.8, 1, 0
-   */
-  strokeOpacity?: number;
-
-  /**
-   * Stroke dash array for dashed lines.
-   * @example "5,5", "10,5,2,5"
-   */
-  strokeDasharray?: string;
-
-  /**
-   * Stroke line cap style.
-   */
-  strokeLinecap?: "butt" | "round" | "square";
-
-  /**
-   * Stroke line join style.
-   */
-  strokeLinejoin?: "miter" | "round" | "bevel";
-}
+export type Style = CSS.Properties & CSS.SvgProperties;
 
 /**
  * Interface for elements that can be styled.
@@ -112,52 +78,44 @@ export interface Stylable {
 /**
  * Helper function to convert a Style object to SVG attributes string.
  *
+ * Converts camelCase property names to kebab-case SVG attribute names
+ * and formats them as an attribute string suitable for SVG elements.
+ *
  * @param style - The style object to convert
  * @returns SVG attribute string
  *
  * @example
  * ```typescript
- * const style = {
+ * const style: Style = {
  *   fill: "#3498db",
  *   stroke: "#2c3e50",
  *   strokeWidth: 2,
- *   opacity: 0.8
+ *   opacity: 0.8,
+ *   strokeDasharray: "5,5"
  * };
  * const attrs = styleToSVGAttributes(style);
- * // Returns: 'fill="#3498db" stroke="#2c3e50" stroke-width="2" opacity="0.8"'
+ * // Returns: 'fill="#3498db" stroke="#2c3e50" stroke-width="2" opacity="0.8" stroke-dasharray="5,5"'
  * ```
  */
-export function styleToSVGAttributes(style: Style): string {
+export function styleToSVGAttributes(style: Partial<Style>): string {
+  if (!style || Object.keys(style).length === 0) {
+    return "";
+  }
+
   const attrs: string[] = [];
 
-  if (style.fill !== undefined) {
-    attrs.push(`fill="${style.fill}"`);
-  }
-  if (style.stroke !== undefined) {
-    attrs.push(`stroke="${style.stroke}"`);
-  }
-  if (style.strokeWidth !== undefined) {
-    attrs.push(`stroke-width="${style.strokeWidth}"`);
-  }
-  if (style.opacity !== undefined) {
-    attrs.push(`opacity="${style.opacity}"`);
-  }
-  if (style.fillOpacity !== undefined) {
-    attrs.push(`fill-opacity="${style.fillOpacity}"`);
-  }
-  if (style.strokeOpacity !== undefined) {
-    attrs.push(`stroke-opacity="${style.strokeOpacity}"`);
-  }
-  if (style.strokeDasharray !== undefined) {
-    attrs.push(`stroke-dasharray="${style.strokeDasharray}"`);
-  }
-  if (style.strokeLinecap !== undefined) {
-    attrs.push(`stroke-linecap="${style.strokeLinecap}"`);
-  }
-  if (style.strokeLinejoin !== undefined) {
-    attrs.push(`stroke-linejoin="${style.strokeLinejoin}"`);
+  // Helper to convert camelCase to kebab-case
+  const toKebabCase = (str: string): string => {
+    return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+  };
+
+  // Iterate through all style properties
+  for (const [key, value] of Object.entries(style)) {
+    if (value !== undefined && value !== null) {
+      const attrName = toKebabCase(key);
+      attrs.push(`${attrName}="${value}"`);
+    }
   }
 
   return attrs.join(" ");
 }
-

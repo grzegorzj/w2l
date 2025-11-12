@@ -16,9 +16,11 @@ const triangle = new Triangle({
   type: "right",
   a: "300px",  // horizontal leg
   b: "400px",  // vertical leg
-  fill: "rgba(52, 152, 219, 0.2)",
-  stroke: "#3498db",
-  strokeWidth: "4px"
+  style: {
+    fill: "rgba(52, 152, 219, 0.2)",
+    stroke: "#3498db",
+    strokeWidth: "4px"
+  }
 });
 
 // Position at center
@@ -44,9 +46,11 @@ sides.forEach((side, index) => {
   // Mark the center of the side
   const centerMarker = new Circle({
     radius: "10px",
-    fill: color,
-    stroke: "#ecf0f1",
-    strokeWidth: "2px"
+    style: {
+      fill: color,
+      stroke: "#ecf0f1",
+      strokeWidth: "2px"
+    }
   });
   
   centerMarker.position({
@@ -62,9 +66,11 @@ sides.forEach((side, index) => {
   for (let i = 1; i <= 4; i++) {
     const outwardCircle = new Circle({
       radius: `${10 - i * 2}px`,
-      fill: color,
-      stroke: "#ecf0f1",
-      strokeWidth: "1px"
+      style: {
+        fill: color,
+        stroke: "#ecf0f1",
+        strokeWidth: "1px"
+      }
     });
     
     outwardCircle.position({
@@ -86,9 +92,11 @@ sides.forEach((side, index) => {
   for (let i = 1; i <= 2; i++) {
     const inwardCircle = new Circle({
       radius: `${6 - i * 2}px`,
-      fill: "#9b59b6",
-      stroke: "#8e44ad",
-      strokeWidth: "1px"
+      style: {
+        fill: "#9b59b6",
+        stroke: "#8e44ad",
+        strokeWidth: "1px"
+      }
     });
     
     inwardCircle.position({
@@ -109,9 +117,11 @@ sides.forEach((side, index) => {
   // Mark the start and end points of each side
   const startMarker = new Circle({
     radius: "6px",
-    fill: "#ecf0f1",
-    stroke: color,
-    strokeWidth: "2px"
+    style: {
+      fill: "#ecf0f1",
+      stroke: color,
+      strokeWidth: "2px"
+    }
   });
   
   startMarker.position({
@@ -135,9 +145,11 @@ const legendItems = [
 legendItems.forEach((item, i) => {
   const legendCircle = new Circle({
     radius: "8px",
-    fill: item.color,
-    stroke: "#ecf0f1",
-    strokeWidth: "2px"
+    style: {
+      fill: item.color,
+      stroke: "#ecf0f1",
+      strokeWidth: "2px"
+    }
   });
   
   legendCircle.position({

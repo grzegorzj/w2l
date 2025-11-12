@@ -10,9 +10,11 @@ const artboard = new Artboard({
 // Create a large circle with radius
 const circle1 = new Circle({
   radius: "120px",
-  fill: "#3498db",
-  stroke: "#2980b9",
-  strokeWidth: "4px"
+  style: {
+    fill: "#3498db",
+    stroke: "#2980b9",
+    strokeWidth: "4px"
+  }
 });
 
 // Position at center
@@ -30,9 +32,11 @@ for (let i = 0; i < 8; i++) {
   const angle = i * 45;
   const outerCircle = new Circle({
     radius: "40px",
-    fill: colors[i],
-    stroke: "#2c3e50",
-    strokeWidth: "2px"
+    style: {
+      fill: colors[i],
+      stroke: "#2c3e50",
+      strokeWidth: "2px"
+    }
   });
   
   // Get point on the main circle's circumference
@@ -55,9 +59,11 @@ artboard.addElement(circle1);
 // Create a circle with diameter (bottom center)
 const circle2 = new Circle({
   diameter: "100px",
-  fill: "rgba(231, 76, 60, 0.7)",
-  stroke: "#c0392b",
-  strokeWidth: "3px"
+  style: {
+    fill: "rgba(231, 76, 60, 0.7)",
+    stroke: "#c0392b",
+    strokeWidth: "3px"
+  }
 });
 
 circle2.position({
@@ -72,7 +78,9 @@ artboard.addElement(circle2);
 // Title text annotation (using a filled circle as a decorative element)
 const titleDot = new Circle({
   radius: "15px",
-  fill: "#34495e"
+  style: {
+    fill: "#34495e"
+  }
 });
 
 titleDot.position({

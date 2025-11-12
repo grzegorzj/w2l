@@ -15,9 +15,11 @@ const artboard = new Artboard({
 const rect = new Rectangle({
   width: "400px",
   height: "300px",
-  fill: "rgba(52, 152, 219, 0.3)",
-  stroke: "#2c3e50",
-  strokeWidth: "3px"
+  style: {
+    fill: "rgba(52, 152, 219, 0.3)",
+    stroke: "#2c3e50",
+    strokeWidth: "3px"
+  }
 });
 
 // Position at center
@@ -68,9 +70,11 @@ sideTests.forEach((test) => {
   // Mark the center of the side
   const centerMarker = new Circle({
     radius: "8px",
-    fill: test.color,
-    stroke: "#2c3e50",
-    strokeWidth: "2px"
+    style: {
+      fill: test.color,
+      stroke: "#2c3e50",
+      strokeWidth: "2px"
+    }
   });
   
   centerMarker.position({
@@ -86,9 +90,11 @@ sideTests.forEach((test) => {
   for (let i = 1; i <= 5; i++) {
     const normalCircle = new Circle({
       radius: `${10 - i}px`,
-      fill: test.color,
-      stroke: "#2c3e50",
-      strokeWidth: "1px"
+      style: {
+        fill: test.color,
+        stroke: "#2c3e50",
+        strokeWidth: "1px"
+      }
     });
     
     normalCircle.position({
@@ -112,9 +118,11 @@ const legendY = -320;
 sideTests.forEach((test, i) => {
   const legendCircle = new Circle({
     radius: "10px",
-    fill: test.color,
-    stroke: "#2c3e50",
-    strokeWidth: "2px"
+    style: {
+      fill: test.color,
+      stroke: "#2c3e50",
+      strokeWidth: "2px"
+    }
   });
   
   legendCircle.position({

@@ -11,9 +11,11 @@ const artboard = new Artboard({
 const triangle = new Triangle({
   type: "equilateral",
   a: "400px",
-  fill: "rgba(52, 152, 219, 0.3)",
-  stroke: "#3498db",
-  strokeWidth: "4px"
+  style: {
+    fill: "rgba(52, 152, 219, 0.3)",
+    stroke: "#3498db",
+    strokeWidth: "4px"
+  }
 });
 
 // Position at center
@@ -31,9 +33,11 @@ triangle.sides.forEach((side, index) => {
   // Add a circle at the center of each side
   const sideCenter = new Circle({
     radius: "12px",
-    fill: "#e74c3c",
-    stroke: "#c0392b",
-    strokeWidth: "2px"
+    style: {
+      fill: "#e74c3c",
+      stroke: "#c0392b",
+      strokeWidth: "2px"
+    }
   });
   
   sideCenter.position({
@@ -49,9 +53,11 @@ triangle.sides.forEach((side, index) => {
   for (let i = 1; i <= 3; i++) {
     const outwardCircle = new Circle({
       radius: `${8 - i * 2}px`,
-      fill: "#2ecc71",
-      stroke: "#27ae60",
-      strokeWidth: "2px"
+      style: {
+        fill: "#2ecc71",
+        stroke: "#27ae60",
+        strokeWidth: "2px"
+      }
     });
     
     outwardCircle.position({
@@ -73,9 +79,11 @@ triangle.sides.forEach((side, index) => {
   for (let i = 1; i <= 2; i++) {
     const inwardCircle = new Circle({
       radius: `${6 - i * 2}px`,
-      fill: "#9b59b6",
-      stroke: "#8e44ad",
-      strokeWidth: "2px"
+      style: {
+        fill: "#9b59b6",
+        stroke: "#8e44ad",
+        strokeWidth: "2px"
+      }
     });
     
     inwardCircle.position({
@@ -98,9 +106,11 @@ triangle.sides.forEach((side, index) => {
     if (i === 0) continue; // Skip center
     const dirCircle = new Circle({
       radius: "6px",
-      fill: "#f39c12",
-      stroke: "#e67e22",
-      strokeWidth: "2px"
+      style: {
+        fill: "#f39c12",
+        stroke: "#e67e22",
+        strokeWidth: "2px"
+      }
     });
     
     dirCircle.position({
@@ -130,9 +140,11 @@ const legendItems = [
 legendItems.forEach((item, index) => {
   const legendCircle = new Circle({
     radius: "10px",
-    fill: item.color,
-    stroke: "#ecf0f1",
-    strokeWidth: "2px"
+    style: {
+      fill: item.color,
+      stroke: "#ecf0f1",
+      strokeWidth: "2px"
+    }
   });
   
   legendCircle.position({

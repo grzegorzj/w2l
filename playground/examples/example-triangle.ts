@@ -11,9 +11,11 @@ const artboard = new Artboard({
 const triangle1 = new Triangle({
   type: "equilateral",
   a: "200px",
-  fill: "#e74c3c",
-  stroke: "#c0392b",
-  strokeWidth: "3px"
+  style: {
+    fill: "#e74c3c",
+    stroke: "#c0392b",
+    strokeWidth: "3px"
+  }
 });
 
 // Position it on the left
@@ -29,9 +31,11 @@ const triangle2 = new Triangle({
   type: "right",
   a: "180px",
   b: "240px",
-  fill: "#3498db",
-  stroke: "#2980b9",
-  strokeWidth: "3px",
+  style: {
+    fill: "#3498db",
+    stroke: "#2980b9",
+    strokeWidth: "3px"
+  },
   orientation: "topRight"
 });
 
@@ -48,9 +52,11 @@ const triangle3 = new Triangle({
   type: "isosceles",
   a: "200px",
   b: "150px",
-  fill: "#2ecc71",
-  stroke: "#27ae60",
-  strokeWidth: "3px"
+  style: {
+    fill: "#2ecc71",
+    stroke: "#27ae60",
+    strokeWidth: "3px"
+  }
 });
 
 // Position it on the right

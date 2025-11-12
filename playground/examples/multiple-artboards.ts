@@ -11,9 +11,11 @@ const triangle1 = new Triangle({
   type: "right",
   a: "200px",
   b: "150px",
-  fill: "#e74c3c",
-  stroke: "#c0392b",
-  strokeWidth: "2px"
+  style: {
+    fill: "#e74c3c",
+    stroke: "#c0392b",
+    strokeWidth: "2px"
+  }
 });
 
 triangle1.position({
@@ -35,9 +37,11 @@ const artboard2 = new Artboard({
 const triangle2 = new Triangle({
   type: "equilateral",
   a: "180px",
-  fill: "#2ecc71",
-  stroke: "#27ae60",
-  strokeWidth: "2px"
+  style: {
+    fill: "#2ecc71",
+    stroke: "#27ae60",
+    strokeWidth: "2px"
+  }
 });
 
 triangle2.position({
@@ -60,9 +64,11 @@ const triangle3 = new Triangle({
   type: "isosceles",
   a: "200px",
   b: "140px",
-  fill: "#3498db",
-  stroke: "#2980b9",
-  strokeWidth: "2px"
+  style: {
+    fill: "#3498db",
+    stroke: "#2980b9",
+    strokeWidth: "2px"
+  }
 });
 
 triangle3.position({

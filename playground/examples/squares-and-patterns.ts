@@ -17,8 +17,10 @@ for (let row = 0; row < rows; row++) {
   for (let col = 0; col < cols; col++) {
     const square = new Square({
       size: squareSize,
-      fill: colors[(row + col) % 2],
-      stroke: "none"
+      style: {
+        fill: colors[(row + col) % 2],
+        stroke: "none"
+      }
     });
     
     square.position({
@@ -37,9 +39,11 @@ const roundedSquare1 = new Square({
   size: "120px",
   cornerStyle: "rounded",
   cornerRadius: "20px",
-  fill: "#3498db",
-  stroke: "#2980b9",
-  strokeWidth: "3px"
+  style: {
+    fill: "#3498db",
+    stroke: "#2980b9",
+    strokeWidth: "3px"
+  }
 });
 
 roundedSquare1.position({
@@ -56,9 +60,11 @@ const squircleSquare = new Square({
   a: "120px", // Using mathematical notation
   cornerStyle: "squircle",
   cornerRadius: "30px",
-  fill: "#e74c3c",
-  stroke: "#c0392b",
-  strokeWidth: "3px"
+  style: {
+    fill: "#e74c3c",
+    stroke: "#c0392b",
+    strokeWidth: "3px"
+  }
 });
 
 squircleSquare.position({
@@ -74,9 +80,11 @@ artboard.addElement(squircleSquare);
 const sharpSquare = new Square({
   size: "120px",
   cornerStyle: "sharp",
-  fill: "#2ecc71",
-  stroke: "#27ae60",
-  strokeWidth: "3px"
+  style: {
+    fill: "#2ecc71",
+    stroke: "#27ae60",
+    strokeWidth: "3px"
+  }
 });
 
 sharpSquare.position({
@@ -93,9 +101,11 @@ const circularSquare = new Square({
   size: "120px",
   cornerStyle: "rounded",
   cornerRadius: "60px",
-  fill: "#9b59b6",
-  stroke: "#8e44ad",
-  strokeWidth: "3px"
+  style: {
+    fill: "#9b59b6",
+    stroke: "#8e44ad",
+    strokeWidth: "3px"
+  }
 });
 
 circularSquare.position({
@@ -115,9 +125,11 @@ for (let i = 0; i < 5; i++) {
     size: `${size}px`,
     cornerStyle: "squircle",
     cornerRadius: `${size * 0.25}px`,
-    fill: "none",
-    stroke: gradientColors[i],
-    strokeWidth: "4px"
+    style: {
+      fill: "none",
+      stroke: gradientColors[i],
+      strokeWidth: "4px"
+    }
   });
   
   gradSquare.position({
