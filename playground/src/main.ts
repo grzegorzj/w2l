@@ -17,7 +17,7 @@ const DEFAULT_CODE = `import { Artboard, Triangle } from 'w2l';
 
 // Create an artboard
 const artboard = new Artboard({
-  size: { width: 800, height: 600 },
+  size: { width: "800px", height: "600px" },
   padding: "20px",
   backgroundColor: "white"
 });
@@ -25,19 +25,19 @@ const artboard = new Artboard({
 // Create a right triangle (3-4-5)
 const triangle = new Triangle({
   type: "right",
-  a: 300,
-  b: 400,
+  a: "300px",
+  b: "400px",
   fill: "#3498db",
   stroke: "#2c3e50",
-  strokeWidth: 2
+  strokeWidth: "2px"
 });
 
 // Position the triangle at the center
 triangle.position({
   relativeFrom: triangle.center,
   relativeTo: artboard.center,
-  x: 0,
-  y: 0
+  x: "0px",
+  y: "0px"
 });
 
 // Add triangle to artboard
@@ -84,13 +84,13 @@ function setupEditor() {
     `
 declare module 'w2l' {
   export interface Point {
-    x: number;
-    y: number;
+    x: string | number;
+    y: string | number;
   }
 
   export interface Size {
-    width: number | "auto";
-    height: number | "auto";
+    width: string | number | "auto";
+    height: string | number | "auto";
   }
 
   export interface ArtboardConfig {
@@ -102,8 +102,8 @@ declare module 'w2l' {
   export interface PositionReference {
     relativeFrom: Point;
     relativeTo: Point;
-    x: number;
-    y: number;
+    x: string | number;
+    y: string | number;
   }
 
   export interface RotateConfig {
@@ -113,18 +113,18 @@ declare module 'w2l' {
 
   export interface TranslateConfig {
     along: Point;
-    distance: number;
+    distance: string | number;
   }
 
   export interface TriangleConfig {
     type: "right" | "equilateral" | "isosceles" | "scalene";
-    a: number;
-    b?: number;
-    c?: number;
+    a: string | number;
+    b?: string | number;
+    c?: string | number;
     orientation?: "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
     fill?: string;
     stroke?: string;
-    strokeWidth?: number;
+    strokeWidth?: string | number;
   }
 
   export interface TriangleSide {
@@ -157,6 +157,10 @@ declare module 'w2l' {
     get sides(): [TriangleSide, TriangleSide, TriangleSide];
     render(): string;
   }
+  
+  export function parseUnit(value: string | number, baseValue?: number): number;
+  export function isValidUnit(value: string | number): boolean;
+  export function formatUnit(pixels: number, unit?: string): string;
 }
     `,
     'file:///node_modules/@types/w2l/index.d.ts'
@@ -320,6 +324,10 @@ function setupResizer() {
 
 // Setup event listeners
 function setupEventListeners() {
+  document.getElementById('load-file-btn')!.addEventListener('click', () => {
+    document.getElementById('file-input')!.click();
+  });
+  document.getElementById('file-input')!.addEventListener('change', handleFileLoad);
   document.getElementById('run-btn')!.addEventListener('click', runCode);
   document.getElementById('save-svg-btn')!.addEventListener('click', saveSVG);
   document.getElementById('save-code-btn')!.addEventListener('click', saveCode);
@@ -356,29 +364,133 @@ async function runCode() {
       .trim();
     
     // If the code doesn't end with a return statement, add one
-    // Check if the last statement is artboard.render()
+    // First, check if there are any explicit render() calls in the code (excluding comments)
     const lines = transformedCode.split('\n');
+    const activeRenderCalls: { line: string; artboardName: string; lineIndex: number }[] = [];
+    
+    lines.forEach((line, index) => {
+      const trimmedLine = line.trim();
+      // Skip commented lines
+      if (trimmedLine.startsWith('//') || trimmedLine.startsWith('/*') || trimmedLine.startsWith('*')) {
+        return;
+      }
+      
+      // Check for render() calls not in comments
+      const renderMatch = line.match(/(\w+)\.render\(\)/);
+      if (renderMatch) {
+        // Make sure it's not in a comment at the end of the line
+        const commentIndex = line.indexOf('//');
+        const renderIndex = line.indexOf(renderMatch[0]);
+        if (commentIndex === -1 || renderIndex < commentIndex) {
+          activeRenderCalls.push({
+            line: line.trim(),
+            artboardName: renderMatch[1],
+            lineIndex: index
+          });
+        }
+      }
+    });
+    
     const lastLine = lines[lines.length - 1].trim();
     
-    if (!lastLine.startsWith('return ') && lastLine.includes('artboard.render()')) {
-      transformedCode = transformedCode.replace(/artboard\.render\(\);?\s*$/, 'return artboard.render();');
-    } else if (!lastLine.startsWith('return ') && !lastLine.includes('return')) {
-      // Add a return statement for the last expression
-      transformedCode += '\n\n// Auto-added return\nreturn artboard.render();';
+    if (!lastLine.startsWith('return ') && !lastLine.includes('return')) {
+      // Check if there are explicit render() calls
+      if (activeRenderCalls.length > 0) {
+        console.log('[Playground] Found explicit render calls:', activeRenderCalls.map(r => r.artboardName));
+        
+        if (activeRenderCalls.length === 1) {
+          // Single render call - convert it to return
+          console.log('[Playground] Converting single render() to return');
+          const renderCall = activeRenderCalls[0];
+          const renderPattern = new RegExp(`${renderCall.artboardName}\\.render\\(\\);?\\s*$`);
+          transformedCode = transformedCode.replace(renderPattern, `return ${renderCall.artboardName}.render();`);
+        } else {
+          // Multiple render calls - remove them and return array at the end
+          console.log('[Playground] Converting multiple render() calls to return array');
+          
+          // Remove all the render() calls from their original locations
+          activeRenderCalls.forEach(renderCall => {
+            const renderPattern = new RegExp(`^\\s*${renderCall.artboardName}\\.render\\(\\);?\\s*$`, 'gm');
+            transformedCode = transformedCode.replace(renderPattern, '');
+          });
+          
+          // Add return array at the end
+          const returnArray = activeRenderCalls.map(r => `${r.artboardName}.render()`).join(', ');
+          transformedCode += `\n\n// Auto-added return for explicit renders\nreturn [${returnArray}];`;
+        }
+      } else {
+        // No explicit render calls - detect artboards and auto-render
+        const artboardMatches = transformedCode.match(/const\s+(\w+)\s*=\s*new\s+Artboard/g);
+        const artboardNames = artboardMatches 
+          ? artboardMatches.map(m => m.match(/const\s+(\w+)/)?.[1]).filter(Boolean)
+          : [];
+        
+        console.log('[Playground] No explicit renders. Detected artboards:', artboardNames);
+        
+        if (artboardNames.length > 1) {
+          // Multiple artboards detected - return array
+          const returnArray = artboardNames.map(name => `${name}.render()`).join(', ');
+          console.log('[Playground] Adding return for all detected artboards:', artboardNames);
+          transformedCode += `\n\n// Auto-added return for multiple artboards\nreturn [${returnArray}];`;
+        } else if (artboardNames.length === 1) {
+          // Single artboard detected - return it
+          const artboardName = artboardNames[0];
+          console.log('[Playground] Adding return for single artboard:', artboardName);
+          transformedCode += `\n\n// Auto-added return\nreturn ${artboardName}.render();`;
+        } else {
+          // Last resort: assume 'artboard' exists
+          console.log('[Playground] Using last resort: assuming artboard exists');
+          transformedCode += '\n\n// Auto-added return\nreturn artboard.render();';
+        }
+      }
+    } else if (!lastLine.startsWith('return ') && lastLine.includes('.render()')) {
+      // Single line with render() but no return keyword
+      console.log('[Playground] Converting render() to return');
+      transformedCode = transformedCode.replace(/([^;]+\.render\(\));?\s*$/, 'return $1;');
     }
+    
+    console.log('[Playground] Transformed code (last 200 chars):', transformedCode.slice(-200));
     
     // Wrap in function and execute
     const func = new Function(...Object.keys(sandbox), transformedCode);
     const result = func(...Object.values(sandbox));
     
-    // If result is a string (SVG), display it
+    // Check if result is a single SVG string or an array of SVG strings
+    let svgsToRender: string[] = [];
+    
     if (typeof result === 'string' && result.includes('<svg')) {
-      currentSVG = result;
-      svgContent.innerHTML = result;
+      // Single SVG
+      svgsToRender = [result];
+    } else if (Array.isArray(result)) {
+      // Array of SVGs (multiple artboards)
+      svgsToRender = result.filter((item: any) => typeof item === 'string' && item.includes('<svg'));
+    }
+    
+    if (svgsToRender.length > 0) {
+      // Render all SVGs
+      currentSVG = svgsToRender.join('\n');
+      
+      if (svgsToRender.length === 1) {
+        // Single artboard - render with shadow
+        svgContent.innerHTML = `<div class="artboard-item">${svgsToRender[0]}</div>`;
+      } else {
+        // Multiple artboards - render each in separate containers
+        const artboardsHTML = svgsToRender
+          .map((svg, index) => `
+            <div class="artboard-item">
+              <div class="artboard-label">Artboard ${index + 1}</div>
+              ${svg}
+            </div>
+          `)
+          .join('');
+        svgContent.innerHTML = `<div class="artboards-container">${artboardsHTML}</div>`;
+      }
+      
       saveSvgBtn.disabled = false;
-      showSuccess('Code executed successfully!');
+      showSuccess(`Code executed successfully! ${svgsToRender.length > 1 ? `Rendered ${svgsToRender.length} artboards.` : ''}`);
     } else {
-      showError('Code did not return an SVG string. Make sure to return artboard.render()');
+      showError('Code did not return an SVG string or array of SVGs. Make sure to return artboard.render() or an array of renders.');
+      svgContent.innerHTML = '<div class="empty-state">No valid SVG output. Check console for details.</div>';
       saveSvgBtn.disabled = true;
     }
   } catch (error: any) {
@@ -463,6 +575,47 @@ function loadSavedCode() {
   if (savedCode) {
     editor.setValue(savedCode);
   }
+}
+
+// Handle file loading
+function handleFileLoad(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  
+  if (!file) {
+    return;
+  }
+  
+  // Check file extension
+  const fileName = file.name.toLowerCase();
+  const validExtensions = ['.ts', '.js', '.tsx', '.jsx'];
+  const isValid = validExtensions.some(ext => fileName.endsWith(ext));
+  
+  if (!isValid) {
+    showError('Please select a valid TypeScript or JavaScript file (.ts, .js, .tsx, .jsx)');
+    return;
+  }
+  
+  // Read the file
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
+    const content = e.target?.result as string;
+    if (content) {
+      editor.setValue(content);
+      showSuccess(`Loaded file: ${file.name}`);
+      // Don't save to localStorage automatically, let user run it first
+    }
+  };
+  
+  reader.onerror = () => {
+    showError(`Failed to read file: ${file.name}`);
+  };
+  
+  reader.readAsText(file);
+  
+  // Reset the input so the same file can be loaded again if needed
+  input.value = '';
 }
 
 // Show error message

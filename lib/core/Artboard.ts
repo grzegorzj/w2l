@@ -7,37 +7,42 @@
  * @module core
  */
 
+import { parseUnit } from "./units.js";
+
 /**
  * Represents a 2D point in space with x and y coordinates.
  * Used throughout the library for positioning and layout calculations.
  *
  * @example
  * ```typescript
- * const center: Point = { x: 100, y: 100 };
+ * const center: Point = { x: "100px", y: "100px" };
+ * const centerNumeric: Point = { x: 100, y: 100 }; // Also supported
  * ```
  */
 export interface Point {
-  /** X coordinate in pixels */
-  x: number;
-  /** Y coordinate in pixels */
-  y: number;
+  /** X coordinate (supports units like "100px", "2rem", or numbers) */
+  x: string | number;
+  /** Y coordinate (supports units like "100px", "2rem", or numbers) */
+  y: string | number;
 }
 
 /**
  * Size specification for artboard dimensions.
- * Can be specified in pixels (number) or as "auto" for automatic sizing.
+ * Supports CSS-style units (px, rem, em, %) or "auto" for automatic sizing.
  *
  * @example
  * ```typescript
- * const fixedSize: Size = { width: 800, height: 600 };
+ * const fixedSize: Size = { width: "800px", height: "600px" };
+ * const remSize: Size = { width: "50rem", height: "37.5rem" };
  * const autoSize: Size = { width: "auto", height: "auto" };
+ * const numericSize: Size = { width: 800, height: 600 }; // Also supported
  * ```
  */
 export interface Size {
-  /** Width in pixels or "auto" for content-based sizing */
-  width: number | "auto";
-  /** Height in pixels or "auto" for content-based sizing */
-  height: number | "auto";
+  /** Width with units (e.g., "800px", "50rem") or "auto" for content-based sizing */
+  width: string | number | "auto";
+  /** Height with units (e.g., "600px", "37.5rem") or "auto" for content-based sizing */
+  height: string | number | "auto";
 }
 
 /**
@@ -46,7 +51,7 @@ export interface Size {
  * @example
  * ```typescript
  * const config: ArtboardConfig = {
- *   size: { width: 800, height: 600 },
+ *   size: { width: "800px", height: "600px" },
  *   padding: "20px",
  *   backgroundColor: "#ffffff"
  * };
@@ -56,6 +61,7 @@ export interface ArtboardConfig {
   /**
    * Size of the artboard. Can be explicit dimensions or "auto" for automatic sizing.
    * When set to "auto", the artboard will expand to fit all contained elements.
+   * Supports CSS-style units (px, rem, em) or plain numbers (treated as pixels).
    */
   size: Size | "auto";
 
@@ -138,19 +144,21 @@ export class Artboard {
    *
    * @example
    * ```typescript
-   * const artboard = new Artboard({ size: { width: 800, height: 600 } });
-   * const center = artboard.center; // { x: 400, y: 300 }
+   * const artboard = new Artboard({ size: { width: "800px", height: "600px" } });
+   * const center = artboard.center; // { x: "400px", y: "300px" }
    * ```
    */
   get center(): Point {
     // Simplified implementation for demonstration
     if (this.config.size === "auto") {
-      return { x: 0, y: 0 }; // Would calculate from elements
+      return { x: "0px", y: "0px" }; // Would calculate from elements
     }
     const size = this.config.size as Size;
+    const widthPx = size.width === "auto" ? 0 : parseUnit(size.width);
+    const heightPx = size.height === "auto" ? 0 : parseUnit(size.height);
     return {
-      x: typeof size.width === "number" ? size.width / 2 : 0,
-      y: typeof size.height === "number" ? size.height / 2 : 0,
+      x: `${widthPx / 2}px`,
+      y: `${heightPx / 2}px`,
     };
   }
 
@@ -183,15 +191,15 @@ export class Artboard {
    *
    * @example
    * ```typescript
-   * const artboard = new Artboard({ size: { width: 800, height: 600 } });
+   * const artboard = new Artboard({ size: { width: "800px", height: "600px" } });
    * const svg = artboard.render();
    * console.log(svg); // <svg width="800" height="600">...</svg>
    * ```
    */
   render(): string {
     const size = this.size;
-    const width = size.width === "auto" ? 800 : size.width;
-    const height = size.height === "auto" ? 600 : size.height;
+    const widthPx = size.width === "auto" ? 800 : parseUnit(size.width);
+    const heightPx = size.height === "auto" ? 600 : parseUnit(size.height);
     const bgColor = this.config.backgroundColor || "transparent";
 
     // Render all elements
@@ -199,8 +207,8 @@ export class Artboard {
       .map((element: any) => element.render())
       .join("\n    ");
 
-    return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-  ${bgColor !== "transparent" ? `<rect width="${width}" height="${height}" fill="${bgColor}"/>` : ""}
+    return `<svg width="${widthPx}" height="${heightPx}" xmlns="http://www.w3.org/2000/svg">
+  ${bgColor !== "transparent" ? `<rect width="${widthPx}" height="${heightPx}" fill="${bgColor}"/>` : ""}
   <g>
     ${elementsHTML}
   </g>

@@ -9,6 +9,7 @@
 
 import { Shape } from "../core/Shape.js";
 import type { Point } from "../core/Artboard.js";
+import { parseUnit } from "../core/units.js";
 
 /**
  * Configuration for creating a Triangle.
@@ -27,21 +28,22 @@ export interface TriangleConfig {
   type: "right" | "equilateral" | "isosceles" | "scalene";
 
   /**
-   * Length of side 'a' in pixels.
+   * Length of side 'a' (supports units like "300px", "2rem", or numbers).
    * For right triangles, this is typically one of the legs.
    */
-  a: number;
+  a: string | number;
 
   /**
-   * Length of side 'b' in pixels.
+   * Length of side 'b' (supports units like "400px", "2rem", or numbers).
    * For right triangles, this is typically the other leg.
    */
-  b?: number;
+  b?: string | number;
 
   /**
-   * Length of side 'c' in pixels (for scalene triangles).
+   * Length of side 'c' (supports units like "500px", "2rem", or numbers).
+   * Used for scalene triangles.
    */
-  c?: number;
+  c?: string | number;
 
   /**
    * Orientation of the triangle.
@@ -62,10 +64,10 @@ export interface TriangleConfig {
   stroke?: string;
 
   /**
-   * Stroke width in pixels.
+   * Stroke width (supports units like "2px" or numbers).
    * @defaultValue 1
    */
-  strokeWidth?: number;
+  strokeWidth?: string | number;
 }
 
 /**
@@ -139,7 +141,11 @@ export interface TriangleSide {
  */
 export class Triangle extends Shape {
   private config: TriangleConfig;
-  private vertices: [Point, Point, Point];
+  private vertices: [
+    { x: number; y: number },
+    { x: number; y: number },
+    { x: number; y: number },
+  ];
 
   /**
    * Creates a new Triangle instance.
@@ -160,24 +166,30 @@ export class Triangle extends Shape {
    * @returns The three vertices of the triangle
    * @internal
    */
-  private calculateVertices(): [Point, Point, Point] {
+  private calculateVertices(): [
+    { x: number; y: number },
+    { x: number; y: number },
+    { x: number; y: number },
+  ] {
     // Simplified implementation - would need full geometric calculations
     const { type, a, b = 0 } = this.config;
+    const aPx = parseUnit(a);
+    const bPx = parseUnit(b);
 
     if (type === "right") {
-      const c = Math.sqrt(a * a + b * b);
+      const c = Math.sqrt(aPx * aPx + bPx * bPx);
       return [
         { x: 0, y: 0 },
-        { x: a, y: 0 },
-        { x: 0, y: b },
+        { x: aPx, y: 0 },
+        { x: 0, y: bPx },
       ];
     }
 
     // Placeholder for other triangle types
     return [
       { x: 0, y: 0 },
-      { x: a, y: 0 },
-      { x: a / 2, y: a },
+      { x: aPx, y: 0 },
+      { x: aPx / 2, y: aPx },
     ];
   }
 
@@ -191,9 +203,10 @@ export class Triangle extends Shape {
    */
   get center(): Point {
     const [v1, v2, v3] = this.vertices;
+
     return {
-      x: (v1.x + v2.x + v3.x) / 3 + this.currentPosition.x,
-      y: (v1.y + v2.y + v3.y) / 3 + this.currentPosition.y,
+      x: `${(v1.x + v2.x + v3.x) / 3 + this.currentPosition.x}px`,
+      y: `${(v1.y + v2.y + v3.y) / 3 + this.currentPosition.y}px`,
     };
   }
 
@@ -224,7 +237,10 @@ export class Triangle extends Shape {
   get sides(): [TriangleSide, TriangleSide, TriangleSide] {
     const [v1, v2, v3] = this.vertices;
 
-    const createSide = (start: Point, end: Point): TriangleSide => {
+    const createSide = (
+      start: { x: number; y: number },
+      end: { x: number; y: number }
+    ): TriangleSide => {
       const dx = end.x - start.x;
       const dy = end.y - start.y;
       const length = Math.sqrt(dx * dx + dy * dy);
@@ -232,20 +248,20 @@ export class Triangle extends Shape {
       return {
         length,
         start: {
-          x: start.x + this.currentPosition.x,
-          y: start.y + this.currentPosition.y,
+          x: `${start.x + this.currentPosition.x}px`,
+          y: `${start.y + this.currentPosition.y}px`,
         },
         end: {
-          x: end.x + this.currentPosition.x,
-          y: end.y + this.currentPosition.y,
+          x: `${end.x + this.currentPosition.x}px`,
+          y: `${end.y + this.currentPosition.y}px`,
         },
         center: {
-          x: (start.x + end.x) / 2 + this.currentPosition.x,
-          y: (start.y + end.y) / 2 + this.currentPosition.y,
+          x: `${(start.x + end.x) / 2 + this.currentPosition.x}px`,
+          y: `${(start.y + end.y) / 2 + this.currentPosition.y}px`,
         },
         outwardNormal: {
-          x: -dy / length,
-          y: dx / length,
+          x: `${-dy / length}px`,
+          y: `${dx / length}px`,
         },
       };
     };
@@ -270,12 +286,14 @@ export class Triangle extends Shape {
     const points = `${x1},${y1} ${x2},${y2} ${x3},${y3}`;
     const fill = this.config.fill || "#000000";
     const stroke = this.config.stroke || "none";
-    const strokeWidth = this.config.strokeWidth || 1;
+    const strokeWidth = parseUnit(this.config.strokeWidth || 1);
 
     let transform = "";
     if (this.rotation !== 0) {
       const center = this.center;
-      transform = ` transform="rotate(${this.rotation} ${center.x} ${center.y})"`;
+      const centerX = parseUnit(center.x);
+      const centerY = parseUnit(center.y);
+      transform = ` transform="rotate(${this.rotation} ${centerX} ${centerY})"`;
     }
 
     return `<polygon points="${points}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"${transform} />`;

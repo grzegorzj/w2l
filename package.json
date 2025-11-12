@@ -18,6 +18,9 @@
     "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
     "dev": "tsc -p tsconfig.build.json --watch",
+    "dev:docs": "typedoc --watch",
+    "dev:playground": "cd playground && npm run dev",
+    "dev:all": "concurrently -n \"lib,docs,playground\" -c \"blue,green,yellow\" \"npm run dev\" \"npm run dev:docs\" \"npm run dev:playground\"",
     "prepare": "npm run build",
     "playground": "cd playground && npm run dev"
   },
@@ -32,8 +35,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "concurrently": "^8.2.0",
     "typedoc": "^0.25.0",
     "typescript": "^5.3.0"
   }
 }
-

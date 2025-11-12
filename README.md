@@ -26,9 +26,14 @@ w2l/
 │   │   ├── Triangle.ts    # Triangle implementation
 │   │   └── index.ts       # Geometry module exports
 │   └── index.ts           # Main library entry point
+├── playground/            # Interactive development environment
+│   ├── examples/         # Example files for testing
+│   ├── src/             # Playground source code
+│   └── index.html       # Playground HTML
 ├── example/               # Example usage
 ├── docs/                  # Generated documentation (from TypeDoc)
-└── dist/                  # Compiled JavaScript output
+├── dist/                  # Compiled JavaScript output
+└── DEV_GUIDE.md          # Development workflow guide
 ```
 
 ## Getting Started
@@ -83,7 +88,7 @@ The canvas where all visual elements are placed. Defines the coordinate system a
 
 ```typescript
 const artboard = new Artboard({
-  size: { width: 800, height: 600 },
+  size: { width: "800px", height: "600px" },
   padding: "20px"
 });
 ```
@@ -95,8 +100,8 @@ Visual elements that can be positioned, rotated, and transformed. All shapes inh
 ```typescript
 const triangle = new Triangle({
   type: "right",
-  a: 300,
-  b: 400
+  a: "300px",
+  b: "400px"
 });
 ```
 
@@ -108,19 +113,62 @@ Elements are positioned relative to other elements or reference points:
 triangle.position({
   relativeFrom: triangle.center,
   relativeTo: artboard.center,
-  x: 0,
-  y: 0
+  x: "0px",
+  y: "0px"
 });
+```
+
+### Units Support
+
+All dimensions support CSS-style units or plain numbers (treated as pixels):
+
+```typescript
+// Using pixel units (recommended)
+size: { width: "800px", height: "600px" }
+
+// Using rem units
+size: { width: "50rem", height: "37.5rem" }
+
+// Using plain numbers (treated as pixels)
+size: { width: 800, height: 600 }
 ```
 
 ## Development
 
-### Watch Mode
+### Interactive Playground
 
-For continuous compilation during development:
+W2L includes an interactive playground for testing and development:
 
 ```bash
+npm run dev:all
+```
+
+This starts all development watchers simultaneously:
+- Library compilation with hot reload
+- Documentation generation
+- Interactive playground at `http://localhost:5173`
+
+The playground features:
+- Monaco editor (VS Code's editor) with TypeScript support
+- Live SVG rendering with zoom and pan
+- File loading for `.ts` and `.js` files
+- Code examples in `playground/examples/`
+
+For more detailed development information, see [DEV_GUIDE.md](./DEV_GUIDE.md).
+
+### Watch Mode (Individual Components)
+
+You can also run watchers individually:
+
+```bash
+# Watch library only
 npm run dev
+
+# Watch documentation only
+npm run dev:docs
+
+# Run playground only
+npm run dev:playground
 ```
 
 ### Type Checking
