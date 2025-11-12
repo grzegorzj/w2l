@@ -13,6 +13,26 @@ import { parseUnit } from "../core/units.js";
 import { Side } from "./Side.js";
 
 /**
+ * Size specification for rectangular dimensions.
+ * Supports CSS-style units (px, rem, em, %) or "auto" for automatic sizing.
+ * Used by rectangles, artboards, containers, and other rectangular elements.
+ *
+ * @example
+ * ```typescript
+ * const fixedSize: RectangleSize = { width: "800px", height: "600px" };
+ * const remSize: RectangleSize = { width: "50rem", height: "37.5rem" };
+ * const autoSize: RectangleSize = { width: "auto", height: "auto" };
+ * const numericSize: RectangleSize = { width: 800, height: 600 }; // Also supported
+ * ```
+ */
+export interface RectangleSize {
+  /** Width with units (e.g., "800px", "50rem") or "auto" for content-based sizing */
+  width: string | number | "auto";
+  /** Height with units (e.g., "600px", "37.5rem") or "auto" for content-based sizing */
+  height: string | number | "auto";
+}
+
+/**
  * Corner style for rectangles.
  * - "sharp": Standard 90-degree corners
  * - "rounded": Circular arc corners
@@ -194,9 +214,58 @@ export class Rectangle extends Shape {
   }
 
   /**
+   * Transforms a point by applying rotation around the rectangle's center.
+   *
+   * @param localX - X coordinate relative to top-left corner (before rotation)
+   * @param localY - Y coordinate relative to top-left corner (before rotation)
+   * @returns The transformed point in world coordinates
+   * @internal
+   */
+  private transformPoint(localX: number, localY: number): Point {
+    const x = this.currentPosition.x;
+    const y = this.currentPosition.y;
+
+    // If no rotation, just return the local position offset by currentPosition
+    if (this.rotation === 0) {
+      return {
+        x: `${x + localX}px`,
+        y: `${y + localY}px`,
+      };
+    }
+
+    // Calculate center of rectangle (rotation pivot point)
+    const centerX = x + this._width / 2;
+    const centerY = y + this._height / 2;
+
+    // Point relative to rectangle's top-left
+    const pointX = x + localX;
+    const pointY = y + localY;
+
+    // Translate point to origin (relative to center)
+    const relX = pointX - centerX;
+    const relY = pointY - centerY;
+
+    // Rotate
+    const angleRad = (this.rotation * Math.PI) / 180;
+    const cos = Math.cos(angleRad);
+    const sin = Math.sin(angleRad);
+    const rotatedX = relX * cos - relY * sin;
+    const rotatedY = relX * sin + relY * cos;
+
+    // Translate back
+    return {
+      x: `${centerX + rotatedX}px`,
+      y: `${centerY + rotatedY}px`,
+    };
+  }
+
+  /**
    * Gets the geometric center of the rectangle.
    *
-   * @returns The center point of the rectangle
+   * @returns The center point of the rectangle (accounting for rotation)
+   *
+   * @remarks
+   * The center is the rotation pivot point and doesn't move with rotation.
    */
   get center(): Point {
     return {
@@ -208,97 +277,77 @@ export class Rectangle extends Shape {
   /**
    * Gets the top-left corner of the rectangle.
    *
-   * @returns The top-left point
+   * @returns The actual transformed position of the top-left corner
+   *
+   * @remarks
+   * This returns the literal position after applying all transformations.
+   * For a rotated rectangle, this is NOT the same as currentPosition.
    */
   get topLeft(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.transformPoint(0, 0);
   }
 
   /**
    * Gets the top-right corner of the rectangle.
    *
-   * @returns The top-right point
+   * @returns The actual transformed position of the top-right corner
    */
   get topRight(): Point {
-    return {
-      x: `${this.currentPosition.x + this._width}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.transformPoint(this._width, 0);
   }
 
   /**
    * Gets the bottom-left corner of the rectangle.
    *
-   * @returns The bottom-left point
+   * @returns The actual transformed position of the bottom-left corner
    */
   get bottomLeft(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y + this._height}px`,
-    };
+    return this.transformPoint(0, this._height);
   }
 
   /**
    * Gets the bottom-right corner of the rectangle.
    *
-   * @returns The bottom-right point
+   * @returns The actual transformed position of the bottom-right corner
    */
   get bottomRight(): Point {
-    return {
-      x: `${this.currentPosition.x + this._width}px`,
-      y: `${this.currentPosition.y + this._height}px`,
-    };
+    return this.transformPoint(this._width, this._height);
   }
 
   /**
    * Gets the center of the top edge.
    *
-   * @returns The top center point
+   * @returns The actual transformed position of the top edge center
    */
   get topCenter(): Point {
-    return {
-      x: `${this.currentPosition.x + this._width / 2}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.transformPoint(this._width / 2, 0);
   }
 
   /**
    * Gets the center of the bottom edge.
    *
-   * @returns The bottom center point
+   * @returns The actual transformed position of the bottom edge center
    */
   get bottomCenter(): Point {
-    return {
-      x: `${this.currentPosition.x + this._width / 2}px`,
-      y: `${this.currentPosition.y + this._height}px`,
-    };
+    return this.transformPoint(this._width / 2, this._height);
   }
 
   /**
    * Gets the center of the left edge.
    *
-   * @returns The left center point
+   * @returns The actual transformed position of the left edge center
    */
   get leftCenter(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y + this._height / 2}px`,
-    };
+    return this.transformPoint(0, this._height / 2);
   }
 
   /**
    * Gets the center of the right edge.
    *
-   * @returns The right center point
+   * @returns The actual transformed position of the right edge center
    */
   get rightCenter(): Point {
-    return {
-      x: `${this.currentPosition.x + this._width}px`,
-      y: `${this.currentPosition.y + this._height / 2}px`,
-    };
+    return this.transformPoint(this._width, this._height / 2);
   }
 
   /**

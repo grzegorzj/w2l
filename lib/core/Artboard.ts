@@ -8,6 +8,7 @@
  */
 
 import { parseUnit } from "./units.js";
+import type { RectangleSize } from "../geometry/Rectangle.js";
 
 /**
  * Represents a 2D point in space with x and y coordinates.
@@ -24,25 +25,6 @@ export interface Point {
   x: string | number;
   /** Y coordinate (supports units like "100px", "2rem", or numbers) */
   y: string | number;
-}
-
-/**
- * Size specification for artboard dimensions.
- * Supports CSS-style units (px, rem, em, %) or "auto" for automatic sizing.
- *
- * @example
- * ```typescript
- * const fixedSize: Size = { width: "800px", height: "600px" };
- * const remSize: Size = { width: "50rem", height: "37.5rem" };
- * const autoSize: Size = { width: "auto", height: "auto" };
- * const numericSize: Size = { width: 800, height: 600 }; // Also supported
- * ```
- */
-export interface Size {
-  /** Width with units (e.g., "800px", "50rem") or "auto" for content-based sizing */
-  width: string | number | "auto";
-  /** Height with units (e.g., "600px", "37.5rem") or "auto" for content-based sizing */
-  height: string | number | "auto";
 }
 
 /**
@@ -63,7 +45,7 @@ export interface ArtboardConfig {
    * When set to "auto", the artboard will expand to fit all contained elements.
    * Supports CSS-style units (px, rem, em) or plain numbers (treated as pixels).
    */
-  size: Size | "auto";
+  size: RectangleSize | "auto";
 
   /**
    * Padding around the artboard content.
@@ -149,13 +131,18 @@ export class Artboard {
    * ```
    */
   get center(): Point {
-    // Simplified implementation for demonstration
-    if (this.config.size === "auto") {
+    const size = this.config.size;
+    if (size === "auto") {
       return { x: "0px", y: "0px" }; // Would calculate from elements
     }
-    const size = this.config.size as Size;
-    const widthPx = size.width === "auto" ? 0 : parseUnit(size.width);
-    const heightPx = size.height === "auto" ? 0 : parseUnit(size.height);
+    const widthPx =
+      (size as RectangleSize).width === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).width);
+    const heightPx =
+      (size as RectangleSize).height === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).height);
     return {
       x: `${widthPx / 2}px`,
       y: `${heightPx / 2}px`,
@@ -167,11 +154,151 @@ export class Artboard {
    *
    * @returns The dimensions of the artboard
    */
-  get size(): Size {
+  get size(): RectangleSize {
     if (this.config.size === "auto") {
       return { width: "auto", height: "auto" };
     }
     return this.config.size;
+  }
+
+  /**
+   * Gets the top-left corner of the artboard.
+   *
+   * @returns The top-left point (always at origin for artboards)
+   */
+  get topLeft(): Point {
+    return { x: "0px", y: "0px" };
+  }
+
+  /**
+   * Gets the top-right corner of the artboard.
+   *
+   * @returns The top-right point
+   */
+  get topRight(): Point {
+    const size = this.config.size;
+    if (size === "auto") {
+      return { x: "0px", y: "0px" };
+    }
+    const widthPx =
+      (size as RectangleSize).width === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).width);
+    return { x: `${widthPx}px`, y: "0px" };
+  }
+
+  /**
+   * Gets the bottom-left corner of the artboard.
+   *
+   * @returns The bottom-left point
+   */
+  get bottomLeft(): Point {
+    const size = this.config.size;
+    if (size === "auto") {
+      return { x: "0px", y: "0px" };
+    }
+    const heightPx =
+      (size as RectangleSize).height === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).height);
+    return { x: "0px", y: `${heightPx}px` };
+  }
+
+  /**
+   * Gets the bottom-right corner of the artboard.
+   *
+   * @returns The bottom-right point
+   */
+  get bottomRight(): Point {
+    const size = this.config.size;
+    if (size === "auto") {
+      return { x: "0px", y: "0px" };
+    }
+    const widthPx =
+      (size as RectangleSize).width === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).width);
+    const heightPx =
+      (size as RectangleSize).height === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).height);
+    return { x: `${widthPx}px`, y: `${heightPx}px` };
+  }
+
+  /**
+   * Gets the center of the top edge.
+   *
+   * @returns The top center point
+   */
+  get topCenter(): Point {
+    const size = this.config.size;
+    if (size === "auto") {
+      return { x: "0px", y: "0px" };
+    }
+    const widthPx =
+      (size as RectangleSize).width === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).width);
+    return { x: `${widthPx / 2}px`, y: "0px" };
+  }
+
+  /**
+   * Gets the center of the bottom edge.
+   *
+   * @returns The bottom center point
+   */
+  get bottomCenter(): Point {
+    const size = this.config.size;
+    if (size === "auto") {
+      return { x: "0px", y: "0px" };
+    }
+    const widthPx =
+      (size as RectangleSize).width === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).width);
+    const heightPx =
+      (size as RectangleSize).height === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).height);
+    return { x: `${widthPx / 2}px`, y: `${heightPx}px` };
+  }
+
+  /**
+   * Gets the center of the left edge.
+   *
+   * @returns The left center point
+   */
+  get leftCenter(): Point {
+    const size = this.config.size;
+    if (size === "auto") {
+      return { x: "0px", y: "0px" };
+    }
+    const heightPx =
+      (size as RectangleSize).height === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).height);
+    return { x: "0px", y: `${heightPx / 2}px` };
+  }
+
+  /**
+   * Gets the center of the right edge.
+   *
+   * @returns The right center point
+   */
+  get rightCenter(): Point {
+    const size = this.config.size;
+    if (size === "auto") {
+      return { x: "0px", y: "0px" };
+    }
+    const widthPx =
+      (size as RectangleSize).width === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).width);
+    const heightPx =
+      (size as RectangleSize).height === "auto"
+        ? 0
+        : parseUnit((size as RectangleSize).height);
+    return { x: `${widthPx}px`, y: `${heightPx / 2}px` };
   }
 
   /**

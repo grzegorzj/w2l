@@ -22,6 +22,7 @@ export type { CircleConfig } from "./Circle.js";
 
 export { Rectangle } from "./Rectangle.js";
 export type {
+  RectangleSize,
   RectangleConfig,
   RectangleSide,
   CornerStyle,
