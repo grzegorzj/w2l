@@ -7,3 +7,6 @@ docs/
 
 # Playground saved files
 playground/saved/
+
+# Generated playground types
+playground/src/w2l-types.ts

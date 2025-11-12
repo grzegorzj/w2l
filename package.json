@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/generate-playground-types.js",
     "build:docs": "typedoc",
     "dev": "tsc -p tsconfig.build.json --watch",
     "dev:docs": "typedoc --watch",

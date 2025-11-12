@@ -1,6 +1,7 @@
 import * as monaco from "monaco-editor";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
+import { W2L_TYPES } from "./w2l-types";
 
 // Configure Monaco workers
 self.MonacoEnvironment = {
@@ -85,38 +86,13 @@ function setupEditor() {
     },
   });
 
-  // Load all W2L type definitions from the parent dist/ folder
-  // Use Vite's glob import to automatically discover all .d.ts files
-  const typeModules = import.meta.glob("../../dist/**/*.d.ts", {
-    query: "?raw",
-    import: "default",
-    eager: true,
-  });
-
-  // Load each type definition into Monaco
-  Object.entries(typeModules).forEach(([path, content]) => {
-    // Extract relative path from dist/ onwards (e.g., "core/Artboard.d.ts")
-    const relativePath = path.replace(/^.*\/dist\//, "");
-
-    // Remove sourcemap comments
-    let cleaned = (content as string)
-      .replace(/\/\/# sourceMappingURL=.*$/m, "")
-      .trim();
-
-    // For the main index.d.ts, wrap it in declare module 'w2l' to make Monaco recognize it
-    if (relativePath === "index.d.ts") {
-      cleaned = `declare module 'w2l' {\n${cleaned}\n}`;
-    }
-
-    monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      cleaned,
-      `file:///node_modules/@types/w2l/${relativePath}`
-    );
-  });
-
-  console.log(
-    `[Playground] ✅ Loaded ${Object.keys(typeModules).length} w2l type definition files from dist/`
+  // Load W2L type definitions (generated at build time)
+  monaco.languages.typescript.typescriptDefaults.addExtraLib(
+    W2L_TYPES,
+    "file:///node_modules/@types/w2l/index.d.ts"
   );
+
+  console.log("[Playground] ✅ Loaded w2l type definitions");
 
   // Create the editor
   editor = monaco.editor.create(container, {
