@@ -7,6 +7,8 @@
  * - {@link Circle}: Circular shapes with radius or diameter
  * - {@link Rectangle}: Rectangular shapes with rounded corners and squircle support
  * - {@link Square}: Square shapes (specialized rectangles)
+ * - {@link RegularPolygon}: Regular polygons (pentagon, hexagon, octagon, etc.)
+ * - {@link Text}: Text elements with word wrapping and typography support
  *
  * @module geometry
  */
@@ -30,3 +32,9 @@ export type {
 
 export { Square } from "./Square.js";
 export type { SquareConfig } from "./Square.js";
+
+export { RegularPolygon } from "./RegularPolygon.js";
+export type { RegularPolygonConfig, PolygonSide } from "./RegularPolygon.js";
+
+export { Text } from "./Text.js";
+export type { TextConfig, TextAlign, TextVerticalAlign } from "./Text.js";

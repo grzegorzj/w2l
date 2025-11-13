@@ -95,7 +95,15 @@ export type {
  * Geometric shapes
  * @category API Reference
  */
-export { Side, Triangle, Circle, Rectangle, Square } from "./geometry/index.js";
+export {
+  Side,
+  Triangle,
+  Circle,
+  Rectangle,
+  Square,
+  RegularPolygon,
+  Text,
+} from "./geometry/index.js";
 
 /**
  * Geometry types and interfaces
@@ -111,6 +119,11 @@ export type {
   RectangleSide,
   CornerStyle,
   SquareConfig,
+  RegularPolygonConfig,
+  PolygonSide,
+  TextConfig,
+  TextAlign,
+  TextVerticalAlign,
 } from "./geometry/index.js";
 
 /**

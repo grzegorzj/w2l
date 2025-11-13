@@ -54,7 +54,7 @@ sides.forEach((side, index) => {
   });
 
   // Rotate to align with the side - the side.angle is used automatically
-  square.rotate({ relativeTo: side });
+  square.rotate({ deg: side.angle });
 
   // Move it outward along the normal
   square.translate({

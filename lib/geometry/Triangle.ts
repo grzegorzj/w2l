@@ -187,26 +187,103 @@ export class Triangle extends Shape {
     { x: number; y: number },
     { x: number; y: number },
   ] {
-    // Simplified implementation - would need full geometric calculations
-    const { type, a, b = 0 } = this.config;
+    const { type, a, b, c, orientation = "bottomLeft" } = this.config;
     const aPx = parseUnit(a);
-    const bPx = parseUnit(b);
+    const bPx = b !== undefined ? parseUnit(b) : aPx;
+    const cPx = c !== undefined ? parseUnit(c) : 0;
 
     if (type === "right") {
-      const c = Math.sqrt(aPx * aPx + bPx * bPx);
-      // Counter-clockwise order: origin → down → right
+      // Right triangle with Pythagorean relationship
+      const hypotenuse = Math.sqrt(aPx * aPx + bPx * bPx);
+
+      // Default orientation: right angle at bottom-left
+      // Counter-clockwise order: bottom-left → bottom-right → top-left
+      switch (orientation) {
+        case "bottomLeft":
+          return [
+            { x: 0, y: bPx }, // v0: bottom-left (right angle)
+            { x: aPx, y: bPx }, // v1: bottom-right
+            { x: 0, y: 0 }, // v2: top-left
+          ];
+        case "bottomRight":
+          return [
+            { x: aPx, y: bPx }, // v0: bottom-right (right angle)
+            { x: aPx, y: 0 }, // v1: top-right
+            { x: 0, y: bPx }, // v2: bottom-left
+          ];
+        case "topLeft":
+          return [
+            { x: 0, y: 0 }, // v0: top-left (right angle)
+            { x: 0, y: bPx }, // v1: bottom-left
+            { x: aPx, y: 0 }, // v2: top-right
+          ];
+        case "topRight":
+          return [
+            { x: aPx, y: 0 }, // v0: top-right (right angle)
+            { x: 0, y: 0 }, // v1: top-left
+            { x: aPx, y: bPx }, // v2: bottom-right
+          ];
+        default:
+          return [
+            { x: 0, y: bPx },
+            { x: aPx, y: bPx },
+            { x: 0, y: 0 },
+          ];
+      }
+    }
+
+    if (type === "equilateral") {
+      // Equilateral triangle with all sides equal to 'a'
+      const height = (aPx * Math.sqrt(3)) / 2;
+      // Counter-clockwise: bottom-left → bottom-right → top-center
       return [
-        { x: 0, y: 0 }, // v0: top-left (right angle)
-        { x: 0, y: bPx }, // v1: bottom-left
-        { x: aPx, y: 0 }, // v2: top-right
+        { x: 0, y: height }, // v0: bottom-left
+        { x: aPx, y: height }, // v1: bottom-right
+        { x: aPx / 2, y: 0 }, // v2: top-center
       ];
     }
 
-    // Placeholder for other triangle types (also counter-clockwise)
+    if (type === "isosceles") {
+      // Isosceles triangle: two sides equal (a and b are the equal sides, or a is base and b is height)
+      // Interpretation: 'a' is the base, 'b' is the height
+      const height = bPx;
+      // Counter-clockwise: bottom-left → bottom-right → top-center
+      return [
+        { x: 0, y: height }, // v0: bottom-left
+        { x: aPx, y: height }, // v1: bottom-right
+        { x: aPx / 2, y: 0 }, // v2: top-center
+      ];
+    }
+
+    if (type === "scalene") {
+      // Scalene triangle: all sides different (a, b, c)
+      // Use the cosine rule to calculate vertex positions
+      // Place first vertex at origin, second along x-axis
+      if (cPx === 0) {
+        throw new Error(
+          "Scalene triangle requires all three sides (a, b, c) to be specified"
+        );
+      }
+
+      // Using the law of cosines to find angle at v0
+      // c² = a² + b² - 2ab·cos(C)
+      const angleA = Math.acos(
+        (bPx * bPx + cPx * cPx - aPx * aPx) / (2 * bPx * cPx)
+      );
+
+      // Counter-clockwise: origin → along x-axis → calculated position
+      return [
+        { x: 0, y: 0 }, // v0: origin
+        { x: cPx, y: 0 }, // v1: along x-axis
+        { x: bPx * Math.cos(angleA), y: bPx * Math.sin(angleA) }, // v2: calculated
+      ];
+    }
+
+    // Fallback (shouldn't reach here)
     return [
       { x: 0, y: 0 },
-      { x: 0, y: aPx },
       { x: aPx, y: 0 },
+      { x: aPx / 2, y: bPx },
     ];
   }
 
@@ -273,6 +350,202 @@ export class Triangle extends Shape {
     };
 
     return [createSide(v1, v2), createSide(v2, v3), createSide(v3, v1)];
+  }
+
+  /**
+   * Gets the lengths of all three sides of the triangle.
+   *
+   * @returns Object containing the lengths of sides a, b, and c in pixels
+   *
+   * @example
+   * Check if a triangle satisfies the Pythagorean theorem
+   * ```typescript
+   * const triangle = new Triangle({ type: "right", a: 3, b: 4 });
+   * const { sideA, sideB, sideC } = triangle.sideLengths;
+   * console.log(sideA * sideA + sideB * sideB === sideC * sideC); // true
+   * ```
+   */
+  get sideLengths(): { sideA: number; sideB: number; sideC: number } {
+    const [side1, side2, side3] = this.sides;
+    return {
+      sideA: side1.length,
+      sideB: side2.length,
+      sideC: side3.length,
+    };
+  }
+
+  /**
+   * Calculates the angle (in degrees) at a specific vertex.
+   *
+   * Uses the law of cosines to calculate angles from side lengths.
+   *
+   * @param vertex - The vertex index (0, 1, or 2)
+   * @returns The angle at the specified vertex in degrees
+   *
+   * @internal
+   */
+  private calculateAngleAtVertex(vertex: 0 | 1 | 2): number {
+    const [v0, v1, v2] = this.vertices;
+    const vertices = [v0, v1, v2];
+
+    // Get the three vertices
+    const prev = vertices[(vertex + 2) % 3];
+    const curr = vertices[vertex];
+    const next = vertices[(vertex + 1) % 3];
+
+    // Calculate vectors from current vertex to adjacent vertices
+    const vec1 = {
+      x: prev.x - curr.x,
+      y: prev.y - curr.y,
+    };
+    const vec2 = {
+      x: next.x - curr.x,
+      y: next.y - curr.y,
+    };
+
+    // Calculate dot product and magnitudes
+    const dot = vec1.x * vec2.x + vec1.y * vec2.y;
+    const mag1 = Math.sqrt(vec1.x * vec1.x + vec1.y * vec1.y);
+    const mag2 = Math.sqrt(vec2.x * vec2.x + vec2.y * vec2.y);
+
+    // Calculate angle using dot product formula
+    const angleRad = Math.acos(dot / (mag1 * mag2));
+    return (angleRad * 180) / Math.PI;
+  }
+
+  /**
+   * Gets all three interior angles of the triangle.
+   *
+   * @returns Object containing the angles at each vertex in degrees
+   *
+   * @example
+   * Get angles of a right triangle
+   * ```typescript
+   * const triangle = new Triangle({ type: "right", a: 3, b: 4 });
+   * const { angleA, angleB, angleC } = triangle.angles;
+   * console.log(angleA); // 90 degrees (right angle)
+   * console.log(angleA + angleB + angleC); // 180 degrees (sum of angles)
+   * ```
+   *
+   * @example
+   * Check if a triangle is equilateral
+   * ```typescript
+   * const triangle = new Triangle({ type: "equilateral", a: 100 });
+   * const { angleA, angleB, angleC } = triangle.angles;
+   * console.log(angleA, angleB, angleC); // All ~60 degrees
+   * ```
+   */
+  get angles(): { angleA: number; angleB: number; angleC: number } {
+    return {
+      angleA: this.calculateAngleAtVertex(0),
+      angleB: this.calculateAngleAtVertex(1),
+      angleC: this.calculateAngleAtVertex(2),
+    };
+  }
+
+  /**
+   * Gets the perimeter of the triangle.
+   *
+   * @returns The sum of all three side lengths in pixels
+   */
+  get perimeter(): number {
+    const { sideA, sideB, sideC } = this.sideLengths;
+    return sideA + sideB + sideC;
+  }
+
+  /**
+   * Gets the area of the triangle using Heron's formula.
+   *
+   * @returns The area of the triangle in square pixels
+   *
+   * @example
+   * Calculate area of a right triangle
+   * ```typescript
+   * const triangle = new Triangle({ type: "right", a: 3, b: 4 });
+   * console.log(triangle.area); // 6 square pixels (0.5 * 3 * 4)
+   * ```
+   */
+  get area(): number {
+    const { sideA, sideB, sideC } = this.sideLengths;
+    const s = (sideA + sideB + sideC) / 2; // Semi-perimeter
+    return Math.sqrt(s * (s - sideA) * (s - sideB) * (s - sideC));
+  }
+
+  /**
+   * Gets the three vertices of the triangle.
+   *
+   * Vertices are in counter-clockwise order (see CONVENTIONS.md).
+   *
+   * @returns Array of three vertex points
+   *
+   * @example
+   * Access individual vertices
+   * ```typescript
+   * const triangle = new Triangle({ type: "right", a: 3, b: 4 });
+   * const [v0, v1, v2] = triangle.getVertices();
+   * ```
+   */
+  getVertices(): [Point, Point, Point] {
+    const [v1, v2, v3] = this.vertices;
+    return [
+      {
+        x: `${v1.x + this.currentPosition.x}px`,
+        y: `${v1.y + this.currentPosition.y}px`,
+      },
+      {
+        x: `${v2.x + this.currentPosition.x}px`,
+        y: `${v2.y + this.currentPosition.y}px`,
+      },
+      {
+        x: `${v3.x + this.currentPosition.x}px`,
+        y: `${v3.y + this.currentPosition.y}px`,
+      },
+    ];
+  }
+
+  /**
+   * Checks if the triangle is a right triangle (has a 90-degree angle).
+   *
+   * @returns True if any angle is approximately 90 degrees
+   */
+  get isRightTriangle(): boolean {
+    const { angleA, angleB, angleC } = this.angles;
+    const tolerance = 0.1; // Tolerance for floating point comparison
+    return (
+      Math.abs(angleA - 90) < tolerance ||
+      Math.abs(angleB - 90) < tolerance ||
+      Math.abs(angleC - 90) < tolerance
+    );
+  }
+
+  /**
+   * Checks if the triangle is equilateral (all sides equal).
+   *
+   * @returns True if all sides are approximately equal
+   */
+  get isEquilateral(): boolean {
+    const { sideA, sideB, sideC } = this.sideLengths;
+    const tolerance = 0.1;
+    return (
+      Math.abs(sideA - sideB) < tolerance &&
+      Math.abs(sideB - sideC) < tolerance &&
+      Math.abs(sideA - sideC) < tolerance
+    );
+  }
+
+  /**
+   * Checks if the triangle is isosceles (two sides equal).
+   *
+   * @returns True if at least two sides are approximately equal
+   */
+  get isIsosceles(): boolean {
+    const { sideA, sideB, sideC } = this.sideLengths;
+    const tolerance = 0.1;
+    return (
+      Math.abs(sideA - sideB) < tolerance ||
+      Math.abs(sideB - sideC) < tolerance ||
+      Math.abs(sideA - sideC) < tolerance
+    );
   }
 
   /**
