@@ -8,6 +8,7 @@
  */
 
 import { Layout, LayoutConfig } from "./Layout.js";
+import { Rectangle } from "../geometry/Rectangle.js";
 import type { Element } from "../core/Element.js";
 import type { Point } from "../core/Artboard.js";
 import type { Style } from "../core/Stylable.js";
@@ -65,7 +66,7 @@ export interface ColumnsLayoutConfig
 
   /**
    * Whether content should resize to fit column width.
-   * @defaultValue true
+   * @defaultValue false
    */
   fitContent?: boolean;
 }
@@ -73,17 +74,15 @@ export interface ColumnsLayoutConfig
 /**
  * Represents a single column within a ColumnsLayout.
  *
- * Columns act as sub-containers that hold elements and apply
- * alignment and sizing rules to their content.
+ * Columns are rectangles that act as sub-containers, holding elements
+ * and applying alignment and sizing rules to their content.
+ *
+ * By extending Rectangle, Column inherits all geometric properties and
+ * reference points (topLeft, center, bottomRight, etc.) without duplication.
  */
-export class Column {
-  private _x: number;
-  private _y: number;
-  private _width: number;
-  private _height: number;
-  private _style?: Partial<Style>;
+export class Column extends Rectangle {
   private elements: Element[] = [];
-  private config: {
+  private alignmentConfig: {
     verticalAlign: "top" | "center" | "bottom";
     horizontalAlign: "left" | "center" | "right";
     fitContent: boolean;
@@ -112,15 +111,19 @@ export class Column {
       fitContent: boolean;
     }
   ) {
-    this._x = x;
-    this._y = y;
-    this._width = width;
-    this._height = height;
-    this._style = style;
-    this.config = config || {
+    // Initialize as a Rectangle
+    super({
+      width,
+      height,
+      style,
+    });
+
+    // Set position after construction
+    this.currentPosition = { x, y };
+    this.alignmentConfig = config || {
       verticalAlign: "top",
       horizontalAlign: "left",
-      fitContent: true,
+      fitContent: false,
     };
   }
 
@@ -138,45 +141,7 @@ export class Column {
     return this._height;
   }
 
-  /**
-   * Gets the top-left corner of the column.
-   */
-  get topLeft(): Point {
-    return {
-      x: `${this._x}px`,
-      y: `${this._y}px`,
-    };
-  }
-
-  /**
-   * Gets the center point of the column.
-   */
-  get center(): Point {
-    return {
-      x: `${this._x + this._width / 2}px`,
-      y: `${this._y + this._height / 2}px`,
-    };
-  }
-
-  /**
-   * Gets the top-center point of the column.
-   */
-  get topCenter(): Point {
-    return {
-      x: `${this._x + this._width / 2}px`,
-      y: `${this._y}px`,
-    };
-  }
-
-  /**
-   * Gets the bottom-center point of the column.
-   */
-  get bottomCenter(): Point {
-    return {
-      x: `${this._x + this._width / 2}px`,
-      y: `${this._y + this._height}px`,
-    };
-  }
+  // Reference points (topLeft, center, bottomRight, etc.) are inherited from Rectangle
 
   /**
    * Adds an element to this column.
@@ -199,34 +164,76 @@ export class Column {
   private positionElement(element: Element): void {
     const elem = element as any;
 
-    // Resize element to fit column width if fitContent is enabled
-    if (this.config.fitContent && "width" in elem && "_width" in elem) {
+    // Resize element to fit column width if both:
+    // 1. fitContent is enabled for this column
+    // 2. The element allows fitting (element.shouldFitContent returns true)
+    if (
+      this.alignmentConfig.fitContent &&
+      element.shouldFitContent &&
+      "width" in elem &&
+      "_width" in elem
+    ) {
       elem._width = this._width;
     }
 
     // Get the element's alignment point based on the column's alignment config
     // This uses the element's default alignment behavior (currently edge-based)
     const elementPoint = element.getAlignmentPoint(
-      this.config.horizontalAlign,
-      this.config.verticalAlign
+      this.alignmentConfig.horizontalAlign,
+      this.alignmentConfig.verticalAlign
     );
 
-    // Calculate the column's target point for this alignment
-    let columnTargetX = this._x;
-    let columnTargetY = this._y;
+    // Get the column's target point based on alignment using inherited reference points
+    let columnTarget: Point;
 
-    // Calculate column target based on alignment
-    if (this.config.horizontalAlign === "center") {
-      columnTargetX = this._x + this._width / 2;
-    } else if (this.config.horizontalAlign === "right") {
-      columnTargetX = this._x + this._width;
+    // Combine horizontal and vertical alignment to get the right reference point
+    if (
+      this.alignmentConfig.horizontalAlign === "left" &&
+      this.alignmentConfig.verticalAlign === "top"
+    ) {
+      columnTarget = this.topLeft;
+    } else if (
+      this.alignmentConfig.horizontalAlign === "left" &&
+      this.alignmentConfig.verticalAlign === "center"
+    ) {
+      columnTarget = this.leftCenter;
+    } else if (
+      this.alignmentConfig.horizontalAlign === "left" &&
+      this.alignmentConfig.verticalAlign === "bottom"
+    ) {
+      columnTarget = this.bottomLeft;
+    } else if (
+      this.alignmentConfig.horizontalAlign === "center" &&
+      this.alignmentConfig.verticalAlign === "top"
+    ) {
+      columnTarget = this.topCenter;
+    } else if (
+      this.alignmentConfig.horizontalAlign === "center" &&
+      this.alignmentConfig.verticalAlign === "center"
+    ) {
+      columnTarget = this.center;
+    } else if (
+      this.alignmentConfig.horizontalAlign === "center" &&
+      this.alignmentConfig.verticalAlign === "bottom"
+    ) {
+      columnTarget = this.bottomCenter;
+    } else if (
+      this.alignmentConfig.horizontalAlign === "right" &&
+      this.alignmentConfig.verticalAlign === "top"
+    ) {
+      columnTarget = this.topRight;
+    } else if (
+      this.alignmentConfig.horizontalAlign === "right" &&
+      this.alignmentConfig.verticalAlign === "center"
+    ) {
+      columnTarget = this.rightCenter;
+    } else {
+      // right + bottom
+      columnTarget = this.bottomRight;
     }
 
-    if (this.config.verticalAlign === "center") {
-      columnTargetY = this._y + this._height / 2;
-    } else if (this.config.verticalAlign === "bottom") {
-      columnTargetY = this._y + this._height;
-    }
+    const columnTargetX = parseUnit(columnTarget.x);
+    const columnTargetY = parseUnit(columnTarget.y);
 
     // Calculate the offset needed to align element point to column point
     const elementPointX = parseUnit(elementPoint.x);
@@ -260,23 +267,10 @@ export class Column {
   render(): string {
     const parts: string[] = [];
 
-    // Render column background if it has a style
-    if (this._style && (this._style.fill || this._style.stroke)) {
-      const styleToSVGAttributes = (style: Partial<Style>): string => {
-        const attrs: string[] = [];
-        if (style.fill) attrs.push(`fill="${style.fill}"`);
-        if (style.stroke) attrs.push(`stroke="${style.stroke}"`);
-        if (style.strokeWidth)
-          attrs.push(`stroke-width="${style.strokeWidth}"`);
-        if (style.opacity !== undefined)
-          attrs.push(`opacity="${style.opacity}"`);
-        return attrs.join(" ");
-      };
-
-      const styleAttrs = styleToSVGAttributes(this._style);
-      parts.push(
-        `<rect x="${this._x}" y="${this._y}" width="${this._width}" height="${this._height}" ${styleAttrs} />`
-      );
+    // Render column background using inherited Rectangle.render()
+    const rectSVG = super.render();
+    if (rectSVG) {
+      parts.push(rectSVG);
     }
 
     // Render children
@@ -295,8 +289,10 @@ export class Column {
    * @internal
    */
   updatePosition(deltaX: number, deltaY: number): void {
-    this._x += deltaX;
-    this._y += deltaY;
+    this.currentPosition = {
+      x: this.currentPosition.x + deltaX,
+      y: this.currentPosition.y + deltaY,
+    };
 
     // Update all children positions
     for (const element of this.elements) {
@@ -430,7 +426,7 @@ export class ColumnsLayout extends Layout {
         {
           verticalAlign: this.columnsConfig.verticalAlign || "top",
           horizontalAlign: this.columnsConfig.horizontalAlign || "left",
-          fitContent: this.columnsConfig.fitContent !== false,
+          fitContent: this.columnsConfig.fitContent === true,
         }
       );
       this._columns.push(column);

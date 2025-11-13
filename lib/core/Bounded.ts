@@ -263,26 +263,26 @@ export abstract class Bounded extends Element {
     const radius = (this as any).radius || 0;
 
     // For circles, use radius-based calculations
+    // Note: Circle's currentPosition is already at the center
     if (radius > 0) {
-      const centerX = this.currentPosition.x + radius;
-      const centerY = this.currentPosition.y + radius;
-
-      let x = centerX;
-      let y = centerY;
+      let x = this.currentPosition.x;
+      let y = this.currentPosition.y;
 
       // Horizontal positioning
       if (horizontalAlign === "left") {
-        x = this.currentPosition.x;
+        x = this.currentPosition.x - radius;
       } else if (horizontalAlign === "right") {
-        x = this.currentPosition.x + radius * 2;
+        x = this.currentPosition.x + radius;
       }
+      // "center" uses x = this.currentPosition.x (already set)
 
       // Vertical positioning
       if (verticalAlign === "top") {
-        y = this.currentPosition.y;
+        y = this.currentPosition.y - radius;
       } else if (verticalAlign === "bottom") {
-        y = this.currentPosition.y + radius * 2;
+        y = this.currentPosition.y + radius;
       }
+      // "center" uses y = this.currentPosition.y (already set)
 
       return { x: `${x}px`, y: `${y}px` };
     }

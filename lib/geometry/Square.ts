@@ -150,6 +150,15 @@ export class Square extends Rectangle {
   }
 
   /**
+   * Squares should not be resized to fit content as they have a constrained aspect ratio.
+   *
+   * @returns False to prevent layout-based resizing
+   */
+  get shouldFitContent(): boolean {
+    return false;
+  }
+
+  /**
    * Gets the side length of the square in pixels.
    *
    * @returns The side length (same as width or height)

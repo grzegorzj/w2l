@@ -124,6 +124,15 @@ export class Circle extends Shape {
   }
 
   /**
+   * Circles should not be resized to fit content as they have a constrained aspect ratio.
+   *
+   * @returns False to prevent layout-based resizing
+   */
+  get shouldFitContent(): boolean {
+    return false;
+  }
+
+  /**
    * Gets the diameter of the circle in pixels.
    *
    * @returns The diameter value (2 × radius)
@@ -237,6 +246,92 @@ export class Circle extends Shape {
     return {
       x: `${this.currentPosition.x + this._radius}px`,
       y: `${this.currentPosition.y}px`,
+    };
+  }
+
+  // Standard reference points (matching Rectangle's 9-point system)
+
+  /**
+   * Gets the top-left point of the bounding box.
+   *
+   * @returns The top-left corner of the circle's bounding box
+   */
+  get topLeft(): Point {
+    return {
+      x: `${this.currentPosition.x - this._radius}px`,
+      y: `${this.currentPosition.y - this._radius}px`,
+    };
+  }
+
+  /**
+   * Gets the top-center point (same as top).
+   *
+   * @returns The top-most point of the circle
+   */
+  get topCenter(): Point {
+    return this.top;
+  }
+
+  /**
+   * Gets the top-right point of the bounding box.
+   *
+   * @returns The top-right corner of the circle's bounding box
+   */
+  get topRight(): Point {
+    return {
+      x: `${this.currentPosition.x + this._radius}px`,
+      y: `${this.currentPosition.y - this._radius}px`,
+    };
+  }
+
+  /**
+   * Gets the left-center point (same as left).
+   *
+   * @returns The left-most point of the circle
+   */
+  get leftCenter(): Point {
+    return this.left;
+  }
+
+  /**
+   * Gets the right-center point (same as right).
+   *
+   * @returns The right-most point of the circle
+   */
+  get rightCenter(): Point {
+    return this.right;
+  }
+
+  /**
+   * Gets the bottom-left point of the bounding box.
+   *
+   * @returns The bottom-left corner of the circle's bounding box
+   */
+  get bottomLeft(): Point {
+    return {
+      x: `${this.currentPosition.x - this._radius}px`,
+      y: `${this.currentPosition.y + this._radius}px`,
+    };
+  }
+
+  /**
+   * Gets the bottom-center point (same as bottom).
+   *
+   * @returns The bottom-most point of the circle
+   */
+  get bottomCenter(): Point {
+    return this.bottom;
+  }
+
+  /**
+   * Gets the bottom-right point of the bounding box.
+   *
+   * @returns The bottom-right corner of the circle's bounding box
+   */
+  get bottomRight(): Point {
+    return {
+      x: `${this.currentPosition.x + this._radius}px`,
+      y: `${this.currentPosition.y + this._radius}px`,
     };
   }
 

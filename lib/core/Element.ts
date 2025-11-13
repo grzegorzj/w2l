@@ -128,6 +128,27 @@ export abstract class Element {
   }
 
   /**
+   * Indicates whether this element should be resized to fit within layout columns.
+   *
+   * Elements return true by default, allowing layouts to resize them.
+   * Elements with constrained aspect ratios (Circle, Square) override this to return false.
+   *
+   * @returns True if the element can be resized to fit content, false otherwise
+   *
+   * @example
+   * ```typescript
+   * // Rectangle can be resized
+   * rectangle.shouldFitContent // true
+   *
+   * // Square maintains aspect ratio
+   * square.shouldFitContent // false
+   * ```
+   */
+  get shouldFitContent(): boolean {
+    return true;
+  }
+
+  /**
    * Positions the element relative to another point or element.
    *
    * This is the primary method for laying out elements in the visual space.
