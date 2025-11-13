@@ -5,6 +5,9 @@ import { EditorToolbar } from "./components/EditorToolbar";
 import { RendererToolbar } from "./components/RendererToolbar";
 import { Message } from "./components/Message";
 import { Resizer } from "./components/Resizer";
+import { VerticalResizer } from "./components/VerticalResizer";
+import { Chat } from "./components/Chat";
+import { ConversationSelector } from "./components/ConversationSelector";
 import { useCodeExecution } from "./hooks/useCodeExecution";
 import {
   saveSVG,
@@ -27,6 +30,32 @@ export function App() {
     "idle" | "success" | "error"
   >("idle");
   const { result, executeCode } = useCodeExecution();
+  const [conversationId, setConversationId] = useState<number | null>(null);
+
+  // Create default conversation on mount
+  useEffect(() => {
+    const createDefaultConversation = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/api/conversations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: "New Conversation",
+            code: initialCode,
+          }),
+        });
+        const newConversation = await response.json();
+        setConversationId(newConversation.id);
+      } catch (error) {
+        console.error("Error creating default conversation:", error);
+        // If server is not available, just continue without conversation
+      }
+    };
+
+    createDefaultConversation();
+  }, [initialCode]); // Run once on mount with initial code
 
   // Show messages from execution results
   useEffect(() => {
@@ -82,6 +111,32 @@ export function App() {
     setMessageType("success");
   };
 
+  const handleConversationSelect = async (id: number) => {
+    setConversationId(id);
+    try {
+      const response = await fetch(`http://localhost:3001/api/conversations/${id}`);
+      const data = await response.json();
+      if (data.code) {
+        editorRef.current?.setValue(data.code);
+        executeCode(data.code);
+      }
+    } catch (error) {
+      console.error("Error loading conversation:", error);
+      setMessage("Failed to load conversation");
+      setMessageType("error");
+    }
+  };
+
+  const handleNewConversation = () => {
+    // Optionally reset the editor when creating a new conversation
+    // editorRef.current?.setValue(DEFAULT_CODE);
+  };
+
+  const handleCodeUpdate = (code: string) => {
+    editorRef.current?.setValue(code);
+    executeCode(code);
+  };
+
   return (
     <div id="app">
       <Message message={message} type={messageType} />
@@ -94,12 +149,31 @@ export function App() {
       />
       <div className="split-container">
         <div className="pane editor-pane" id="editor-pane">
-          <EditorToolbar
-            onLoadFile={handleLoadFile}
-            onRun={handleRun}
-            onSaveCode={handleSaveCode}
+          <ConversationSelector
+            selectedId={conversationId}
+            onSelect={handleConversationSelect}
+            onNew={handleNewConversation}
           />
-          <CodeEditor ref={editorRef} initialValue={initialCode} onRun={handleRun} />
+          <div className="editor-split-container">
+            <div className="editor-section" id="editor-section" style={{ flex: "0 0 50%" }}>
+              <EditorToolbar
+                onLoadFile={handleLoadFile}
+                onRun={handleRun}
+                onSaveCode={handleSaveCode}
+              />
+              <CodeEditor ref={editorRef} initialValue={initialCode} onRun={handleRun} />
+            </div>
+
+            <VerticalResizer />
+
+            <div className="chat-section" id="chat-section" style={{ flex: "0 0 50%" }}>
+              <Chat
+                conversationId={conversationId}
+                onCodeUpdate={handleCodeUpdate}
+                currentCode={editorRef.current?.getValue() || ""}
+              />
+            </div>
+          </div>
         </div>
 
         <Resizer />
