@@ -1,3 +1,8 @@
+---
+title: Conventions
+category: Documentation
+---
+
 # W2L Mathematical Conventions
 
 ## Coordinate System

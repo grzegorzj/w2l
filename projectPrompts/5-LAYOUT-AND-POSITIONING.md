@@ -55,4 +55,59 @@ container.addElement(columns); // this automatically makes the columns fill the 
 
 So we see a lot to implement here.
 
-3. Let's implement the column logic as visible
+3. Let's implement the column logic as visible in the example above - we should add a new folder called "layouts" in "/lib" for this.
+
+It would be also nice if our /docs generation actually has a index-of-content style of separation of what is in which folder, as the current separation is only along technical lines, and the code is growing fast.
+
+Column (and overall Layouts) implementation:
+
+- Layouts are rectangular Elements - they should derive from Rectangles. Investigate how Rectangle inherits its abilities
+- Layouts should have the possibility of adding something _to them_. For instance, entire layout should expose each of its columns (.columns), and these columns should act like a container with extra abilities - anything added there is by default positioned inside of them, and _moving/translating/rotating/etc. the layout moves the contents_ (this is something that containers don't do now, but should).
+
+Hierarchy of positioning when Layouts are involved should be as follows:
+
+1. layouts; if something has no translations, it just renders inside of a layout it's been placed into. We essentially create a layout link between the element inside of the layout and the layout item. The behaviour of object is dependend on layout and their type. For instance, for most elements, columns would simply resize them to fit horizontally (or overflow, depending on the config), and align top top/bottom/left/right depending on config of the column.
+
+Essentially, these are column styles - implement them simply as Stylable.
+
+2. if something is inside of a Layout, but we call "position" on it, there's the difficulty of determining what has priority - and how do we act going forward. This means we are removing the thing from the layout and going forward, all subsequent movement happens in absolute terms.
+
+We should write a documentation MD about positioning after we implmement this.
+
+## ✅ COMPLETED
+
+All tasks from this prompt have been successfully implemented:
+
+1. ✅ Element base class created with positioning/transformation methods
+2. ✅ RectangleSize type created and used across library
+3. ✅ Container and Layout classes with child transformation
+4. ✅ ColumnsLayout with automatic column management
+5. ✅ Layout positioning hierarchy (layout-bound vs absolute)
+6. ✅ Intelligent alignment system with `getAlignmentPoint()`
+7. ✅ Full documentation created (POSITIONING.md, INTELLIGENT-ALIGNMENT.md)
+8. ✅ Playground examples created and working
+9. ✅ All tests passing
+
+### Intelligent Alignment (Latest Addition)
+
+Elements now intelligently choose their alignment point:
+
+- **Left align**: Uses center of left edge (not center of element)
+- **Right align**: Uses center of right edge
+- **Top/Bottom**: Uses center of respective edge
+- **Center**: Uses geometric center
+
+This creates natural, intuitive alignment behavior in columns and layouts.
+
+See:
+
+- `INTELLIGENT-ALIGNMENT.md` - Full documentation
+- `playground/examples/intelligent-alignment-demo.ts` - Visual demonstration
+
+# Feedback 1
+
+Let's improve the horizontalAlign: "left", verticalAlign: "center", etc. with the possibility of telling _what_ to align. right now its aligning centers of objects to the left, it would be cool if:
+
+- every element had a property/function that says "if you align me to the X side of layout, that's the point you should take" f(alignTo: "left") => // returns coords of the left edge since we are aligning to the left;
+- and we add a reasonable default to Element (center of the left edge if you align to the left, center)
+- later we can implement some custom self-positioning behaviour to the elements, but it's not needed now.

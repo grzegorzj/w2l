@@ -76,7 +76,7 @@ export interface TranslateConfig {
  * class Shape extends Element {
  *   // Shape-specific implementation
  * }
- * 
+ *
  * class Container extends Element {
  *   // Container-specific implementation
  * }
@@ -95,6 +95,37 @@ export abstract class Element {
    * Subclasses must implement this to return their specific center calculation.
    */
   abstract get center(): Point;
+
+  /**
+   * Get the point on this element that should be used for alignment.
+   *
+   * This is the default alignment behavior used by layouts to position elements.
+   * The base implementation returns the center point as a fallback.
+   *
+   * **Current default:** Returns center point. Subclasses (like Bounded) override
+   * this to provide edge-based alignment.
+   *
+   * **Future:** Individual element classes will define their own alignment
+   * behavior (e.g., text aligning from baseline, shapes from anchor points).
+   *
+   * @param horizontalAlign - The horizontal alignment: "left", "center", or "right"
+   * @param verticalAlign - The vertical alignment: "top", "center", or "bottom"
+   * @returns The point to use for alignment
+   *
+   * @example
+   * ```typescript
+   * // Get the alignment point for left-center alignment
+   * const point = element.getAlignmentPoint("left", "center");
+   * ```
+   */
+  getAlignmentPoint(
+    horizontalAlign: "left" | "center" | "right",
+    verticalAlign: "top" | "center" | "bottom"
+  ): Point {
+    // Default fallback: return center point
+    // Subclasses override to provide edge/anchor-based alignment
+    return this.center;
+  }
 
   /**
    * Positions the element relative to another point or element.
@@ -243,4 +274,3 @@ export abstract class Element {
    */
   abstract render(): string;
 }
-

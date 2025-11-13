@@ -11,6 +11,7 @@ import { Bounded } from "../core/Bounded.js";
 import type { Point } from "../core/Artboard.js";
 import type { RectangleSize } from "../geometry/Rectangle.js";
 import { parseUnit } from "../core/units.js";
+import { ChildrenManager } from "./ChildrenManager.js";
 
 /**
  * Configuration for creating a Container.
@@ -67,7 +68,7 @@ export class Container extends Bounded {
   private config: ContainerConfig;
   private _width: number;
   private _height: number;
-  private elements: any[] = [];
+  private childrenManager: ChildrenManager;
 
   /**
    * Creates a new Container instance.
@@ -83,6 +84,12 @@ export class Container extends Bounded {
     if (config.padding) {
       this.padding = config.padding;
     }
+
+    // Initialize children manager
+    this.childrenManager = new ChildrenManager(
+      () => this.currentPosition,
+      () => this.rotation
+    );
   }
 
   /**
@@ -209,7 +216,50 @@ export class Container extends Bounded {
    * ```
    */
   addElement(element: any): void {
-    this.elements.push(element);
+    this.childrenManager.addChild(element, this);
+  }
+
+  /**
+   * Removes an element from the container.
+   *
+   * @param element - The element to remove
+   */
+  removeElement(element: any): void {
+    this.childrenManager.removeChild(element);
+  }
+
+  /**
+   * Marks a child element as absolute-positioned.
+   * This is called when position() is explicitly called on a child element.
+   * @param element - The element to mark as absolute
+   * @internal
+   */
+  markChildAsAbsolute(element: any): void {
+    this.childrenManager.markChildAsAbsolute(element);
+  }
+
+  /**
+   * Overrides position to update child positions.
+   */
+  position(config: any): void {
+    super.position(config);
+    this.childrenManager.updateChildPositions();
+  }
+
+  /**
+   * Overrides translate to update child positions.
+   */
+  translate(config: any): void {
+    super.translate(config);
+    this.childrenManager.updateChildPositions();
+  }
+
+  /**
+   * Overrides rotate to update child positions.
+   */
+  rotate(config: any): void {
+    super.rotate(config);
+    this.childrenManager.updateChildPositions();
   }
 
   /**
@@ -218,7 +268,7 @@ export class Container extends Bounded {
    * @returns Array of elements
    */
   get children(): any[] {
-    return this.elements;
+    return this.childrenManager.getChildren();
   }
 
   /**

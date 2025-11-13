@@ -3,6 +3,7 @@
  *
  * An imperative library for LLM-driven structured image generation.
  *
+ *
  * ## Overview
  *
  * W2L provides a high-level, declarative API for creating structured visual compositions
@@ -62,7 +63,10 @@
  * @packageDocumentation
  */
 
-// Core exports
+/**
+ * Core classes and utilities
+ * @category API Reference
+ */
 export {
   Artboard,
   Element,
@@ -70,6 +74,11 @@ export {
   Shape,
   styleToSVGAttributes,
 } from "./core/index.js";
+
+/**
+ * Core types and interfaces
+ * @category API Reference
+ */
 export type {
   Point,
   ArtboardConfig,
@@ -82,8 +91,16 @@ export type {
   Stylable,
 } from "./core/index.js";
 
-// Geometry exports
+/**
+ * Geometric shapes
+ * @category API Reference
+ */
 export { Side, Triangle, Circle, Rectangle, Square } from "./geometry/index.js";
+
+/**
+ * Geometry types and interfaces
+ * @category API Reference
+ */
 export type {
   RectangleSize,
   SideConfig,
@@ -96,6 +113,18 @@ export type {
   SquareConfig,
 } from "./geometry/index.js";
 
-// Layout exports
-export { Container } from "./layout/index.js";
-export type { ContainerConfig } from "./layout/index.js";
+/**
+ * Layout and container classes
+ * @category API Reference
+ */
+export { Container, Layout, ColumnsLayout, Column } from "./layout/index.js";
+
+/**
+ * Layout types and interfaces
+ * @category API Reference
+ */
+export type {
+  ContainerConfig,
+  LayoutConfig,
+  ColumnsLayoutConfig,
+} from "./layout/index.js";

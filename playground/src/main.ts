@@ -488,9 +488,21 @@ async function runCode() {
     }
   } catch (error: any) {
     console.error("Error executing code:", error);
-    showError(`Error: ${error.message}`);
-    svgContent.innerHTML =
-      '<div class="empty-state">Error executing code. Check console for details.</div>';
+    console.error("Full error object:", error);
+    console.error("Stack trace:", error.stack);
+
+    // Build detailed error message
+    let errorMessage = `Error: ${error.message}`;
+    if (error.stack) {
+      errorMessage += `\n\nStack Trace:\n${error.stack}`;
+    }
+
+    showError(errorMessage);
+    svgContent.innerHTML = `
+      <div class="empty-state" style="text-align: left; font-family: monospace; font-size: 12px; white-space: pre-wrap; padding: 20px;">
+        <strong style="color: #ef4444;">Error executing code:</strong>\n\n${error.message}\n\n${error.stack || "No stack trace available"}
+      </div>
+    `;
     saveSvgBtn.disabled = true;
   }
 }

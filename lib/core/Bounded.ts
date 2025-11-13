@@ -221,5 +221,92 @@ export abstract class Bounded extends Element {
       y: `${this.currentPosition.y + padding.top}px`,
     };
   }
-}
 
+  /**
+   * Gets the appropriate alignment point based on alignment direction.
+   *
+   * For bounded elements, this returns edge centers or corners depending
+   * on the alignment configuration.
+   *
+   * @param horizontalAlign - Horizontal alignment: "left", "center", or "right"
+   * @param verticalAlign - Vertical alignment: "top", "center", or "bottom"
+   * @returns The point to use for alignment
+   *
+   * @remarks
+   * This method is used by layouts to determine where to position elements.
+   *
+   * Alignment mappings:
+   * - left + top: topLeft
+   * - left + center: leftCenter (center of left edge)
+   * - left + bottom: bottomLeft
+   * - center + top: topCenter (center of top edge)
+   * - center + center: center
+   * - center + bottom: bottomCenter (center of bottom edge)
+   * - right + top: topRight
+   * - right + center: rightCenter (center of right edge)
+   * - right + bottom: bottomRight
+   *
+   * @example
+   * ```typescript
+   * // Get the center of the left edge for left-aligned content
+   * const point = element.getAlignmentPoint("left", "center");
+   * ```
+   */
+  getAlignmentPoint(
+    horizontalAlign: "left" | "center" | "right",
+    verticalAlign: "top" | "center" | "bottom"
+  ): Point {
+    // For Bounded elements, we need access to width/height
+    // These should be available in subclasses (Rectangle, Circle, etc.)
+    const width = (this as any).width || 0;
+    const height = (this as any).height || 0;
+    const radius = (this as any).radius || 0;
+
+    // For circles, use radius-based calculations
+    if (radius > 0) {
+      const centerX = this.currentPosition.x + radius;
+      const centerY = this.currentPosition.y + radius;
+
+      let x = centerX;
+      let y = centerY;
+
+      // Horizontal positioning
+      if (horizontalAlign === "left") {
+        x = this.currentPosition.x;
+      } else if (horizontalAlign === "right") {
+        x = this.currentPosition.x + radius * 2;
+      }
+
+      // Vertical positioning
+      if (verticalAlign === "top") {
+        y = this.currentPosition.y;
+      } else if (verticalAlign === "bottom") {
+        y = this.currentPosition.y + radius * 2;
+      }
+
+      return { x: `${x}px`, y: `${y}px` };
+    }
+
+    // For rectangular elements
+    let x = this.currentPosition.x;
+    let y = this.currentPosition.y;
+
+    // Horizontal positioning
+    if (horizontalAlign === "center") {
+      x = this.currentPosition.x + width / 2;
+    } else if (horizontalAlign === "right") {
+      x = this.currentPosition.x + width;
+    }
+    // "left" uses x = this.currentPosition.x (already set)
+
+    // Vertical positioning
+    if (verticalAlign === "center") {
+      y = this.currentPosition.y + height / 2;
+    } else if (verticalAlign === "bottom") {
+      y = this.currentPosition.y + height;
+    }
+    // "top" uses y = this.currentPosition.y (already set)
+
+    return { x: `${x}px`, y: `${y}px` };
+  }
+}

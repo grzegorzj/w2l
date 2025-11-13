@@ -9,8 +9,9 @@ W2L is a TypeScript library designed to make it easy for Large Language Models (
 ## Philosophy
 
 When asked to "Create a visual representation of the Pythagorean Theorem," an LLM shouldn't try to write SVG directly (which often fails due to geometric complexity). Instead, it should:
-1. Express *what* should appear on screen
-2. Express *where* things should be positioned
+
+1. Express _what_ should appear on screen
+2. Express _where_ things should be positioned
 3. Let the library handle the mathematics
 
 ## Project Structure
@@ -74,13 +75,23 @@ npm start
 
 ## Documentation
 
-All documentation is written inline within the TypeScript source files using TSDoc comments. This ensures:
+### Comprehensive Guides
+
+For detailed documentation, see:
+
+- [Architecture](./guides/ARCHITECTURE.md) - System architecture and design decisions
+- [Conventions](./guides/CONVENTIONS.md) - Mathematical conventions, coordinate systems, and standards
+- [Positioning System](./guides/POSITIONING.md) - Complete guide to positioning and layouts
+- [Intelligent Alignment](./guides/INTELLIGENT-ALIGNMENT.md) - How intelligent alignment works
+
+### API Documentation
+
+All code documentation is written inline within the TypeScript source files using TSDoc comments. This ensures:
+
 - Documentation stays in sync with code
 - LLMs can read both implementation and documentation together
 - No separate markdown files to maintain
-- Professional documentation is generated automatically via TypeDoc
-
-**Important**: See [CONVENTIONS.md](./CONVENTIONS.md) for mathematical conventions including coordinate systems, polygon winding order, and normal vector calculations
+- Professional API documentation is generated automatically via TypeDoc in the `/docs` directory
 
 ## Key Concepts
 
@@ -91,7 +102,7 @@ The canvas where all visual elements are placed. Defines the coordinate system a
 ```typescript
 const artboard = new Artboard({
   size: { width: "800px", height: "600px" },
-  padding: "20px"
+  padding: "20px",
 });
 ```
 
@@ -103,7 +114,7 @@ Visual elements that can be positioned, rotated, and transformed. All shapes inh
 const triangle = new Triangle({
   type: "right",
   a: "300px",
-  b: "400px"
+  b: "400px",
 });
 ```
 
@@ -116,7 +127,7 @@ triangle.position({
   relativeFrom: triangle.center,
   relativeTo: artboard.center,
   x: "0px",
-  y: "0px"
+  y: "0px",
 });
 ```
 
@@ -146,11 +157,13 @@ npm run dev:all
 ```
 
 This starts all development watchers simultaneously:
+
 - Library compilation with hot reload
 - Documentation generation
 - Interactive playground at `http://localhost:5173`
 
 The playground features:
+
 - Monaco editor (VS Code's editor) with TypeScript support
 - Live SVG rendering with zoom and pan
 - File loading for `.ts` and `.js` files
@@ -190,6 +203,7 @@ const artboard = new Artboard({
 ### Core Module (`lib/core/`)
 
 Contains fundamental entities:
+
 - **Artboard**: Main canvas with coordinate system
 - **Shape**: Abstract base class providing positioning, rotation, and translation
 - **Type definitions**: Point, Size, PositionReference, etc.
@@ -197,12 +211,14 @@ Contains fundamental entities:
 ### Geometry Module (`lib/geometry/`)
 
 Contains geometric primitives:
+
 - **Triangle**: Triangular shapes with various configurations
 - More shapes to be added: Square, Circle, Rectangle, Polygon, etc.
 
 ### Future Modules
 
 Planned modules include:
+
 - **Text**: Text elements with layout and typography
 - **Containers**: Layout containers (rows, columns, grids)
 - **Icons**: Pre-built icon shapes
@@ -219,4 +235,3 @@ Planned modules include:
 ## License
 
 MIT
-

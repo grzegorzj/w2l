@@ -5,10 +5,15 @@
   "excludePrivate": true,
   "excludeProtected": false,
   "excludeExternals": true,
-  "readme": "README.md",
+  "readme": "none",
   "name": "W2L - Write to Layout",
-  "navigationLinks": {
-    "GitHub": "https://github.com/yourusername/w2l"
+  "projectDocuments": ["guides/**/*.md"],
+  "categorizeByGroup": false,
+  "categoryOrder": ["Documentation", "*"],
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": false,
+    "includeFolders": false
   }
 }
 
