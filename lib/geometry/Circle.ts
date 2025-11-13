@@ -374,10 +374,8 @@ export class Circle extends Shape {
     const style = { ...defaultStyle, ...this.config.style };
     const styleAttrs = styleToSVGAttributes(style);
 
-    let transform = "";
-    if (this.rotation !== 0) {
-      transform = ` transform="rotate(${this.rotation} ${cx} ${cy})"`;
-    }
+    const transformStr = this.getTransformString();
+    const transform = transformStr ? ` transform="${transformStr}"` : "";
 
     return `<circle cx="${cx}" cy="${cy}" r="${r}" ${styleAttrs}${transform} />`;
   }

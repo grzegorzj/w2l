@@ -300,13 +300,8 @@ export class Triangle extends Shape {
     const style = { ...defaultStyle, ...this.config.style };
     const styleAttrs = styleToSVGAttributes(style);
 
-    let transform = "";
-    if (this.rotation !== 0) {
-      const center = this.center;
-      const centerX = parseUnit(center.x);
-      const centerY = parseUnit(center.y);
-      transform = ` transform="rotate(${this.rotation} ${centerX} ${centerY})"`;
-    }
+    const transformStr = this.getTransformString();
+    const transform = transformStr ? ` transform="${transformStr}"` : "";
 
     return `<polygon points="${points}" ${styleAttrs}${transform} />`;
   }

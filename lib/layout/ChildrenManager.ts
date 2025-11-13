@@ -144,8 +144,12 @@ export class ChildrenManager {
         }
 
         // Rotate child by the same delta
-        if (deltaRotation !== 0 && "rotation" in child) {
-          child.rotation = (child.rotation || 0) + deltaRotation;
+        // Add a rotation transform to the child's transform array
+        if (deltaRotation !== 0 && "transforms" in child) {
+          child.transforms.push({
+            type: "rotation",
+            params: { deg: deltaRotation },
+          });
         }
       }
     }

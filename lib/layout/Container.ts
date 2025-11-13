@@ -88,7 +88,7 @@ export class Container extends Bounded {
     // Initialize children manager
     this.childrenManager = new ChildrenManager(
       () => this.currentPosition,
-      () => this.rotation
+      () => this.getTotalRotation()
     );
   }
 

@@ -35,13 +35,37 @@ export interface PositionReference {
 }
 
 /**
+ * Types of transformations that can be applied to an element.
+ */
+export type TransformType = "rotation" | "scale" | "skew";
+
+/**
+ * Represents a single transformation applied to an element.
+ */
+export interface Transform {
+  /** Type of transformation */
+  type: TransformType;
+  /** Parameters specific to the transformation type */
+  params: any;
+  /** The pivot point for this transformation (defaults to element center) */
+  pivot?: Point;
+}
+
+/**
  * Configuration for rotating an element.
  */
 export interface RotateConfig {
-  /** The reference element or point to rotate relative to */
-  relativeTo: any;
-  /** Rotation angle in degrees */
-  deg: number;
+  /** 
+   * The reference element or point to rotate relative to.
+   * If the reference has an .angle property, it will be used.
+   * Optional - defaults to rotating around the element's own center.
+   */
+  relativeTo?: any;
+  /** 
+   * Rotation angle in degrees. 
+   * If relativeTo has an .angle property and deg is not provided, uses that angle.
+   */
+  deg?: number;
 }
 
 /**
@@ -84,7 +108,33 @@ export interface TranslateConfig {
  */
 export abstract class Element {
   protected currentPosition: { x: number; y: number } = { x: 0, y: 0 };
-  protected rotation: number = 0;
+  protected transforms: Transform[] = [];
+  
+  /**
+   * @deprecated Use transforms array instead. This property is kept for backward compatibility.
+   * @internal
+   */
+  protected get rotation(): number {
+    // Calculate cumulative rotation from transforms array
+    return this.transforms
+      .filter((t) => t.type === "rotation")
+      .reduce((sum, t) => sum + (t.params.deg || 0), 0);
+  }
+  
+  /**
+   * @deprecated Use transforms array instead. This property is kept for backward compatibility.
+   * @internal
+   */
+  protected set rotation(value: number) {
+    // Clear all rotation transforms and set a single one
+    this.transforms = this.transforms.filter((t) => t.type !== "rotation");
+    if (value !== 0) {
+      this.transforms.push({
+        type: "rotation",
+        params: { deg: value },
+      });
+    }
+  }
 
   /**
    * Gets the center point of the element.
@@ -231,19 +281,77 @@ export abstract class Element {
   /**
    * Rotates the element around a reference point or along a reference line.
    *
+   * By default, rotation occurs around the element's own center.
+   * You can optionally specify a reference object with an .angle property,
+   * or provide a custom pivot point.
+   *
+   * Multiple rotations can be applied and they will be stored in order.
+   *
    * @param config - The rotation configuration
    *
    * @example
-   * Rotate an element 45 degrees relative to a line
+   * Rotate an element 45 degrees around its center
+   * ```typescript
+   * element.rotate({ deg: 45 });
+   * ```
+   *
+   * @example
+   * Rotate an element to align with a side's angle
    * ```typescript
    * element.rotate({
-   *   relativeTo: line,
-   *   deg: 45
+   *   relativeTo: triangle.side,
+   *   deg: triangle.side.angle
+   * });
+   * // Or shorthand - if relativeTo has .angle, it's used automatically:
+   * element.rotate({ relativeTo: triangle.side });
+   * ```
+   *
+   * @example
+   * Rotate around a custom pivot point
+   * ```typescript
+   * element.rotate({
+   *   deg: 90,
+   *   relativeTo: { x: "100px", y: "100px" }
    * });
    * ```
    */
   rotate(config: RotateConfig): void {
-    this.rotation += config.deg;
+    let angle = 0;
+    let pivot: Point | undefined;
+
+    // Determine the rotation angle
+    if (config.deg !== undefined) {
+      angle = config.deg;
+    } else if (config.relativeTo && "angle" in config.relativeTo) {
+      // If relativeTo has an angle property, use it
+      angle = config.relativeTo.angle;
+    } else {
+      // No angle provided and no angle on relativeTo
+      console.warn(
+        "rotate() called without deg parameter and relativeTo does not have an angle property"
+      );
+      return;
+    }
+
+    // Determine the pivot point
+    if (config.relativeTo) {
+      // Check if relativeTo is a Point (has x and y)
+      if ("x" in config.relativeTo && "y" in config.relativeTo) {
+        pivot = config.relativeTo as Point;
+      }
+      // If relativeTo has a center property (like shapes), use it
+      else if ("center" in config.relativeTo) {
+        pivot = config.relativeTo.center;
+      }
+      // Otherwise, don't set a pivot - will default to element's center during render
+    }
+
+    // Add the rotation transform to the array
+    this.transforms.push({
+      type: "rotation",
+      params: { deg: angle },
+      pivot: pivot,
+    });
   }
 
   /**
@@ -281,6 +389,76 @@ export abstract class Element {
       x: this.currentPosition.x + normalized.x * distancePx,
       y: this.currentPosition.y + normalized.y * distancePx,
     };
+  }
+
+  /**
+   * Gets the SVG transform attribute string for this element.
+   *
+   * Transforms are applied in the order they were added.
+   * If no pivot is specified for a rotation, the element's center is used.
+   *
+   * @returns SVG transform attribute string, or empty string if no transforms
+   *
+   * @example
+   * ```typescript
+   * const transformStr = element.getTransformString();
+   * // Returns something like: "rotate(45 100 100) rotate(30 150 150)"
+   * ```
+   */
+  protected getTransformString(): string {
+    if (this.transforms.length === 0) {
+      return "";
+    }
+
+    const transformStrings: string[] = [];
+
+    for (const transform of this.transforms) {
+      if (transform.type === "rotation") {
+        const deg = transform.params.deg || 0;
+        if (deg === 0) continue;
+
+        // Determine pivot point
+        let pivotX: number, pivotY: number;
+        if (transform.pivot) {
+          pivotX = parseUnit(transform.pivot.x);
+          pivotY = parseUnit(transform.pivot.y);
+        } else {
+          // Default to element's center
+          const center = this.center;
+          pivotX = parseUnit(center.x);
+          pivotY = parseUnit(center.y);
+        }
+
+        transformStrings.push(`rotate(${deg} ${pivotX} ${pivotY})`);
+      }
+      // Future: add support for scale, skew, etc.
+    }
+
+    return transformStrings.join(" ");
+  }
+
+  /**
+   * Gets the cumulative rotation angle of the element.
+   *
+   * @returns Total rotation in degrees
+   */
+  protected getTotalRotation(): number {
+    return this.transforms
+      .filter((t) => t.type === "rotation")
+      .reduce((sum, t) => sum + (t.params.deg || 0), 0);
+  }
+
+  /**
+   * Clears all transforms of a specific type.
+   *
+   * @param type - The type of transform to clear
+   */
+  protected clearTransforms(type?: TransformType): void {
+    if (type) {
+      this.transforms = this.transforms.filter((t) => t.type !== type);
+    } else {
+      this.transforms = [];
+    }
   }
 
   /**

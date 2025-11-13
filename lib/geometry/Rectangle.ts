@@ -226,8 +226,10 @@ export class Rectangle extends Shape {
     const x = this.currentPosition.x;
     const y = this.currentPosition.y;
 
+    const totalRotation = this.getTotalRotation();
+
     // If no rotation, just return the local position offset by currentPosition
-    if (this.rotation === 0) {
+    if (totalRotation === 0) {
       return {
         x: `${x + localX}px`,
         y: `${y + localY}px`,
@@ -247,7 +249,7 @@ export class Rectangle extends Shape {
     const relY = pointY - centerY;
 
     // Rotate
-    const angleRad = (this.rotation * Math.PI) / 180;
+    const angleRad = (totalRotation * Math.PI) / 180;
     const cos = Math.cos(angleRad);
     const sin = Math.sin(angleRad);
     const rotatedX = relX * cos - relY * sin;
@@ -454,12 +456,8 @@ export class Rectangle extends Shape {
     const style = { ...defaultStyle, ...this.config.style };
     const styleAttrs = styleToSVGAttributes(style);
 
-    let transform = "";
-    if (this.rotation !== 0) {
-      const centerX = x + w / 2;
-      const centerY = y + h / 2;
-      transform = ` transform="rotate(${this.rotation} ${centerX} ${centerY})"`;
-    }
+    const transformStr = this.getTransformString();
+    const transform = transformStr ? ` transform="${transformStr}"` : "";
 
     // Squircle corners
     if (cornerStyle === "squircle" && this._cornerRadius > 0) {

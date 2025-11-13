@@ -86,7 +86,7 @@ export class Layout extends Rectangle {
     // Initialize children manager
     this.childrenManager = new ChildrenManager(
       () => this.currentPosition,
-      () => this.rotation
+      () => this.getTotalRotation()
     );
   }
 
