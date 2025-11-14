@@ -121,7 +121,7 @@ export function buildCondensedContext() {
   return `
 # W2L Library Quick Reference
 
-## Available Classes
+## Some available Classes
 - **Artboard**: Main canvas. Use \`new Artboard()\`, then \`artboard.width()\`, \`artboard.height()\`, \`artboard.add(element)\`
 - **Rectangle**: \`new Rectangle()\`, then \`width()\`, \`height()\`, \`fill()\`, \`stroke()\`, etc.
 - **Circle**: \`new Circle()\`, then \`radius()\`, \`fill()\`, etc.
@@ -157,10 +157,11 @@ container.add(rect1, rect2, rect3);
 ### Styling
 All shapes support: \`fill()\`, \`stroke()\`, \`strokeWidth()\`, \`opacity()\`, \`rotate()\`, \`scale()\`
 
-### Export Pattern
-Always export an array of artboards:
+### Final pattern
 \`\`\`typescript
-export default [artboard];
+artboard.render(); // renders the artboard and all its elements
+
+There can be multiple artboards if needed, you will need to render each of them (they render into separate SVG)
 \`\`\`
 
 ## Key Conventions

@@ -160,10 +160,22 @@ export const searchDocumentationToolResponses = {
  * @returns {Promise<string>} Formatted results
  */
 export async function handleSearchTool(toolCall) {
-  const { query, topK = 10 } = JSON.parse(toolCall.function.arguments);
+  const args = JSON.parse(toolCall.function.arguments);
+  console.log("🔍 Tool called with arguments:", args);
+  
+  const { query, topK = 10 } = args;
+  const limitedTopK = Math.min(topK, 10);
+  
+  console.log(`🔍 Searching with topK=${limitedTopK} (requested: ${topK})`);
 
   // Limit to max 10 results to keep total output ~20KB
-  const results = await searchDocumentation(query, Math.min(topK, 10));
+  let results = await searchDocumentation(query, limitedTopK);
+  
+  // ENFORCE the limit even if vectra returns more
+  if (results.length > 10) {
+    console.log(`⚠️ Got ${results.length} results, truncating to 10`);
+    results = results.slice(0, 10);
+  }
 
   console.log(`📊 Search returned ${results.length} results, sizes:`, 
     results.map(r => r.content.length));

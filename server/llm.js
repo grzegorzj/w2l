@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { buildCondensedContext } from "./documentation.js";
+import { SYSTEM_PROMPT } from "./systemPrompt.js";
 import {
   searchDocumentationToolResponses,
   handleSearchTool,
@@ -8,75 +8,6 @@ import {
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-// Load documentation context once at startup
-const DOCUMENTATION_CONTEXT = buildCondensedContext();
-
-const SYSTEM_PROMPT = `You are an AI assistant helping users write code for the w2l (Write to Layout) library. This is a TypeScript library for creating SVG graphics with a declarative API.
-
-${DOCUMENTATION_CONTEXT}
-
-## IMPORTANT: Using the Search Tool
-
-You MUST use the \`search_documentation\` tool before generating code. This is critical because:
-1. The basic context above is incomplete - it only shows a summary
-2. The actual API in the source code may differ from the summary
-3. You need to see real implementation details to generate correct code
-
-**ALWAYS search first** when:
-- User asks to create ANY shape or element
-- User mentions a specific class (Triangle, Rectangle, Circle, etc.)
-- User asks about layouts, positioning, or containers
-- You're unsure about exact method names or parameters
-- You need to verify the current API
-
-Example workflow:
-1. User asks: "Create a triangle"
-2. You MUST call: search_documentation("Triangle class API methods")
-3. Read the actual source code from results
-4. Generate code using the REAL API you just looked up
-
-DO NOT guess the API - always search first!
-
-## How to Help Users
-
-When users ask you to create or modify code, you should:
-1. If you need more details about the API, use the search tool first
-2. Generate clean, well-formatted TypeScript/JavaScript code
-3. Use the w2l library's API correctly based on the documentation
-4. Include helpful comments explaining what the code does
-5. Make sure the code is complete and executable
-6. Follow the library's conventions and patterns
-7. Always import from "w2l" (not relative paths)
-
-## Response Format
-
-**CRITICAL**: You must respond with structured JSON in this exact format:
-
-{
-  "reasoning": "Your explanation of what you're creating and why",
-  "hasCode": true,
-  "code": "// Complete executable code here\nimport { Artboard } from 'w2l';\n..."
-}
-
-**Code Requirements:**
-- Must be complete and ready to run
-- Include all necessary imports from "w2l"
-- Always end with artboard.render()
-- Do NOT include markdown code fences in the code field
-- Set hasCode to false if you're just answering a question without generating new code
-
-The system will automatically update the code editor and render the SVG.
-
-## Common User Requests
-
-- "Create a [shape] with [properties]" → Generate full code with the shape
-- "Make it [color/size/etc]" → Modify the existing code they have
-- "Add a [new element]" → Extend their current code
-- "Position it [where]" → Use appropriate positioning methods
-- "Create a layout with [description]" → Use Container with columns layout
-
-Always provide complete, runnable code in your response.`;
 
 /**
  * Extract code blocks from LLM response (fallback for non-structured output)
@@ -141,10 +72,33 @@ export async function streamChatCompletion(
     let currentToolCall = null;
 
     // GPT-5-Codex uses the Responses API with 'input' instead of 'messages'
-    console.log("📤 Sending request to OpenAI Responses API...");
+    const inputMessages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...messages,
+    ];
+
+    console.log("\n========================================");
+    console.log("📤 CONVERSATION HISTORY BEING SENT TO LLM:");
+    console.log("========================================");
+    inputMessages.forEach((msg, idx) => {
+      console.log(`\n[${idx}] Role: ${msg.role || msg.type}`);
+      if (msg.content) {
+        console.log(
+          `Content (${msg.content.length} chars): ${msg.content.substring(0, 300)}${msg.content.length > 300 ? "..." : ""}`
+        );
+      } else if (msg.output) {
+        console.log(
+          `Output (${msg.output.length} chars): ${msg.output.substring(0, 300)}${msg.output.length > 300 ? "..." : ""}`
+        );
+      } else if (msg.name) {
+        console.log(`Function: ${msg.name}`);
+      }
+    });
+    console.log("\n========================================\n");
+
     const stream = await openai.responses.create({
       model: "gpt-5-codex",
-      input: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+      input: inputMessages,
       tools: [searchDocumentationToolResponses],
       tool_choice: "auto",
       text: {
@@ -159,6 +113,9 @@ export async function streamChatCompletion(
     });
 
     console.log("✅ Stream created, waiting for chunks...");
+    console.log("\n========================================");
+    console.log("🟢 LLM STREAMING OUTPUT:");
+    console.log("========================================\n");
 
     for await (const chunk of stream) {
       // Responses API uses event-based streaming with 'type' field
@@ -169,9 +126,9 @@ export async function streamChatCompletion(
         const textDelta = chunk.delta || chunk.text || chunk.content;
         if (textDelta) {
           fullContent += textDelta;
-          console.log("🟢 LLM OUTPUT:", textDelta);
+          process.stdout.write(textDelta); // Write without newline to show streaming
         } else {
-          console.log("⚠️ No text in delta chunk:", JSON.stringify(chunk));
+          console.log("\n⚠️ No text in delta chunk:", JSON.stringify(chunk));
         }
       } else if (eventType === "response.output_item.added") {
         // New output item (could be text, function call, etc.)
@@ -286,11 +243,12 @@ export async function streamChatCompletion(
     }
 
     // Parse structured output
-    console.log(
-      "📝 Full content received (first 200 chars):",
-      fullContent.substring(0, 200)
-    );
-    console.log("📊 Full content length:", fullContent.length);
+    console.log("\n\n========================================");
+    console.log("📝 FULL RESPONSE RECEIVED");
+    console.log("========================================");
+    console.log(`Length: ${fullContent.length} chars`);
+    console.log(`Content:\n${fullContent}`);
+    console.log("========================================\n");
 
     let reasoning = fullContent;
     let extractedCode = null;
