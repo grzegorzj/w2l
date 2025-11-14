@@ -94,17 +94,25 @@ export function Chat({ conversationId, onCodeUpdate, currentCode }: ChatProps) {
       };
       setMessages((prev) => [...prev, tempAssistantMessage]);
 
+      console.log("📡 Starting to read stream...");
+      
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log("✅ Stream complete");
+          break;
+        }
 
         const chunk = decoder.decode(value);
+        console.log("📦 Received chunk:", chunk);
         const lines = chunk.split("\n");
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
+            console.log("📨 Processing line:", line);
             try {
               const data = JSON.parse(line.slice(6));
+              console.log("📋 Parsed data:", data);
 
               if (data.type === "chunk") {
                 assistantMessage += data.content;
@@ -114,11 +122,13 @@ export function Chat({ conversationId, onCodeUpdate, currentCode }: ChatProps) {
                   return newMessages;
                 });
               } else if (data.type === "code") {
+                console.log("💻 Received code update");
                 onCodeUpdate(data.content);
               } else if (data.type === "error") {
                 console.error("Stream error:", data.content);
               }
             } catch (e) {
+              console.warn("⚠️ JSON parse error:", e, "Line:", line);
               // Ignore JSON parse errors for incomplete chunks
             }
           }

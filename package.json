@@ -22,8 +22,8 @@
     "dev:playground": "cd playground && npm run dev",
     "dev:server": "cd server && npm run dev",
     "dev:lib": "concurrently -n \"tsc,types\" -c \"blue,cyan\" \"tsc -p tsconfig.build.json --watch\" \"node scripts/watch-and-generate-types.js\"",
-    "dev:all": "concurrently -n \"lib,docs,server,playground\" -c \"blue,green,magenta,yellow\" \"npm run dev:lib\" \"npm run dev:docs\" \"npm run dev:server\" \"npm run dev:playground\"",
-    "dev:llm-playground": "concurrently -n \"server,playground\" -c \"magenta,yellow\" \"npm run dev:server\" \"npm run dev:playground\"",
+    "dev:all": "concurrently -n \"lib,docs,server,indexer,playground\" -c \"blue,green,magenta,cyan,yellow\" \"npm run dev:lib\" \"npm run dev:docs\" \"npm run dev:server\" \"cd server && npm run watch:index\" \"npm run dev:playground\"",
+    "dev:llm-playground": "concurrently -n \"server,indexer,playground\" -c \"magenta,cyan,yellow\" \"npm run dev:server\" \"cd server && npm run watch:index\" \"npm run dev:playground\"",
     "prepare": "npm run build",
     "playground": "cd playground && npm run dev",
     "server": "cd server && npm run dev"

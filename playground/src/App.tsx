@@ -156,12 +156,12 @@ export function App() {
           />
           <div className="editor-split-container">
             <div className="editor-section" id="editor-section" style={{ flex: "0 0 50%" }}>
-              <EditorToolbar
-                onLoadFile={handleLoadFile}
-                onRun={handleRun}
-                onSaveCode={handleSaveCode}
-              />
-              <CodeEditor ref={editorRef} initialValue={initialCode} onRun={handleRun} />
+          <EditorToolbar
+            onLoadFile={handleLoadFile}
+            onRun={handleRun}
+            onSaveCode={handleSaveCode}
+          />
+          <CodeEditor ref={editorRef} initialValue={initialCode} onRun={handleRun} />
             </div>
 
             <VerticalResizer />
