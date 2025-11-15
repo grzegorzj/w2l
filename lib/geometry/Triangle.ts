@@ -56,6 +56,11 @@ export interface TriangleConfig {
   orientation?: "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
 
   /**
+   * Optional name for debugging and SVG comments.
+   */
+  name?: string;
+
+  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
    * Uses standard CSS/SVG property names.
    *
@@ -169,7 +174,7 @@ export class Triangle extends Shape {
    * @throws {Error} If invalid parameters are provided for the triangle type
    */
   constructor(config: TriangleConfig) {
-    super();
+    super(config.name);
     this.config = config;
     this.vertices = this.calculateVertices();
   }
@@ -297,11 +302,11 @@ export class Triangle extends Shape {
    */
   get center(): Point {
     const [v1, v2, v3] = this.vertices;
-
-    return {
-      x: `${(v1.x + v2.x + v3.x) / 3 + this.currentPosition.x}px`,
-      y: `${(v1.y + v2.y + v3.y) / 3 + this.currentPosition.y}px`,
-    };
+    // Calculate center relative to vertices, then use absolute position
+    return this.toAbsolutePoint(
+      (v1.x + v2.x + v3.x) / 3,
+      (v1.y + v2.y + v3.y) / 3
+    );
   }
 
   /**
@@ -670,13 +675,15 @@ export class Triangle extends Shape {
    * @returns SVG polygon element representing the triangle
    */
   render(): string {
+    // Use absolute position for rendering to account for parent hierarchy
+    const absPos = this.getAbsolutePosition();
     const [v1, v2, v3] = this.vertices;
-    const x1 = v1.x + this.currentPosition.x;
-    const y1 = v1.y + this.currentPosition.y;
-    const x2 = v2.x + this.currentPosition.x;
-    const y2 = v2.y + this.currentPosition.y;
-    const x3 = v3.x + this.currentPosition.x;
-    const y3 = v3.y + this.currentPosition.y;
+    const x1 = v1.x + absPos.x;
+    const y1 = v1.y + absPos.y;
+    const x2 = v2.x + absPos.x;
+    const y2 = v2.y + absPos.y;
+    const x3 = v3.x + absPos.x;
+    const y3 = v3.y + absPos.y;
 
     const points = `${x1},${y1} ${x2},${y2} ${x3},${y3}`;
 
@@ -692,6 +699,8 @@ export class Triangle extends Shape {
     const transformStr = this.getTransformString();
     const transform = transformStr ? ` transform="${transformStr}"` : "";
 
-    return `<polygon points="${points}" ${styleAttrs}${transform} />`;
+    const comment = this.getSVGComment();
+
+    return `${comment}<polygon points="${points}" ${styleAttrs}${transform} />`;
   }
 }

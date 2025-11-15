@@ -32,6 +32,11 @@ export interface CircleConfig {
   diameter?: string | number;
 
   /**
+   * Optional name for debugging and SVG comments.
+   */
+  name?: string;
+
+  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
    * Uses standard CSS/SVG property names.
    *
@@ -102,7 +107,7 @@ export class Circle extends Shape {
    * @throws {Error} If neither radius nor diameter is provided
    */
   constructor(config: CircleConfig) {
-    super();
+    super(config.name);
     this.config = config;
 
     if (config.radius !== undefined) {
@@ -165,10 +170,8 @@ export class Circle extends Shape {
    * @returns The center point of the circle
    */
   get center(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    // Use absolute position to account for parent hierarchy
+    return this.toAbsolutePoint(0, 0);
   }
 
   /**
@@ -195,10 +198,11 @@ export class Circle extends Shape {
    */
   pointAt(degrees: number): Point {
     const radians = (degrees * Math.PI) / 180;
-    return {
-      x: `${this.currentPosition.x + this._radius * Math.cos(radians)}px`,
-      y: `${this.currentPosition.y + this._radius * Math.sin(radians)}px`,
-    };
+    // Use absolute position to account for parent hierarchy
+    return this.toAbsolutePoint(
+      this._radius * Math.cos(radians),
+      this._radius * Math.sin(radians)
+    );
   }
 
   /**
@@ -207,10 +211,7 @@ export class Circle extends Shape {
    * @returns The top point of the circle
    */
   get top(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y - this._radius}px`,
-    };
+    return this.toAbsolutePoint(0, -this._radius);
   }
 
   /**
@@ -219,10 +220,7 @@ export class Circle extends Shape {
    * @returns The bottom point of the circle
    */
   get bottom(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y + this._radius}px`,
-    };
+    return this.toAbsolutePoint(0, this._radius);
   }
 
   /**
@@ -231,10 +229,7 @@ export class Circle extends Shape {
    * @returns The left point of the circle
    */
   get left(): Point {
-    return {
-      x: `${this.currentPosition.x - this._radius}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.toAbsolutePoint(-this._radius, 0);
   }
 
   /**
@@ -243,10 +238,7 @@ export class Circle extends Shape {
    * @returns The right point of the circle
    */
   get right(): Point {
-    return {
-      x: `${this.currentPosition.x + this._radius}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.toAbsolutePoint(this._radius, 0);
   }
 
   // Standard reference points (matching Rectangle's 9-point system)
@@ -257,10 +249,7 @@ export class Circle extends Shape {
    * @returns The top-left corner of the circle's bounding box
    */
   get topLeft(): Point {
-    return {
-      x: `${this.currentPosition.x - this._radius}px`,
-      y: `${this.currentPosition.y - this._radius}px`,
-    };
+    return this.toAbsolutePoint(-this._radius, -this._radius);
   }
 
   /**
@@ -278,10 +267,7 @@ export class Circle extends Shape {
    * @returns The top-right corner of the circle's bounding box
    */
   get topRight(): Point {
-    return {
-      x: `${this.currentPosition.x + this._radius}px`,
-      y: `${this.currentPosition.y - this._radius}px`,
-    };
+    return this.toAbsolutePoint(this._radius, -this._radius);
   }
 
   /**
@@ -308,10 +294,7 @@ export class Circle extends Shape {
    * @returns The bottom-left corner of the circle's bounding box
    */
   get bottomLeft(): Point {
-    return {
-      x: `${this.currentPosition.x - this._radius}px`,
-      y: `${this.currentPosition.y + this._radius}px`,
-    };
+    return this.toAbsolutePoint(-this._radius, this._radius);
   }
 
   /**
@@ -329,10 +312,7 @@ export class Circle extends Shape {
    * @returns The bottom-right corner of the circle's bounding box
    */
   get bottomRight(): Point {
-    return {
-      x: `${this.currentPosition.x + this._radius}px`,
-      y: `${this.currentPosition.y + this._radius}px`,
-    };
+    return this.toAbsolutePoint(this._radius, this._radius);
   }
 
   /**
@@ -342,14 +322,8 @@ export class Circle extends Shape {
    */
   get boundingBox(): { topLeft: Point; bottomRight: Point; width: number; height: number } {
     return {
-      topLeft: {
-        x: `${this.currentPosition.x - this._radius}px`,
-        y: `${this.currentPosition.y - this._radius}px`,
-      },
-      bottomRight: {
-        x: `${this.currentPosition.x + this._radius}px`,
-        y: `${this.currentPosition.y + this._radius}px`,
-      },
+      topLeft: this.toAbsolutePoint(-this._radius, -this._radius),
+      bottomRight: this.toAbsolutePoint(this._radius, this._radius),
       width: this._radius * 2,
       height: this._radius * 2,
     };
@@ -361,8 +335,10 @@ export class Circle extends Shape {
    * @returns SVG circle element representing the circle
    */
   render(): string {
-    const cx = this.currentPosition.x;
-    const cy = this.currentPosition.y;
+    // Use absolute position for rendering to account for parent hierarchy
+    const absPos = this.getAbsolutePosition();
+    const cx = absPos.x;
+    const cy = absPos.y;
     const r = this._radius;
 
     // Default style if none provided
@@ -377,7 +353,9 @@ export class Circle extends Shape {
     const transformStr = this.getTransformString();
     const transform = transformStr ? ` transform="${transformStr}"` : "";
 
-    return `<circle cx="${cx}" cy="${cy}" r="${r}" ${styleAttrs}${transform} />`;
+    const comment = this.getSVGComment();
+
+    return `${comment}<circle cx="${cx}" cy="${cy}" r="${r}" ${styleAttrs}${transform} />`;
   }
 }
 

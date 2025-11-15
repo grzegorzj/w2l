@@ -111,6 +111,67 @@ export abstract class Element {
   protected transforms: Transform[] = [];
   
   /**
+   * Optional name for this element, used for debugging and SVG comments.
+   */
+  protected _name?: string;
+
+  /**
+   * Creation order index for z-index sorting.
+   * @internal
+   */
+  protected _creationIndex: number;
+
+  /**
+   * Static counter for creation order.
+   * @internal
+   */
+  private static _creationCounter: number = 0;
+
+  /**
+   * Explicit z-index for this element.
+   * When set, overrides automatic z-ordering based on creation time.
+   * Higher values appear on top of lower values.
+   * @internal
+   */
+  protected _zIndex?: number;
+  
+  /**
+   * Reference to the parent element (Container or Layout).
+   * When set, this element's position is relative to the parent.
+   * @internal
+   */
+  protected _parent: any = null;
+
+  /**
+   * Flag to indicate if this element uses absolute positioning.
+   * When true, the element's position is independent of its parent's layout.
+   * @internal
+   */
+  protected _isAbsolutePositioned: boolean = false;
+
+  /**
+   * Elements that have reactive bindings to this element's position.
+   * When this element moves, all dependent elements are notified to update.
+   * @internal
+   */
+  protected _dependentElements: Set<{ element: any; updateCallback: () => void }> = new Set();
+
+  /**
+   * Bindings that this element has to other elements' positions.
+   * Stores information about which properties are bound to which source elements.
+   * @internal
+   */
+  protected _positionBindings: Map<string, { element: any; property: string; getValue: () => Point }> = new Map();
+
+  /**
+   * Constructor to initialize creation index.
+   */
+  constructor(name?: string) {
+    this._name = name;
+    this._creationIndex = Element._creationCounter++;
+  }
+  
+  /**
    * @deprecated Use transforms array instead. This property is kept for backward compatibility.
    * @internal
    */
@@ -134,6 +195,142 @@ export abstract class Element {
         params: { deg: value },
       });
     }
+  }
+
+  /**
+   * Gets the absolute world position of this element.
+   * 
+   * This accounts for parent positions and transformations to provide
+   * the true world coordinates of the element.
+   * 
+   * @returns The absolute position in world coordinates
+   * @internal
+   */
+  protected getAbsolutePosition(): { x: number; y: number } {
+    // If no parent, current position is already absolute
+    if (!this._parent) {
+      return { ...this.currentPosition };
+    }
+
+    // If explicitly positioned as absolute, use current position
+    if (this._isAbsolutePositioned) {
+      return { ...this.currentPosition };
+    }
+
+    // Get parent's absolute position recursively
+    const parentPos = this._parent.currentPosition || { x: 0, y: 0 };
+    const parentAbsPos = this._parent.getAbsolutePosition
+      ? this._parent.getAbsolutePosition()
+      : parentPos;
+
+    // Add our relative position to parent's absolute position
+    return {
+      x: parentAbsPos.x + this.currentPosition.x,
+      y: parentAbsPos.y + this.currentPosition.y,
+    };
+  }
+
+  /**
+   * Helper to create a Point from absolute coordinates.
+   * @internal
+   */
+  protected toAbsolutePoint(relativeX: number, relativeY: number, propertyName?: string): Point {
+    const absPos = this.getAbsolutePosition();
+    const x = `${absPos.x + relativeX}px`;
+    const y = `${absPos.y + relativeY}px`;
+    
+    // If property name is provided, create a bound point
+    if (propertyName) {
+      return this.createBoundPoint(x, y, propertyName);
+    }
+    
+    return { x, y };
+  }
+
+  /**
+   * Gets the parent element of this element, if any.
+   * 
+   * @returns The parent element or null if no parent
+   */
+  get parent(): any {
+    return this._parent;
+  }
+
+  /**
+   * Sets the parent element of this element.
+   * This is typically called automatically by Container.addElement().
+   * 
+   * @param parent - The parent element
+   * @internal
+   */
+  setParent(parent: any): void {
+    this._parent = parent;
+  }
+
+  /**
+   * Checks if this element is using absolute positioning.
+   * 
+   * @returns True if absolutely positioned, false if relative to parent
+   */
+  get isAbsolutePositioned(): boolean {
+    return this._isAbsolutePositioned;
+  }
+
+  /**
+   * Gets the name of this element.
+   * 
+   * @returns The element name or undefined if not set
+   */
+  get name(): string | undefined {
+    return this._name;
+  }
+
+  /**
+   * Gets the creation index of this element (for z-index sorting).
+   * 
+   * @returns The creation index
+   * @internal
+   */
+  get creationIndex(): number {
+    return this._creationIndex;
+  }
+
+  /**
+   * Gets the z-index of this element.
+   * 
+   * @returns The z-index or undefined if not set
+   */
+  get zIndex(): number | undefined {
+    return this._zIndex;
+  }
+
+  /**
+   * Sets the z-index of this element.
+   * 
+   * When set, this overrides automatic z-ordering based on creation time.
+   * Higher values appear on top of lower values.
+   * 
+   * @param value - The z-index value
+   * 
+   * @example
+   * Position a highlight behind text
+   * ```typescript
+   * text.zIndex = 10;
+   * highlight.zIndex = 5; // Will render behind text
+   * ```
+   */
+  set zIndex(value: number | undefined) {
+    this._zIndex = value;
+  }
+
+  /**
+   * Generates an SVG comment for this element if it has a name.
+   * 
+   * @returns SVG comment string or empty string if no name
+   * @internal
+   */
+  protected getSVGComment(): string {
+    return this._name ? `<!-- ${this._name} -->\n` : '';
   }
 
   /**
@@ -276,6 +473,18 @@ export abstract class Element {
       x: this.currentPosition.x + offsetX,
       y: this.currentPosition.y + offsetY,
     };
+
+    // Mark as absolutely positioned when position() is explicitly called
+    // This breaks the element out of relative parent positioning
+    this._isAbsolutePositioned = true;
+
+    // Notify parent that this child is now absolutely positioned
+    if (this._parent && typeof this._parent.markChildAsAbsolute === 'function') {
+      this._parent.markChildAsAbsolute(this);
+    }
+
+    // Notify all elements that have reactive bindings to this element
+    this.notifyDependents();
   }
 
   /**
@@ -352,6 +561,9 @@ export abstract class Element {
       params: { deg: angle },
       pivot: pivot,
     });
+
+    // Notify all elements that have reactive bindings to this element
+    this.notifyDependents();
   }
 
   /**
@@ -389,6 +601,9 @@ export abstract class Element {
       x: this.currentPosition.x + normalized.x * distancePx,
       y: this.currentPosition.y + normalized.y * distancePx,
     };
+
+    // Notify all elements that have reactive bindings to this element
+    this.notifyDependents();
   }
 
   /**
@@ -459,6 +674,110 @@ export abstract class Element {
     } else {
       this.transforms = [];
     }
+  }
+
+  /**
+   * Registers a reactive binding from this element to a source element's position.
+   * When the source element moves, this element will be notified to update.
+   *
+   * @param bindingKey - Unique key for this binding (e.g., 'start', 'end')
+   * @param sourceElement - The element to bind to
+   * @param property - The property name on the source element (e.g., 'center', 'topLeft')
+   * @param updateCallback - Function to call when the source element moves
+   * @internal
+   */
+  protected registerBinding(
+    bindingKey: string,
+    sourceElement: any,
+    property: string,
+    updateCallback: () => void
+  ): void {
+    // Store the binding information
+    this._positionBindings.set(bindingKey, {
+      element: sourceElement,
+      property,
+      getValue: () => sourceElement[property]
+    });
+
+    // Register this element as a dependent of the source element
+    if (sourceElement._dependentElements) {
+      sourceElement._dependentElements.add({
+        element: this,
+        updateCallback
+      });
+    }
+  }
+
+  /**
+   * Unregisters a reactive binding.
+   *
+   * @param bindingKey - The key of the binding to remove
+   * @internal
+   */
+  protected unregisterBinding(bindingKey: string): void {
+    const binding = this._positionBindings.get(bindingKey);
+    if (binding && binding.element._dependentElements) {
+      // Remove this element from the source element's dependents
+      for (const dep of binding.element._dependentElements) {
+        if (dep.element === this) {
+          binding.element._dependentElements.delete(dep);
+          break;
+        }
+      }
+    }
+    this._positionBindings.delete(bindingKey);
+  }
+
+  /**
+   * Unregisters all reactive bindings for this element.
+   * @internal
+   */
+  protected unregisterAllBindings(): void {
+    for (const bindingKey of this._positionBindings.keys()) {
+      this.unregisterBinding(bindingKey);
+    }
+  }
+
+  /**
+   * Notifies all dependent elements that this element has moved.
+   * Triggers update callbacks for all elements that have reactive bindings to this element.
+   * @internal
+   */
+  protected notifyDependents(): void {
+    for (const dependent of this._dependentElements) {
+      dependent.updateCallback();
+    }
+  }
+
+  /**
+   * Updates positions of bound properties from their source elements.
+   * Called automatically when source elements move.
+   * @internal
+   */
+  protected updateFromBindings(): void {
+    // Default implementation does nothing
+    // Subclasses override this to update their specific properties
+  }
+
+  /**
+   * Creates a Point with binding information attached.
+   * This allows position getters to return points that maintain references to their source.
+   *
+   * @param x - The x coordinate
+   * @param y - The y coordinate
+   * @param property - The property name this point represents (e.g., 'center', 'topLeft')
+   * @returns A Point with binding metadata
+   * @internal
+   */
+  protected createBoundPoint(x: number | string, y: number | string, property: string): Point {
+    return {
+      x,
+      y,
+      _binding: {
+        element: this,
+        property
+      }
+    };
   }
 
   /**

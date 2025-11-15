@@ -85,6 +85,11 @@ export interface TextConfig {
   letterSpacing?: string | number;
 
   /**
+   * Optional name for debugging and SVG comments.
+   */
+  name?: string;
+
+  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
    * Uses standard CSS/SVG property names.
    *
@@ -151,12 +156,40 @@ export interface TextConfig {
  * });
  * ```
  */
+/**
+ * Bounding box for a word or text element.
+ */
+export interface WordBoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export class Text extends Shape {
   private config: TextConfig;
   private _fontSize: number;
   private _maxWidth: number | null;
   private _lineHeight: number;
   private _lines: string[];
+  
+  /**
+   * Function to get the measurement container from the parent artboard.
+   * Set by artboard when element is added.
+   * @internal
+   */
+  private _measurementContainerGetter?: () => SVGElement;
+  
+  /**
+   * Cached measured dimensions from browser.
+   * Populated lazily when positions are queried.
+   * @internal
+   */
+  private _measuredDimensions?: {
+    words: Array<WordBoundingBox>;
+    totalWidth: number;
+    totalHeight: number;
+  };
 
   /**
    * Creates a new Text instance.
@@ -164,7 +197,7 @@ export class Text extends Shape {
    * @param config - Configuration for the text element
    */
   constructor(config: TextConfig) {
-    super();
+    super(config.name);
     this.config = config;
 
     this._fontSize = parseUnit(config.fontSize || "16px");
@@ -237,6 +270,76 @@ export class Text extends Shape {
   }
 
   /**
+   * Sets the measurement container getter.
+   * Called by Artboard when this text element is added.
+   * 
+   * @param getter - Function that returns the measurement SVG container
+   * @internal
+   */
+  setMeasurementContainer(getter: () => SVGElement): void {
+    this._measurementContainerGetter = getter;
+  }
+
+  /**
+   * Ensures this text has been measured with actual browser metrics.
+   * Called automatically when any dimension or position getter is accessed.
+   * 
+   * @internal
+   */
+  private ensureMeasured(): void {
+    // Already measured?
+    if (this._measuredDimensions) {
+      return;
+    }
+    
+    // No DOM access available? Will use estimate-based dimensions
+    if (!this._measurementContainerGetter || typeof document === 'undefined') {
+      return;
+    }
+    
+    try {
+      // Get the hidden measurement container
+      const container = this._measurementContainerGetter();
+      
+      // Create temporary group to hold our text
+      const tempGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      tempGroup.innerHTML = this.renderTextElement();
+      container.appendChild(tempGroup);
+      
+      // Measure actual dimensions
+      const textElement = tempGroup.querySelector('text');
+      if (textElement) {
+        const bbox = textElement.getBBox();
+        
+        // Measure each word (each tspan has an ID)
+        const wordBBoxes: Array<WordBoundingBox> = [];
+        const tspans = textElement.querySelectorAll('tspan[data-word-index]');
+        tspans.forEach((tspan) => {
+          const wordBBox = (tspan as SVGTSpanElement).getBBox();
+          wordBBoxes.push({
+            x: wordBBox.x,
+            y: wordBBox.y,
+            width: wordBBox.width,
+            height: wordBBox.height
+          });
+        });
+        
+        this._measuredDimensions = {
+          words: wordBBoxes,
+          totalWidth: bbox.width,
+          totalHeight: bbox.height
+        };
+      }
+      
+      // Clean up temporary element
+      container.removeChild(tempGroup);
+    } catch (error) {
+      // If measurement fails, fall back to estimates
+      console.warn('Text measurement failed, using estimates:', error);
+    }
+  }
+
+  /**
    * Gets the font size in pixels.
    *
    * @returns The font size value
@@ -265,22 +368,37 @@ export class Text extends Shape {
 
   /**
    * Gets the total height of the text block in pixels.
+   * Uses accurate browser measurements when available, estimates otherwise.
    *
    * @returns The height of all lines combined
    */
   get textHeight(): number {
+    // Try to get accurate measurement
+    this.ensureMeasured();
+    
+    if (this._measuredDimensions) {
+      return this._measuredDimensions.totalHeight;
+    }
+    
+    // Fallback to estimate
     return this._lines.length * this.lineHeight;
   }
 
   /**
-   * Gets the estimated width of the text block in pixels.
+   * Gets the width of the text block in pixels.
+   * Uses accurate browser measurements when available, estimates otherwise.
    *
-   * This is a rough approximation based on average character width.
-   * For precise measurements, font metrics would be needed.
-   *
-   * @returns The estimated width
+   * @returns The text width
    */
   get textWidth(): number {
+    // Try to get accurate measurement
+    this.ensureMeasured();
+    
+    if (this._measuredDimensions) {
+      return this._measuredDimensions.totalWidth;
+    }
+    
+    // Fallback to estimate
     if (this._maxWidth) {
       return this._maxWidth;
     }
@@ -300,10 +418,7 @@ export class Text extends Shape {
    * @returns The center point of the text
    */
   get center(): Point {
-    return {
-      x: `${this.currentPosition.x + this.textWidth / 2}px`,
-      y: `${this.currentPosition.y + this.textHeight / 2}px`,
-    };
+    return this.toAbsolutePoint(this.textWidth / 2, this.textHeight / 2);
   }
 
   /**
@@ -311,59 +426,35 @@ export class Text extends Shape {
    */
 
   get topLeft(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.toAbsolutePoint(0, 0);
   }
 
   get topCenter(): Point {
-    return {
-      x: `${this.currentPosition.x + this.textWidth / 2}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.toAbsolutePoint(this.textWidth / 2, 0);
   }
 
   get topRight(): Point {
-    return {
-      x: `${this.currentPosition.x + this.textWidth}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.toAbsolutePoint(this.textWidth, 0);
   }
 
   get leftCenter(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y + this.textHeight / 2}px`,
-    };
+    return this.toAbsolutePoint(0, this.textHeight / 2);
   }
 
   get rightCenter(): Point {
-    return {
-      x: `${this.currentPosition.x + this.textWidth}px`,
-      y: `${this.currentPosition.y + this.textHeight / 2}px`,
-    };
+    return this.toAbsolutePoint(this.textWidth, this.textHeight / 2);
   }
 
   get bottomLeft(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y + this.textHeight}px`,
-    };
+    return this.toAbsolutePoint(0, this.textHeight);
   }
 
   get bottomCenter(): Point {
-    return {
-      x: `${this.currentPosition.x + this.textWidth / 2}px`,
-      y: `${this.currentPosition.y + this.textHeight}px`,
-    };
+    return this.toAbsolutePoint(this.textWidth / 2, this.textHeight);
   }
 
   get bottomRight(): Point {
-    return {
-      x: `${this.currentPosition.x + this.textWidth}px`,
-      y: `${this.currentPosition.y + this.textHeight}px`,
-    };
+    return this.toAbsolutePoint(this.textWidth, this.textHeight);
   }
 
   /**
@@ -386,7 +477,88 @@ export class Text extends Shape {
   }
 
   /**
+   * Gets all words in the text as an array.
+   * Splits text by whitespace across all lines.
+   * 
+   * @returns Array of words
+   * 
+   * @example
+   * Get all words
+   * ```typescript
+   * const text = new Text({ content: "Hello World\nFoo Bar" });
+   * const words = text.getWords(); // ["Hello", "World", "Foo", "Bar"]
+   * ```
+   */
+  getWords(): string[] {
+    const allWords: string[] = [];
+    for (const line of this._lines) {
+      const words = line.split(/\s+/).filter(w => w.length > 0);
+      allWords.push(...words);
+    }
+    return allWords;
+  }
+
+  /**
+   * Gets the accurate bounding box for a specific word.
+   * Requires browser environment for measurement.
+   * 
+   * @param wordIndex - Index of the word (0-based, across all lines)
+   * @returns Bounding box of the word, or null if not available
+   * 
+   * @example
+   * Get bounding box for the first word
+   * ```typescript
+   * const text = new Text({ content: "Hello World" });
+   * const bbox = text.getWordBoundingBox(0); // Bounding box for "Hello"
+   * ```
+   */
+  getWordBoundingBox(wordIndex: number): WordBoundingBox | null {
+    this.ensureMeasured();
+    
+    if (this._measuredDimensions && this._measuredDimensions.words[wordIndex]) {
+      return this._measuredDimensions.words[wordIndex];
+    }
+    
+    return null;
+  }
+
+  /**
+   * Gets the center point of a specific word.
+   * Useful for positioning elements relative to individual words.
+   * 
+   * @param wordIndex - Index of the word (0-based)
+   * @returns Center point of the word, or null if not available
+   * 
+   * @example
+   * Position a circle at the center of a word
+   * ```typescript
+   * const text = new Text({ content: "Hello World" });
+   * const wordCenter = text.getWordCenter(0);
+   * if (wordCenter) {
+   *   circle.position({
+   *     relativeFrom: circle.center,
+   *     relativeTo: wordCenter,
+   *     x: "0px",
+   *     y: "0px"
+   *   });
+   * }
+   * ```
+   */
+  getWordCenter(wordIndex: number): Point | null {
+    const bbox = this.getWordBoundingBox(wordIndex);
+    if (!bbox) {
+      return null;
+    }
+    
+    return {
+      x: `${bbox.x + bbox.width / 2}px`,
+      y: `${bbox.y + bbox.height / 2}px`
+    };
+  }
+
+  /**
    * Updates the text content and recalculates lines.
+   * Clears cached measurements to force re-measurement on next access.
    *
    * @param newContent - The new text content
    *
@@ -400,16 +572,22 @@ export class Text extends Shape {
   updateContent(newContent: string): void {
     this.config.content = newContent;
     this._lines = this.calculateLines();
+    // Clear cached measurements since content changed
+    this._measuredDimensions = undefined;
   }
 
   /**
-   * Renders the text to SVG.
-   *
-   * @returns SVG text element representing the text
+   * Generates the SVG text element with word-level detail for measurements.
+   * Each word gets a data-word-index attribute for accurate bounding box queries.
+   * 
+   * @returns SVG text element string
+   * @internal
    */
-  render(): string {
-    const x = this.currentPosition.x;
-    const y = this.currentPosition.y;
+  private renderTextElement(): string {
+    // Use absolute position for rendering to account for parent hierarchy
+    const absPos = this.getAbsolutePosition();
+    const x = absPos.x;
+    const y = absPos.y;
 
     const fontSize = this._fontSize;
     const fontFamily = this.config.fontFamily || "sans-serif";
@@ -442,17 +620,51 @@ export class Text extends Shape {
     const transformStr = this.getTransformString();
     const transform = transformStr ? ` transform="${transformStr}"` : "";
 
-    // Build SVG text element with tspan for each line
+    // Build SVG text element with tspan for each word
     let svgText = `<text x="${x + xOffset}" y="${y + fontSize}" font-size="${fontSize}" font-family="${fontFamily}" font-weight="${fontWeight}" text-anchor="${textAnchor}" letter-spacing="${letterSpacing}" ${styleAttrs}${transform}>`;
 
-    this._lines.forEach((line, index) => {
-      const dy = index === 0 ? 0 : this.lineHeight;
-      svgText += `<tspan x="${x + xOffset}" dy="${dy}">${this.escapeXml(line)}</tspan>`;
+    let wordIndex = 0;
+    this._lines.forEach((line, lineIndex) => {
+      const dy = lineIndex === 0 ? 0 : this.lineHeight;
+      
+      // Split line into words for individual measurement
+      const words = line.split(/(\s+)/); // Keep whitespace in array
+      
+      if (words.length === 0 || (words.length === 1 && words[0] === "")) {
+        // Empty line
+        svgText += `<tspan x="${x + xOffset}" dy="${dy}"></tspan>`;
+      } else {
+        // First word/space in the line needs dy attribute
+        let isFirstInLine = true;
+        
+        for (const part of words) {
+          if (part.match(/^\s+$/)) {
+            // Whitespace - render as-is without word index
+            svgText += this.escapeXml(part);
+          } else if (part.length > 0) {
+            // Actual word - give it an index for measurement
+            const dyAttr = isFirstInLine ? ` dy="${dy}"` : '';
+            const xAttr = isFirstInLine ? ` x="${x + xOffset}"` : '';
+            svgText += `<tspan${xAttr}${dyAttr} data-word-index="${wordIndex}">${this.escapeXml(part)}</tspan>`;
+            wordIndex++;
+            isFirstInLine = false;
+          }
+        }
+      }
     });
 
     svgText += "</text>";
-
     return svgText;
+  }
+
+  /**
+   * Renders the text to SVG.
+   *
+   * @returns SVG text element representing the text
+   */
+  render(): string {
+    const comment = this.getSVGComment();
+    return comment + this.renderTextElement();
   }
 
   /**

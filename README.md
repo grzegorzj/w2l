@@ -131,6 +131,23 @@ triangle.position({
 });
 ```
 
+### Reactive Positioning
+
+Lines automatically maintain connections to elements, even when those elements move:
+
+```typescript
+// Create a line between two rectangles
+const connector = new Line({
+  start: rect1.center,
+  end: rect2.center
+});
+
+// Move rect1 - the line automatically follows! ✨
+rect1.position({ ... });
+```
+
+Perfect for creating dynamic diagrams, flowcharts, and network graphs. See [Positioning Guide](./guides/POSITIONING.md#reactive-positioning) for details.
+
 ### Units Support
 
 All dimensions support CSS-style units or plain numbers (treated as pixels):

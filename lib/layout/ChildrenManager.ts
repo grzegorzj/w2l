@@ -74,7 +74,12 @@ export class ChildrenManager {
       },
     });
 
-    // Mark the element as belonging to this parent
+    // Set parent relationship using the proper method
+    if (typeof element.setParent === 'function') {
+      element.setParent(parentContext);
+    }
+
+    // Also mark the element as belonging to this parent (legacy support)
     (element as any)._parentLayout = parentContext;
   }
 
@@ -87,6 +92,13 @@ export class ChildrenManager {
     const index = this.children.findIndex((b) => b.element === element);
     if (index !== -1) {
       this.children.splice(index, 1);
+      
+      // Clear parent relationship
+      if (typeof element.setParent === 'function') {
+        element.setParent(null);
+      }
+      
+      // Also clear legacy property
       delete (element as any)._parentLayout;
     }
   }
@@ -150,6 +162,12 @@ export class ChildrenManager {
             type: "rotation",
             params: { deg: deltaRotation },
           });
+        }
+
+        // Recursively update children of children (if this child is a container/layout)
+        if (typeof child.childrenManager !== 'undefined' && 
+            typeof child.childrenManager.updateChildPositions === 'function') {
+          child.childrenManager.updateChildPositions();
         }
       }
     }

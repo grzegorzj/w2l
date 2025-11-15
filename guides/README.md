@@ -18,7 +18,7 @@ System architecture, design decisions, and project structure. Read this to under
 Mathematical conventions, coordinate systems, and coding standards. Essential for understanding how W2L interprets geometry and positioning.
 
 ### [Positioning System](./POSITIONING.md)
-Complete guide to positioning, layouts, and child transformations. Learn how to position elements, use containers, and work with column-based layouts.
+Complete guide to positioning, layouts, and child transformations. Learn how to position elements, use containers, work with column-based layouts, and create reactive connections between elements.
 
 ### [Intelligent Alignment](./INTELLIGENT-ALIGNMENT.md)
 How W2L's intelligent alignment system works. Understand how elements automatically choose appropriate alignment points for natural, intuitive layouts.
@@ -40,6 +40,7 @@ If you're new to W2L, we recommend reading in this order:
 | Understand design decisions | [Architecture](./ARCHITECTURE.md) |
 | Learn coordinate systems | [Conventions](./CONVENTIONS.md) |
 | Position elements and create layouts | [Positioning System](./POSITIONING.md) |
+| Create lines that follow elements | [Reactive Positioning](./POSITIONING.md#reactive-positioning) |
 | Align elements intelligently | [Intelligent Alignment](./INTELLIGENT-ALIGNMENT.md) |
 | See working examples | [Playground Examples](../playground/examples/) |
 | Look up API details | [API Documentation](../docs/index.html) (generated) |
@@ -60,6 +61,7 @@ Key examples:
 - `intelligent-alignment-demo.ts` - Alignment showcase
 - `columns-alignment-demo.ts` - Comprehensive alignment options
 - `layout-transformation-test.ts` - Transformation and positioning
+- `23-reactive-positioning.js` - Reactive line connections between elements
 
 ## Documentation Structure
 

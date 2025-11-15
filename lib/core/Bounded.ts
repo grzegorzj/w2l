@@ -89,6 +89,13 @@ export abstract class Bounded extends Element {
   protected _padding: Spacing = 0;
 
   /**
+   * Constructor to pass name up to Element.
+   */
+  constructor(name?: string) {
+    super(name);
+  }
+
+  /**
    * Gets the margin spacing for this element.
    *
    * @returns The current margin value
@@ -216,10 +223,7 @@ export abstract class Bounded extends Element {
    */
   get contentArea(): Point {
     const padding = this.paddingBox;
-    return {
-      x: `${this.currentPosition.x + padding.left}px`,
-      y: `${this.currentPosition.y + padding.top}px`,
-    };
+    return this.toAbsolutePoint(padding.left, padding.top);
   }
 
   /**

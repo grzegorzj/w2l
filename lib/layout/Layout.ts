@@ -179,10 +179,7 @@ export class Layout extends Rectangle {
    */
   get contentArea(): Point {
     const padding = this.paddingBox;
-    return {
-      x: `${this.currentPosition.x + padding.left}px`,
-      y: `${this.currentPosition.y + padding.top}px`,
-    };
+    return this.toAbsolutePoint(padding.left, padding.top);
   }
 
   /**

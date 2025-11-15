@@ -32,6 +32,43 @@ export interface LineConfig {
   end: Point;
 
   /**
+   * Optional name for debugging and SVG comments.
+   */
+  name?: string;
+
+  /**
+   * Whether to capture point positions absolutely or maintain reactive bindings.
+   * 
+   * - `false` (default): Maintains reactive bindings to source elements.
+   *   When the source elements move, the line updates automatically.
+   * - `true`: Captures current point values and makes them absolute.
+   *   The line becomes independent of the source elements.
+   *
+   * @defaultValue false
+   *
+   * @example
+   * Reactive line that follows elements
+   * ```typescript
+   * const line = new Line({
+   *   start: rect1.center,
+   *   end: rect2.center,
+   *   absolute: false  // line updates when rect1 or rect2 move
+   * });
+   * ```
+   *
+   * @example
+   * Static line with fixed positions
+   * ```typescript
+   * const line = new Line({
+   *   start: rect1.center,
+   *   end: rect2.center,
+   *   absolute: true  // line stays fixed even if rect1 or rect2 move
+   * });
+   * ```
+   */
+  absolute?: boolean;
+
+  /**
    * Visual styling properties (stroke, strokeWidth, opacity, etc.).
    * Uses standard CSS/SVG property names.
    *
@@ -113,10 +150,37 @@ export class Line extends Shape {
    * @param config - Configuration for the line
    */
   constructor(config: LineConfig) {
-    super();
+    super(config.name);
     this.config = config;
     this._start = config.start;
     this._end = config.end;
+
+    // Register reactive bindings if absolute is false (default)
+    const isAbsolute = config.absolute ?? false;
+    
+    if (!isAbsolute) {
+      // Check if start point has binding metadata
+      if (config.start._binding) {
+        const binding = config.start._binding;
+        this.registerBinding(
+          'start',
+          binding.element,
+          binding.property,
+          () => this.updateStartFromBinding()
+        );
+      }
+
+      // Check if end point has binding metadata
+      if (config.end._binding) {
+        const binding = config.end._binding;
+        this.registerBinding(
+          'end',
+          binding.element,
+          binding.property,
+          () => this.updateEndFromBinding()
+        );
+      }
+    }
   }
 
   /**
@@ -230,6 +294,30 @@ export class Line extends Shape {
   }
 
   /**
+   * Updates the start point from its binding.
+   * Called automatically when the bound source element moves.
+   * @internal
+   */
+  private updateStartFromBinding(): void {
+    const binding = this._positionBindings.get('start');
+    if (binding) {
+      this._start = binding.getValue();
+    }
+  }
+
+  /**
+   * Updates the end point from its binding.
+   * Called automatically when the bound source element moves.
+   * @internal
+   */
+  private updateEndFromBinding(): void {
+    const binding = this._positionBindings.get('end');
+    if (binding) {
+      this._end = binding.getValue();
+    }
+  }
+
+  /**
    * Renders the line to SVG.
    *
    * @returns SVG line element representing the line
@@ -252,7 +340,9 @@ export class Line extends Shape {
     const transformStr = this.getTransformString();
     const transform = transformStr ? ` transform="${transformStr}"` : "";
 
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${styleAttrs}${transform} />`;
+    const comment = this.getSVGComment();
+
+    return `${comment}<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${styleAttrs}${transform} />`;
   }
 }
 

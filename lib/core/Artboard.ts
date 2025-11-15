@@ -8,16 +8,39 @@
  */
 
 import { parseUnit } from "./units.js";
-import type { RectangleSize } from "../geometry/Rectangle.js";
+import { Rectangle, type RectangleSize } from "../geometry/Rectangle.js";
+
+/**
+ * Binding information for reactive positioning.
+ * Allows points to maintain references to their source elements.
+ */
+export interface PointBinding {
+  /** The source element this point is bound to */
+  element: any;
+  /** The property name on the source element (e.g., 'center', 'topLeft') */
+  property: string;
+}
 
 /**
  * Represents a 2D point in space with x and y coordinates.
  * Used throughout the library for positioning and layout calculations.
  *
+ * @remarks
+ * Points can optionally include binding metadata for reactive positioning.
+ * When a point includes a binding, it maintains a relationship with the source
+ * element, allowing it to update automatically when the source moves.
+ *
  * @example
  * ```typescript
  * const center: Point = { x: "100px", y: "100px" };
  * const centerNumeric: Point = { x: 100, y: 100 }; // Also supported
+ * 
+ * // Point with binding (created internally by position getters)
+ * const boundPoint: Point = {
+ *   x: 100,
+ *   y: 100,
+ *   _binding: { element: someElement, property: 'center' }
+ * };
  * ```
  */
 export interface Point {
@@ -25,6 +48,8 @@ export interface Point {
   x: string | number;
   /** Y coordinate (supports units like "100px", "2rem", or numbers) */
   y: string | number;
+  /** Optional binding information for reactive positioning */
+  _binding?: PointBinding;
 }
 
 /**
@@ -69,6 +94,8 @@ export interface ArtboardConfig {
  * shapes, text, and other elements to be positioned within.
  *
  * @remarks
+ * The Artboard extends Rectangle to inherit positioning and sizing capabilities.
+ * It is always positioned at (0,0) and provides the root coordinate system.
  * The Artboard uses a standard Cartesian coordinate system with the origin (0,0)
  * at the top-left corner. Positive X extends to the right, positive Y extends downward.
  *
@@ -94,9 +121,16 @@ export interface ArtboardConfig {
  * // Artboard will expand to fit all elements added to it
  * ```
  */
-export class Artboard {
-  private config: ArtboardConfig;
+export class Artboard extends Rectangle {
+  private artboardConfig: ArtboardConfig;
   private elements: any[] = [];
+  
+  /**
+   * Hidden DOM container for accurate text measurements.
+   * Created lazily when first text element needs measurement.
+   * @internal
+   */
+  private _measurementContainer?: SVGElement;
 
   /**
    * Creates a new Artboard instance.
@@ -113,40 +147,24 @@ export class Artboard {
    * ```
    */
   constructor(config: ArtboardConfig) {
-    this.config = config;
-  }
-
-  /**
-   * Gets the center point of the artboard.
-   *
-   * For fixed-size artboards, returns the geometric center.
-   * For auto-sized artboards, calculates the center based on current content bounds.
-   *
-   * @returns The center point of the artboard
-   *
-   * @example
-   * ```typescript
-   * const artboard = new Artboard({ size: { width: "800px", height: "600px" } });
-   * const center = artboard.center; // { x: "400px", y: "300px" }
-   * ```
-   */
-  get center(): Point {
-    const size = this.config.size;
-    if (size === "auto") {
-      return { x: "0px", y: "0px" }; // Would calculate from elements
+    // Convert Artboard config to Rectangle config
+    const size = config.size === "auto" ? { width: 0, height: 0 } : config.size;
+    
+    super({
+      width: size.width,
+      height: size.height,
+      name: "artboard",
+      style: {
+        fill: config.backgroundColor || "transparent"
+      }
+    });
+    
+    this.artboardConfig = config;
+    
+    // Set padding if provided
+    if (config.padding) {
+      this.padding = config.padding;
     }
-    const widthPx =
-      (size as RectangleSize).width === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).width);
-    const heightPx =
-      (size as RectangleSize).height === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).height);
-    return {
-      x: `${widthPx / 2}px`,
-      y: `${heightPx / 2}px`,
-    };
   }
 
   /**
@@ -155,150 +173,42 @@ export class Artboard {
    * @returns The dimensions of the artboard
    */
   get size(): RectangleSize {
-    if (this.config.size === "auto") {
+    if (this.artboardConfig.size === "auto") {
       return { width: "auto", height: "auto" };
     }
-    return this.config.size;
+    return this.artboardConfig.size;
   }
+  
+  // Position getters (center, topLeft, etc.) are inherited from Rectangle
 
   /**
-   * Gets the top-left corner of the artboard.
-   *
-   * @returns The top-left point (always at origin for artboards)
+   * Gets or creates the measurement DOM container.
+   * This is a hidden SVG element used for accurate text measurements.
+   * 
+   * @returns The measurement container SVG element
+   * @internal
    */
-  get topLeft(): Point {
-    return { x: "0px", y: "0px" };
-  }
-
-  /**
-   * Gets the top-right corner of the artboard.
-   *
-   * @returns The top-right point
-   */
-  get topRight(): Point {
-    const size = this.config.size;
-    if (size === "auto") {
-      return { x: "0px", y: "0px" };
+  getMeasurementContainer(): SVGElement {
+    if (this._measurementContainer) {
+      return this._measurementContainer;
     }
-    const widthPx =
-      (size as RectangleSize).width === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).width);
-    return { x: `${widthPx}px`, y: "0px" };
-  }
-
-  /**
-   * Gets the bottom-left corner of the artboard.
-   *
-   * @returns The bottom-left point
-   */
-  get bottomLeft(): Point {
-    const size = this.config.size;
-    if (size === "auto") {
-      return { x: "0px", y: "0px" };
+    
+    // Check if we're in a browser environment
+    if (typeof document === 'undefined') {
+      throw new Error('Measurement container requires browser environment');
     }
-    const heightPx =
-      (size as RectangleSize).height === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).height);
-    return { x: "0px", y: `${heightPx}px` };
-  }
-
-  /**
-   * Gets the bottom-right corner of the artboard.
-   *
-   * @returns The bottom-right point
-   */
-  get bottomRight(): Point {
-    const size = this.config.size;
-    if (size === "auto") {
-      return { x: "0px", y: "0px" };
-    }
-    const widthPx =
-      (size as RectangleSize).width === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).width);
-    const heightPx =
-      (size as RectangleSize).height === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).height);
-    return { x: `${widthPx}px`, y: `${heightPx}px` };
-  }
-
-  /**
-   * Gets the center of the top edge.
-   *
-   * @returns The top center point
-   */
-  get topCenter(): Point {
-    const size = this.config.size;
-    if (size === "auto") {
-      return { x: "0px", y: "0px" };
-    }
-    const widthPx =
-      (size as RectangleSize).width === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).width);
-    return { x: `${widthPx / 2}px`, y: "0px" };
-  }
-
-  /**
-   * Gets the center of the bottom edge.
-   *
-   * @returns The bottom center point
-   */
-  get bottomCenter(): Point {
-    const size = this.config.size;
-    if (size === "auto") {
-      return { x: "0px", y: "0px" };
-    }
-    const widthPx =
-      (size as RectangleSize).width === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).width);
-    const heightPx =
-      (size as RectangleSize).height === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).height);
-    return { x: `${widthPx / 2}px`, y: `${heightPx}px` };
-  }
-
-  /**
-   * Gets the center of the left edge.
-   *
-   * @returns The left center point
-   */
-  get leftCenter(): Point {
-    const size = this.config.size;
-    if (size === "auto") {
-      return { x: "0px", y: "0px" };
-    }
-    const heightPx =
-      (size as RectangleSize).height === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).height);
-    return { x: "0px", y: `${heightPx / 2}px` };
-  }
-
-  /**
-   * Gets the center of the right edge.
-   *
-   * @returns The right center point
-   */
-  get rightCenter(): Point {
-    const size = this.config.size;
-    if (size === "auto") {
-      return { x: "0px", y: "0px" };
-    }
-    const widthPx =
-      (size as RectangleSize).width === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).width);
-    const heightPx =
-      (size as RectangleSize).height === "auto"
-        ? 0
-        : parseUnit((size as RectangleSize).height);
-    return { x: `${widthPx}px`, y: `${heightPx / 2}px` };
+    
+    // Create hidden SVG for measurements
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "0");
+    svg.setAttribute("height", "0");
+    svg.style.position = "absolute";
+    svg.style.visibility = "hidden";
+    svg.style.pointerEvents = "none";
+    document.body.appendChild(svg);
+    
+    this._measurementContainer = svg;
+    return svg;
   }
 
   /**
@@ -309,10 +219,77 @@ export class Artboard {
    */
   addElement(element: any): void {
     this.elements.push(element);
+    
+    // If element supports measurement (like Text), provide measurement container
+    if (element.setMeasurementContainer) {
+      element.setMeasurementContainer(() => this.getMeasurementContainer());
+    }
+  }
+
+  /**
+   * Gets the nesting depth of an element (how many parents it has).
+   * @internal
+   */
+  private getNestingDepth(element: any): number {
+    let depth = 0;
+    let current = element;
+    while (current.parent) {
+      depth++;
+      current = current.parent;
+    }
+    return depth;
+  }
+
+  /**
+   * Sorts elements by z-index (explicit z-index > nesting depth > creation order).
+   * 
+   * Sorting priority:
+   * 1. Explicit z-index (if set) - higher values on top
+   * 2. Nesting depth - deeper nested elements on top
+   * 3. Creation order - later created elements on top
+   * 
+   * @internal
+   */
+  private sortElementsByZIndex(elements: any[]): any[] {
+    return [...elements].sort((a, b) => {
+      // First priority: explicit z-index (if set on either element)
+      const zIndexA = a.zIndex;
+      const zIndexB = b.zIndex;
+      
+      // If both have explicit z-index, compare them
+      if (zIndexA !== undefined && zIndexB !== undefined) {
+        return zIndexA - zIndexB;
+      }
+      
+      // If only one has z-index, it takes priority based on its value
+      // Elements without z-index are treated as z-index: 0
+      if (zIndexA !== undefined) {
+        return zIndexA - 0;
+      }
+      if (zIndexB !== undefined) {
+        return 0 - zIndexB;
+      }
+      
+      // Second priority: nesting depth (more nested = higher z-index)
+      const depthA = this.getNestingDepth(a);
+      const depthB = this.getNestingDepth(b);
+      if (depthA !== depthB) {
+        return depthA - depthB;
+      }
+      
+      // Third priority: creation order (later = higher z-index)
+      const indexA = a.creationIndex !== undefined ? a.creationIndex : 0;
+      const indexB = b.creationIndex !== undefined ? b.creationIndex : 0;
+      return indexA - indexB;
+    });
   }
 
   /**
    * Renders the artboard and all its elements to SVG.
+   *
+   * Elements are sorted by z-index before rendering:
+   * - Creation order: Later created elements appear on top
+   * - Nesting: Deeper nested elements appear on top of their parents
    *
    * @returns SVG string representation of the artboard
    *
@@ -327,10 +304,13 @@ export class Artboard {
     const size = this.size;
     const widthPx = size.width === "auto" ? 800 : parseUnit(size.width);
     const heightPx = size.height === "auto" ? 600 : parseUnit(size.height);
-    const bgColor = this.config.backgroundColor || "transparent";
+    const bgColor = this.artboardConfig.backgroundColor || "transparent";
 
-    // Render all elements
-    const elementsHTML = this.elements
+    // Sort elements by z-index (creation order + nesting depth)
+    const sortedElements = this.sortElementsByZIndex(this.elements);
+
+    // Render all elements in z-index order
+    const elementsHTML = sortedElements
       .map((element: any) => element.render())
       .join("\n    ");
 

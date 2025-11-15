@@ -74,6 +74,11 @@ export interface RectangleConfig {
   cornerRadius?: string | number;
 
   /**
+   * Optional name for debugging and SVG comments.
+   */
+  name?: string;
+
+  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
    * Uses standard CSS/SVG property names.
    *
@@ -171,7 +176,7 @@ export class Rectangle extends Shape {
    * @param config - Configuration for the rectangle
    */
   constructor(config: RectangleConfig) {
-    super();
+    super(config.name);
     this.config = config;
     this._width = parseUnit(config.width);
     this._height = parseUnit(config.height);
@@ -222,17 +227,31 @@ export class Rectangle extends Shape {
    * @returns The transformed point in world coordinates
    * @internal
    */
-  private transformPoint(localX: number, localY: number): Point {
-    const x = this.currentPosition.x;
-    const y = this.currentPosition.y;
+  private transformPoint(
+    localX: number,
+    localY: number,
+    propertyName?: string
+  ): Point {
+    // Use absolute position to account for parent hierarchy
+    const absPos = this.getAbsolutePosition();
+    const x = absPos.x;
+    const y = absPos.y;
 
     const totalRotation = this.getTotalRotation();
 
-    // If no rotation, just return the local position offset by currentPosition
+    // If no rotation, just return the local position offset by absolute position
     if (totalRotation === 0) {
+      const resultX = `${x + localX}px`;
+      const resultY = `${y + localY}px`;
+
+      // If property name is provided, create a bound point
+      if (propertyName) {
+        return this.createBoundPoint(resultX, resultY, propertyName);
+      }
+
       return {
-        x: `${x + localX}px`,
-        y: `${y + localY}px`,
+        x: resultX,
+        y: resultY,
       };
     }
 
@@ -256,9 +275,17 @@ export class Rectangle extends Shape {
     const rotatedY = relX * sin + relY * cos;
 
     // Translate back
+    const resultX = `${centerX + rotatedX}px`;
+    const resultY = `${centerY + rotatedY}px`;
+
+    // If property name is provided, create a bound point
+    if (propertyName) {
+      return this.createBoundPoint(resultX, resultY, propertyName);
+    }
+
     return {
-      x: `${centerX + rotatedX}px`,
-      y: `${centerY + rotatedY}px`,
+      x: resultX,
+      y: resultY,
     };
   }
 
@@ -271,10 +298,8 @@ export class Rectangle extends Shape {
    * The center is the rotation pivot point and doesn't move with rotation.
    */
   get center(): Point {
-    return {
-      x: `${this.currentPosition.x + this._width / 2}px`,
-      y: `${this.currentPosition.y + this._height / 2}px`,
-    };
+    // Use absolute position to account for parent hierarchy
+    return this.toAbsolutePoint(this._width / 2, this._height / 2, "center");
   }
 
   /**
@@ -287,7 +312,7 @@ export class Rectangle extends Shape {
    * For a rotated rectangle, this is NOT the same as currentPosition.
    */
   get topLeft(): Point {
-    return this.transformPoint(0, 0);
+    return this.transformPoint(0, 0, "topLeft");
   }
 
   /**
@@ -296,7 +321,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the top-right corner
    */
   get topRight(): Point {
-    return this.transformPoint(this._width, 0);
+    return this.transformPoint(this._width, 0, "topRight");
   }
 
   /**
@@ -305,7 +330,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the bottom-left corner
    */
   get bottomLeft(): Point {
-    return this.transformPoint(0, this._height);
+    return this.transformPoint(0, this._height, "bottomLeft");
   }
 
   /**
@@ -314,7 +339,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the bottom-right corner
    */
   get bottomRight(): Point {
-    return this.transformPoint(this._width, this._height);
+    return this.transformPoint(this._width, this._height, "bottomRight");
   }
 
   /**
@@ -323,7 +348,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the top edge center
    */
   get topCenter(): Point {
-    return this.transformPoint(this._width / 2, 0);
+    return this.transformPoint(this._width / 2, 0, "topCenter");
   }
 
   /**
@@ -332,7 +357,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the bottom edge center
    */
   get bottomCenter(): Point {
-    return this.transformPoint(this._width / 2, this._height);
+    return this.transformPoint(this._width / 2, this._height, "bottomCenter");
   }
 
   /**
@@ -341,7 +366,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the left edge center
    */
   get leftCenter(): Point {
-    return this.transformPoint(0, this._height / 2);
+    return this.transformPoint(0, this._height / 2, "leftCenter");
   }
 
   /**
@@ -350,7 +375,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the right edge center
    */
   get rightCenter(): Point {
-    return this.transformPoint(this._width, this._height / 2);
+    return this.transformPoint(this._width, this._height / 2, "rightCenter");
   }
 
   /**
@@ -375,8 +400,10 @@ export class Rectangle extends Shape {
    * ```
    */
   get sides(): [RectangleSide, RectangleSide, RectangleSide, RectangleSide] {
-    const x = this.currentPosition.x;
-    const y = this.currentPosition.y;
+    // Use absolute position to account for parent hierarchy
+    const absPos = this.getAbsolutePosition();
+    const x = absPos.x;
+    const y = absPos.y;
     const w = this._width;
     const h = this._height;
 
@@ -514,8 +541,10 @@ export class Rectangle extends Shape {
    * @internal
    */
   private generateSquirclePath(): string {
-    const x = this.currentPosition.x;
-    const y = this.currentPosition.y;
+    // Use absolute position to account for parent hierarchy
+    const absPos = this.getAbsolutePosition();
+    const x = absPos.x;
+    const y = absPos.y;
     const w = this._width;
     const h = this._height;
     const r = Math.min(this._cornerRadius, w / 2, h / 2);
@@ -547,8 +576,10 @@ export class Rectangle extends Shape {
    * @returns SVG element representing the rectangle
    */
   render(): string {
-    const x = this.currentPosition.x;
-    const y = this.currentPosition.y;
+    // Use absolute position for rendering to account for parent hierarchy
+    const absPos = this.getAbsolutePosition();
+    const x = absPos.x;
+    const y = absPos.y;
     const w = this._width;
     const h = this._height;
     const cornerStyle = this.config.cornerStyle || "sharp";
@@ -565,10 +596,12 @@ export class Rectangle extends Shape {
     const transformStr = this.getTransformString();
     const transform = transformStr ? ` transform="${transformStr}"` : "";
 
+    const comment = this.getSVGComment();
+
     // Squircle corners
     if (cornerStyle === "squircle" && this._cornerRadius > 0) {
       const path = this.generateSquirclePath();
-      return `<path d="${path}" ${styleAttrs}${transform} />`;
+      return `${comment}<path d="${path}" ${styleAttrs}${transform} />`;
     }
 
     // Rounded or sharp corners
@@ -576,6 +609,6 @@ export class Rectangle extends Shape {
       cornerStyle === "rounded"
         ? Math.min(this._cornerRadius, w / 2, h / 2)
         : 0;
-    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ry="${r}" ${styleAttrs}${transform} />`;
+    return `${comment}<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ry="${r}" ${styleAttrs}${transform} />`;
   }
 }

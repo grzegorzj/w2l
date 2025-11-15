@@ -28,6 +28,11 @@ export interface ContainerConfig {
    * @defaultValue 0
    */
   padding?: string | number;
+
+  /**
+   * Optional name for debugging and SVG comments.
+   */
+  name?: string;
 }
 
 /**
@@ -76,7 +81,7 @@ export class Container extends Bounded {
    * @param config - Configuration for the container
    */
   constructor(config: ContainerConfig) {
-    super();
+    super(config.name);
     this.config = config;
     this._width = parseUnit(config.size.width);
     this._height = parseUnit(config.size.height);
@@ -116,10 +121,7 @@ export class Container extends Bounded {
    * @returns The center point of the container
    */
   get center(): Point {
-    return {
-      x: `${this.currentPosition.x + this._width / 2}px`,
-      y: `${this.currentPosition.y + this._height / 2}px`,
-    };
+    return this.toAbsolutePoint(this._width / 2, this._height / 2);
   }
 
   /**
@@ -128,10 +130,16 @@ export class Container extends Bounded {
    * @returns The top-left point
    */
   get topLeft(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.toAbsolutePoint(0, 0);
+  }
+
+  /**
+   * Gets the center of the top edge.
+   *
+   * @returns The top-center point
+   */
+  get topCenter(): Point {
+    return this.toAbsolutePoint(this._width / 2, 0);
   }
 
   /**
@@ -140,10 +148,25 @@ export class Container extends Bounded {
    * @returns The top-right point
    */
   get topRight(): Point {
-    return {
-      x: `${this.currentPosition.x + this._width}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    return this.toAbsolutePoint(this._width, 0);
+  }
+
+  /**
+   * Gets the center of the left edge.
+   *
+   * @returns The left-center point
+   */
+  get leftCenter(): Point {
+    return this.toAbsolutePoint(0, this._height / 2);
+  }
+
+  /**
+   * Gets the center of the right edge.
+   *
+   * @returns The right-center point
+   */
+  get rightCenter(): Point {
+    return this.toAbsolutePoint(this._width, this._height / 2);
   }
 
   /**
@@ -152,10 +175,16 @@ export class Container extends Bounded {
    * @returns The bottom-left point
    */
   get bottomLeft(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y + this._height}px`,
-    };
+    return this.toAbsolutePoint(0, this._height);
+  }
+
+  /**
+   * Gets the center of the bottom edge.
+   *
+   * @returns The bottom-center point
+   */
+  get bottomCenter(): Point {
+    return this.toAbsolutePoint(this._width / 2, this._height);
   }
 
   /**
@@ -164,10 +193,7 @@ export class Container extends Bounded {
    * @returns The bottom-right point
    */
   get bottomRight(): Point {
-    return {
-      x: `${this.currentPosition.x + this._width}px`,
-      y: `${this.currentPosition.y + this._height}px`,
-    };
+    return this.toAbsolutePoint(this._width, this._height);
   }
 
   /**
@@ -180,10 +206,7 @@ export class Container extends Bounded {
    */
   get contentArea(): Point {
     const padding = this.paddingBox;
-    return {
-      x: `${this.currentPosition.x + padding.left}px`,
-      y: `${this.currentPosition.y + padding.top}px`,
-    };
+    return this.toAbsolutePoint(padding.left, padding.top);
   }
 
   /**
@@ -272,18 +295,23 @@ export class Container extends Bounded {
   }
 
   /**
-   * Renders the container.
+   * Renders the container and its children.
    *
-   * @returns Empty string (containers are invisible)
+   * @returns SVG string representation of all children
    *
    * @remarks
-   * Containers are invisible layout elements and do not render anything.
-   * Only their child elements render.
+   * Containers are invisible layout elements and do not render anything themselves.
+   * However, they render all their child elements.
    */
   render(): string {
-    // Containers are invisible - they don't render anything
-    // Only their children render
-    return "";
+    // Containers are invisible - they don't render anything themselves
+    // But they render all their children
+    const childrenSVG = this.childrenManager
+      .getChildren()
+      .map((element) => element.render())
+      .filter((svg) => svg.length > 0)
+      .join("\n");
+
+    return childrenSVG;
   }
 }
-

@@ -39,6 +39,13 @@ import { Bounded } from "./Bounded.js";
  * ```
  */
 export abstract class Shape extends Bounded {
+  /**
+   * Constructor to pass name up to Bounded.
+   */
+  constructor(name?: string) {
+    super(name);
+  }
+
   // Shape-specific methods and properties can be added here
   // All positioning, rotation, translation, margin, and padding are inherited from Bounded
 }

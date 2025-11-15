@@ -54,6 +54,11 @@ export interface RegularPolygonConfig {
   rotation?: number;
 
   /**
+   * Optional name for debugging and SVG comments.
+   */
+  name?: string;
+
+  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
    * Uses standard CSS/SVG property names.
    *
@@ -155,7 +160,7 @@ export class RegularPolygon extends Shape {
    * @throws {Error} If sides is less than 3
    */
   constructor(config: RegularPolygonConfig) {
-    super();
+    super(config.name);
     
     if (config.sides < 3) {
       throw new Error("RegularPolygon requires at least 3 sides");
@@ -302,10 +307,8 @@ export class RegularPolygon extends Shape {
    * @returns The center point of the polygon
    */
   get center(): Point {
-    return {
-      x: `${this.currentPosition.x}px`,
-      y: `${this.currentPosition.y}px`,
-    };
+    // Use absolute position to account for parent hierarchy
+    return this.toAbsolutePoint(0, 0);
   }
 
   /**
@@ -502,10 +505,12 @@ export class RegularPolygon extends Shape {
    * @returns SVG polygon element representing the regular polygon
    */
   render(): string {
+    // Use absolute position for rendering to account for parent hierarchy
+    const absPos = this.getAbsolutePosition();
     const points = this.vertices
       .map((v) => {
-        const x = v.x + this.currentPosition.x;
-        const y = v.y + this.currentPosition.y;
+        const x = v.x + absPos.x;
+        const y = v.y + absPos.y;
         return `${x},${y}`;
       })
       .join(" ");
@@ -522,7 +527,9 @@ export class RegularPolygon extends Shape {
     const transformStr = this.getTransformString();
     const transform = transformStr ? ` transform="${transformStr}"` : "";
 
-    return `<polygon points="${points}" ${styleAttrs}${transform} />`;
+    const comment = this.getSVGComment();
+
+    return `${comment}<polygon points="${points}" ${styleAttrs}${transform} />`;
   }
 }
 
