@@ -97,6 +97,7 @@ export type {
  */
 export {
   Side,
+  Line,
   Triangle,
   Circle,
   Rectangle,
@@ -112,6 +113,7 @@ export {
 export type {
   RectangleSize,
   SideConfig,
+  LineConfig,
   TriangleConfig,
   TriangleSide,
   CircleConfig,

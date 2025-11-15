@@ -3,6 +3,7 @@
  *
  * This module contains geometric shape primitives including:
  * - {@link Side}: Generic side/edge with inward and outward normals
+ * - {@link Line}: Line connecting two points
  * - {@link Triangle}: Triangular shapes with various configurations
  * - {@link Circle}: Circular shapes with radius or diameter
  * - {@link Rectangle}: Rectangular shapes with rounded corners and squircle support
@@ -15,6 +16,9 @@
 
 export { Side } from "./Side.js";
 export type { SideConfig } from "./Side.js";
+
+export { Line } from "./Line.js";
+export type { LineConfig } from "./Line.js";
 
 export { Triangle } from "./Triangle.js";
 export type { TriangleConfig, TriangleSide } from "./Triangle.js";

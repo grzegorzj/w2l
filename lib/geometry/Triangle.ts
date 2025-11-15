@@ -549,6 +549,122 @@ export class Triangle extends Shape {
   }
 
   /**
+   * Gets the altitudes of the triangle from each vertex to its opposite side.
+   *
+   * An altitude is the perpendicular line segment from a vertex to the line containing
+   * the opposite side. Each altitude includes the foot point (where it meets the opposite
+   * side), the length, and the vertex it originates from.
+   *
+   * @returns Array of three altitude objects, one from each vertex
+   *
+   * @example
+   * Draw altitudes of a triangle
+   * ```typescript
+   * const triangle = new Triangle({ type: "right", a: 300, b: 400 });
+   * triangle.altitudes.forEach((altitude) => {
+   *   const line = new Line({
+   *     start: altitude.vertex,
+   *     end: altitude.foot,
+   *     style: {
+   *       stroke: "#3498db",
+   *       strokeWidth: 2,
+   *       strokeDasharray: "5,5"
+   *     }
+   *   });
+   *   artboard.addElement(line);
+   * });
+   * ```
+   */
+  get altitudes(): Array<{
+    vertex: Point;
+    foot: Point;
+    length: number;
+    side: TriangleSide;
+  }> {
+    const [v0, v1, v2] = this.vertices;
+    const [side0, side1, side2] = this.sides;
+
+    // Helper to calculate the foot of the perpendicular from a point to a line
+    const getAltitudeFoot = (
+      vertex: { x: number; y: number },
+      sideStart: { x: number; y: number },
+      sideEnd: { x: number; y: number }
+    ): { foot: { x: number; y: number }; length: number } => {
+      // Vector from side start to side end
+      const dx = sideEnd.x - sideStart.x;
+      const dy = sideEnd.y - sideStart.y;
+      const sideLengthSq = dx * dx + dy * dy;
+
+      // Vector from side start to vertex
+      const vx = vertex.x - sideStart.x;
+      const vy = vertex.y - sideStart.y;
+
+      // Project vertex onto the line (parameter t along the line)
+      const t = (vx * dx + vy * dy) / sideLengthSq;
+
+      // Foot point
+      const footX = sideStart.x + t * dx;
+      const footY = sideStart.y + t * dy;
+
+      // Distance from vertex to foot
+      const distX = vertex.x - footX;
+      const distY = vertex.y - footY;
+      const length = Math.sqrt(distX * distX + distY * distY);
+
+      return {
+        foot: { x: footX, y: footY },
+        length,
+      };
+    };
+
+    // Altitude from v0 to side opposite (side1: v1->v2)
+    const altitude0 = getAltitudeFoot(v0, v1, v2);
+    // Altitude from v1 to side opposite (side2: v2->v0)
+    const altitude1 = getAltitudeFoot(v1, v2, v0);
+    // Altitude from v2 to side opposite (side0: v0->v1)
+    const altitude2 = getAltitudeFoot(v2, v0, v1);
+
+    return [
+      {
+        vertex: {
+          x: `${v0.x + this.currentPosition.x}px`,
+          y: `${v0.y + this.currentPosition.y}px`,
+        },
+        foot: {
+          x: `${altitude0.foot.x + this.currentPosition.x}px`,
+          y: `${altitude0.foot.y + this.currentPosition.y}px`,
+        },
+        length: altitude0.length,
+        side: side1, // opposite side
+      },
+      {
+        vertex: {
+          x: `${v1.x + this.currentPosition.x}px`,
+          y: `${v1.y + this.currentPosition.y}px`,
+        },
+        foot: {
+          x: `${altitude1.foot.x + this.currentPosition.x}px`,
+          y: `${altitude1.foot.y + this.currentPosition.y}px`,
+        },
+        length: altitude1.length,
+        side: side2, // opposite side
+      },
+      {
+        vertex: {
+          x: `${v2.x + this.currentPosition.x}px`,
+          y: `${v2.y + this.currentPosition.y}px`,
+        },
+        foot: {
+          x: `${altitude2.foot.x + this.currentPosition.x}px`,
+          y: `${altitude2.foot.y + this.currentPosition.y}px`,
+        },
+        length: altitude2.length,
+        side: side0, // opposite side
+      },
+    ];
+  }
+
+  /**
    * Renders the triangle to SVG.
    *
    * @returns SVG polygon element representing the triangle

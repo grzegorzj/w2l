@@ -171,8 +171,12 @@ export class Square extends Rectangle {
    * Gets the diagonal length of the square in pixels.
    *
    * @returns The diagonal length (side × √2)
+   *
+   * @remarks
+   * For detailed diagonal properties including start/end points and normals,
+   * use the inherited `diagonal` and `antiDiagonal` properties from Rectangle.
    */
-  get diagonal(): number {
+  get diagonalLength(): number {
     return this._width * Math.sqrt(2);
   }
 }

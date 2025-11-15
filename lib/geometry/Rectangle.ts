@@ -402,6 +402,112 @@ export class Rectangle extends Shape {
   }
 
   /**
+   * Gets the primary diagonal of the rectangle (top-left to bottom-right).
+   *
+   * @returns Object with diagonal start, end, center, length, and normal vectors
+   *
+   * @example
+   * Draw the diagonal
+   * ```typescript
+   * const rect = new Rectangle({ width: 200, height: 100 });
+   * const line = new Line({
+   *   start: rect.diagonal.start,
+   *   end: rect.diagonal.end,
+   *   style: { stroke: "#e74c3c", strokeWidth: 2 }
+   * });
+   * ```
+   */
+  get diagonal(): {
+    start: Point;
+    end: Point;
+    center: Point;
+    length: number;
+    outwardNormal: Point;
+    inwardNormal: Point;
+  } {
+    const tl = this.topLeft;
+    const br = this.bottomRight;
+    const length = Math.sqrt(this._width ** 2 + this._height ** 2);
+
+    // Direction vector: from TL to BR
+    const dx = this._width;
+    const dy = this._height;
+
+    // Outward normal: perpendicular to diagonal, pointing away from center
+    // For TL->BR diagonal, rotate 90° clockwise: (dx, dy) -> (-dy, dx)
+    const outwardX = -dy / length;
+    const outwardY = dx / length;
+
+    return {
+      start: tl,
+      end: br,
+      center: this.center,
+      length,
+      outwardNormal: {
+        x: `${outwardX}px`,
+        y: `${outwardY}px`,
+      },
+      inwardNormal: {
+        x: `${-outwardX}px`,
+        y: `${-outwardY}px`,
+      },
+    };
+  }
+
+  /**
+   * Gets the secondary diagonal of the rectangle (top-right to bottom-left).
+   *
+   * @returns Object with diagonal start, end, center, length, and normal vectors
+   *
+   * @example
+   * Draw the anti-diagonal
+   * ```typescript
+   * const rect = new Rectangle({ width: 200, height: 100 });
+   * const line = new Line({
+   *   start: rect.antiDiagonal.start,
+   *   end: rect.antiDiagonal.end,
+   *   style: { stroke: "#3498db", strokeWidth: 2 }
+   * });
+   * ```
+   */
+  get antiDiagonal(): {
+    start: Point;
+    end: Point;
+    center: Point;
+    length: number;
+    outwardNormal: Point;
+    inwardNormal: Point;
+  } {
+    const tr = this.topRight;
+    const bl = this.bottomLeft;
+    const length = Math.sqrt(this._width ** 2 + this._height ** 2);
+
+    // Direction vector: from TR to BL
+    const dx = -this._width;
+    const dy = this._height;
+
+    // Outward normal: perpendicular to diagonal, pointing away from center
+    // For TR->BL diagonal, rotate 90° clockwise: (dx, dy) -> (-dy, dx)
+    const outwardX = -dy / length;
+    const outwardY = dx / length;
+
+    return {
+      start: tr,
+      end: bl,
+      center: this.center,
+      length,
+      outwardNormal: {
+        x: `${outwardX}px`,
+        y: `${outwardY}px`,
+      },
+      inwardNormal: {
+        x: `${-outwardX}px`,
+        y: `${-outwardY}px`,
+      },
+    };
+  }
+
+  /**
    * Generates a squircle (superellipse) path.
    *
    * @returns SVG path data for a squircle shape
