@@ -260,14 +260,16 @@ export class LatexText extends Shape {
             height: vbHeight * scale
           };
           
-          // Use viewBox calculation as it's more precise
+          // Use viewBox calculation for dimensions, but keep browser position for part offsets
           bbox = {
             width: vbWidth * scale,
             height: vbHeight * scale,
-            left: 0,
-            top: 0,
-            right: vbWidth * scale,
-            bottom: vbHeight * scale
+            left: browserBbox.left,  // Use actual screen position for offset calculations
+            top: browserBbox.top,    // Use actual screen position for offset calculations
+            right: browserBbox.left + vbWidth * scale,
+            bottom: browserBbox.top + vbHeight * scale,
+            x: browserBbox.x,
+            y: browserBbox.y
           } as DOMRect;
         } else {
           // No viewBox, use browser measurement
@@ -278,22 +280,25 @@ export class LatexText extends Shape {
         bbox = tempDiv.getBoundingClientRect();
       }
       
-      // Measure parts (individual elements with MathJax classes)
+      // Measure parts (individual elements with MathJax structure)
       const parts = new Map<string, LatexPartBoundingBox>();
       
-      // Find all measurable parts (MathJax uses different class names)
-      // mjx-* classes for various math elements
+      // Find all measurable parts - MathJax uses <g> elements with data-mml-node attributes
       const searchRoot = svgElement || tempDiv;
-      const elements = searchRoot.querySelectorAll('[data-mjx-texclass], .mjx-char, .mjx-mo, .mjx-mi, .mjx-mn, .mjx-mfrac, .mjx-msqrt');
+      const elements = searchRoot.querySelectorAll('g[data-mml-node]');
       elements.forEach((el, index) => {
-        const partBbox = (el as HTMLElement).getBoundingClientRect();
-        const texClass = el.getAttribute('data-mjx-texclass') || el.className.split(' ')[0] || `part-${index}`;
-        parts.set(texClass + `-${index}`, {
-          x: partBbox.left - bbox.left,
-          y: partBbox.top - bbox.top,
-          width: partBbox.width,
-          height: partBbox.height
-        });
+        const partBbox = (el as SVGElement).getBoundingClientRect();
+        const mmlNode = el.getAttribute('data-mml-node') || `part`;
+        
+        // Only include parts with reasonable size (filter out tiny structural elements)
+        if (partBbox.width > 1 && partBbox.height > 1) {
+          parts.set(`${mmlNode}-${index}`, {
+            x: partBbox.left - bbox.left,
+            y: partBbox.top - bbox.top,
+            width: partBbox.width,
+            height: partBbox.height
+          });
+        }
       });
       
       this._measuredDimensions = {
@@ -338,7 +343,9 @@ export class LatexText extends Shape {
           exSize: this._fontSize * 0.5,
           scale: this._fontSize / 1000,
           displayMode: this.config.displayMode,
-          svgFound: !!svgElement
+          svgFound: !!svgElement,
+          partsFound: this._measuredDimensions.parts.size,
+          partSample: Array.from(this._measuredDimensions.parts.keys()).slice(0, 5)
         });
       }
       

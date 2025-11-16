@@ -59,42 +59,59 @@ quadratic.zIndex = 10;
 // Get available parts for highlighting
 console.log("Available formula parts:", quadratic.getAvailableParts());
 
-// Highlight discriminant parts
-// Note: The actual part IDs depend on KaTeX's internal structure
+// Highlight formula parts
+// Note: The actual part IDs depend on MathJax's internal structure
 // We'll highlight based on measured positions
 const parts = quadratic.getAvailableParts();
 
+console.log(`Found ${parts.length} parts to highlight`);
+
 // Add highlights for various parts (if they exist)
-if (parts.length > 0) {
-  parts.slice(0, Math.min(3, parts.length)).forEach((partId, index) => {
-    const bbox = quadratic.getPartBoundingBox(partId);
+// MathJax typically generates many small parts, so we'll be selective
+const partsToHighlight = parts.filter((partId, index) => {
+  // Only highlight every 5th part to avoid clutter
+  return index % 5 === 0;
+}).slice(0, 5);
+
+partsToHighlight.forEach((partId, index) => {
+  const bbox = quadratic.getPartBoundingBox(partId);
+  
+  console.log(`Part ${partId}:`, bbox);
+  
+  if (bbox && bbox.width > 5 && bbox.height > 5) {
+    // Only highlight parts that are big enough to see
+    const colors = ["#fff3cd", "#d1ecf1", "#f8d7da", "#d4edda", "#cce5ff"];
+    const highlight = new Rectangle({
+      width: bbox.width + 6,
+      height: bbox.height + 4,
+      name: `highlight-${index}`,
+      style: {
+        fill: colors[index % colors.length],
+        stroke: "none",
+        opacity: 0.5,
+      },
+    });
+
+    highlight.zIndex = 5;
+
+    // Position relative to the formula element
+    const quadPos = quadratic.topLeft;
+    console.log(`Quadratic topLeft:`, quadPos);
+    console.log(`Highlight positioning: x=${bbox.x - 3}px, y=${bbox.y - 2}px`);
     
-    if (bbox) {
-      const colors = ["#fff3cd", "#d1ecf1", "#f8d7da"];
-      const highlight = new Rectangle({
-        width: bbox.width + 6,
-        height: bbox.height + 4,
-        name: `highlight-${index}`,
-        style: {
-          fill: colors[index % colors.length],
-          stroke: "none",
-          opacity: 0.6,
-        },
-      });
+    highlight.position({
+      relativeFrom: highlight.topLeft,
+      relativeTo: quadratic.topLeft,
+      x: `${bbox.x - 3}px`,
+      y: `${bbox.y - 2}px`,
+    });
 
-      highlight.zIndex = 5;
-
-      highlight.position({
-        relativeFrom: highlight.topLeft,
-        relativeTo: { x: `${bbox.x - 3}px`, y: `${bbox.y - 2}px` },
-        x: "0px",
-        y: "0px",
-      });
-
-      artboard.addElement(highlight);
-    }
-  });
-}
+    console.log(`Added highlight ${index} for part ${partId}`);
+    artboard.addElement(highlight);
+  } else {
+    console.log(`Skipped part ${partId} - too small or null`);
+  }
+});
 
 // Example 2: Smaller formula with annotations
 const pythagorean = new LatexText({
@@ -116,35 +133,55 @@ pythagorean.zIndex = 10;
 
 // Get parts and add circles to mark them
 const pythParts = pythagorean.getAvailableParts();
-console.log("Pythagorean parts:", pythParts);
+console.log(`Pythagorean has ${pythParts.length} parts`);
 
-pythParts.slice(0, Math.min(5, pythParts.length)).forEach((partId, index) => {
-  const center = pythagorean.getPartCenter(partId);
+// Filter for bigger parts and add circles
+const biggerParts = pythParts.filter((partId, index) => {
+  const bbox = pythagorean.getPartBoundingBox(partId);
+  return bbox && bbox.width > 8 && bbox.height > 8;
+}).slice(0, 8);
+
+console.log(`Marking ${biggerParts.length} visible parts`);
+
+biggerParts.forEach((partId, index) => {
+  const bbox = pythagorean.getPartBoundingBox(partId);
   
-  if (center) {
+  console.log(`Pythagorean part ${partId}:`, { bbox });
+  
+  if (bbox) {
     const circle = new Circle({
-      radius: 3,
+      radius: 4,
       name: `marker-${index}`,
       style: {
         fill: "#e74c3c",
-        stroke: "none",
+        stroke: "#c0392b",
+        strokeWidth: "1px",
       },
     });
 
+    // Calculate center from bbox (same as highlights - relative to formula)
+    const centerX = bbox.x + bbox.width / 2;
+    const centerY = bbox.y + bbox.height / 2;
+    
+    console.log(`Circle center: x=${centerX}px, y=${centerY}px`);
+
     circle.position({
       relativeFrom: circle.center,
-      relativeTo: center,
-      x: "0px",
-      y: "0px",
+      relativeTo: pythagorean.topLeft,  // Position relative to formula
+      x: `${centerX}px`,
+      y: `${centerY}px`,
     });
 
+    console.log(`Added circle ${index} for part ${partId}`);
     artboard.addElement(circle);
+  } else {
+    console.log(`No bbox found for part ${partId}`);
   }
 });
 
 // Add explanatory text
 const explanation = new Text({
-  content: "The quadratic formula shows highlighted parts based on KaTeX's internal structure.\nThe Pythagorean theorem shows red dots marking measurable formula components.",
+  content: "The quadratic formula shows colored highlights on selected formula parts.\nThe Pythagorean theorem shows red dots marking measurable formula components.\n(MathJax generates many small parts, so we filter for visibility)",
   fontSize: "14px",
   fontFamily: "sans-serif",
   lineHeight: 1.6,

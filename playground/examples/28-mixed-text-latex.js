@@ -78,11 +78,12 @@ segments1.forEach((segment) => {
 
       highlight.zIndex = 5;
 
+      // Position relative to the text element's position
       highlight.position({
         relativeFrom: highlight.topLeft,
-        relativeTo: { x: `${bbox.x - 4}px`, y: `${bbox.y - 2}px` },
-        x: "0px",
-        y: "0px",
+        relativeTo: sentence1.topLeft,
+        x: `${bbox.x - 4}px`,
+        y: `${bbox.y - 2}px`,
       });
 
       artboard.addElement(highlight);
@@ -135,11 +136,12 @@ segments2.forEach((segment) => {
 
       highlight.zIndex = 5;
 
+      // Position relative to the text element's position
       highlight.position({
         relativeFrom: highlight.topLeft,
-        relativeTo: { x: `${bbox.x - 4}px`, y: `${bbox.y - 2}px` },
-        x: "0px",
-        y: "0px",
+        relativeTo: sentence2.topLeft,
+        x: `${bbox.x - 4}px`,
+        y: `${bbox.y - 2}px`,
       });
 
       artboard.addElement(highlight);
