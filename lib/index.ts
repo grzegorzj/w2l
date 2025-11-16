@@ -104,6 +104,8 @@ export {
   Square,
   RegularPolygon,
   Text,
+  LatexText,
+  MixedText,
 } from "./geometry/index.js";
 
 /**
@@ -126,6 +128,11 @@ export type {
   TextConfig,
   TextAlign,
   TextVerticalAlign,
+  WordBoundingBox,
+  LatexTextConfig,
+  LatexPartBoundingBox,
+  MixedTextConfig,
+  MixedTextPartBoundingBox,
 } from "./geometry/index.js";
 
 /**

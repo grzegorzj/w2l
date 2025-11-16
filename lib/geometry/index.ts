@@ -10,6 +10,8 @@
  * - {@link Square}: Square shapes (specialized rectangles)
  * - {@link RegularPolygon}: Regular polygons (pentagon, hexagon, octagon, etc.)
  * - {@link Text}: Text elements with word wrapping and typography support
+ * - {@link LatexText}: LaTeX/mathematical notation rendering with measurement support
+ * - {@link MixedText}: Text with embedded LaTeX formulas
  *
  * @module geometry
  */
@@ -41,4 +43,15 @@ export { RegularPolygon } from "./RegularPolygon.js";
 export type { RegularPolygonConfig, PolygonSide } from "./RegularPolygon.js";
 
 export { Text } from "./Text.js";
-export type { TextConfig, TextAlign, TextVerticalAlign } from "./Text.js";
+export type {
+  TextConfig,
+  TextAlign,
+  TextVerticalAlign,
+  WordBoundingBox,
+} from "./Text.js";
+
+export { LatexText } from "./LatexText.js";
+export type { LatexTextConfig, LatexPartBoundingBox } from "./LatexText.js";
+
+export { MixedText } from "./MixedText.js";
+export type { MixedTextConfig, MixedTextPartBoundingBox } from "./MixedText.js";

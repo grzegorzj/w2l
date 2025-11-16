@@ -23,6 +23,9 @@ Complete guide to positioning, layouts, and child transformations. Learn how to 
 ### [Intelligent Alignment](./INTELLIGENT-ALIGNMENT.md)
 How W2L's intelligent alignment system works. Understand how elements automatically choose appropriate alignment points for natural, intuitive layouts.
 
+### [LaTeX Support](./LATEX-SUPPORT.md)
+Complete guide to rendering LaTeX mathematical notation. Learn how to create standalone formulas, embed math in text, and query coordinates of formula parts for highlighting and positioning.
+
 ## Quick Start
 
 If you're new to W2L, we recommend reading in this order:
@@ -42,6 +45,7 @@ If you're new to W2L, we recommend reading in this order:
 | Position elements and create layouts | [Positioning System](./POSITIONING.md) |
 | Create lines that follow elements | [Reactive Positioning](./POSITIONING.md#reactive-positioning) |
 | Align elements intelligently | [Intelligent Alignment](./INTELLIGENT-ALIGNMENT.md) |
+| Render LaTeX and mathematical notation | [LaTeX Support](./LATEX-SUPPORT.md) |
 | See working examples | [Playground Examples](../playground/examples/) |
 | Look up API details | [API Documentation](../docs/index.html) (generated) |
 
@@ -62,6 +66,11 @@ Key examples:
 - `columns-alignment-demo.ts` - Comprehensive alignment options
 - `layout-transformation-test.ts` - Transformation and positioning
 - `23-reactive-positioning.js` - Reactive line connections between elements
+- `24-text-word-measurement.js` - Text measurement capabilities
+- `25-text-word-highlighting.js` - Highlighting text words
+- `26-basic-latex.js` - LaTeX mathematical notation
+- `27-latex-highlighting.js` - LaTeX formula part highlighting
+- `28-mixed-text-latex.js` - Embedding LaTeX in text
 
 ## Documentation Structure
 
@@ -71,7 +80,8 @@ guides/
 ├── ARCHITECTURE.md                (System design)
 ├── CONVENTIONS.md                 (Standards & conventions)
 ├── POSITIONING.md                 (Positioning & layouts)
-└── INTELLIGENT-ALIGNMENT.md       (Alignment system)
+├── INTELLIGENT-ALIGNMENT.md       (Alignment system)
+└── LATEX-SUPPORT.md              (LaTeX mathematical notation)
 ```
 
 The auto-generated API documentation lives in `docs/` and is built from inline TSDoc comments in the source code.
