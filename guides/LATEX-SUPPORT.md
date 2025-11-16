@@ -160,32 +160,30 @@ Demonstrates:
 
 ## Implementation Details
 
-### KaTeX Integration
+### MathJax Integration
 
-The LaTeX rendering uses KaTeX, a fast math typesetting library:
+The LaTeX rendering uses MathJax v3, a comprehensive math typesetting library:
 - Loaded via CDN in the playground HTML
-- Renders to HTML/MathML that can be embedded in SVG using `foreignObject`
+- Renders directly to SVG (cleaner than HTML/MathML approaches)
 - Provides accurate browser-level measurements
+- More complete LaTeX support than alternatives
 
 ### Measurement Process
 
 1. When a LaTeX element is added to an artboard, it receives a measurement container getter
 2. On first dimension/position query, the element:
-   - Renders the LaTeX using KaTeX
-   - Creates a temporary DOM element
+   - Renders the LaTeX using MathJax's `tex2svg()` function
+   - Creates a temporary DOM element with the SVG
    - Measures using `getBoundingClientRect()`
    - Caches the measurements
 3. Subsequent queries use cached measurements
 
 ### Part Identification
 
-For `LatexText`, parts are identified by KaTeX's internal CSS classes:
-- `mord`: Ordinary symbols (letters, numbers)
-- `mbin`: Binary operators (+, -, ×, ÷)
-- `mrel`: Relational operators (=, <, >)
-- `mop`: Large operators (∑, ∫, ∏)
-- `mfrac`: Fractions
-- `msqrt`: Square roots
+For `LatexText`, parts are identified by MathJax's internal structure:
+- `data-mjx-texclass` attributes indicate the type of math element
+- `mjx-*` CSS classes for various components (mi, mo, mn, mfrac, msqrt, etc.)
+- More semantic and comprehensive than HTML-based approaches
 
 For `MixedText`, segments are numbered sequentially and identified as "text" or "latex" type.
 
@@ -241,19 +239,20 @@ if (parts.length > 0) {
 
 ## Limitations
 
-1. **Browser Environment**: LaTeX rendering requires a browser with KaTeX loaded
+1. **Browser Environment**: LaTeX rendering requires a browser with MathJax loaded
 2. **Font Consistency**: LaTeX uses its own fonts, which may not match surrounding text perfectly
-3. **Part Granularity**: Part identification depends on KaTeX's internal structure
+3. **Part Granularity**: Part identification depends on MathJax's internal structure
 4. **No Line Breaking**: LaTeX formulas don't automatically break across lines in `MixedText`
+5. **Async Loading**: MathJax loads asynchronously; ensure it's ready before rendering
 
 ## Future Enhancements
 
 Potential improvements:
 - Custom part annotations for more precise highlighting
 - Line-breaking support for long formulas in mixed text
-- Chemistry notation support (mhchem)
+- Chemistry notation support (mhchem extension)
 - Better integration with text baseline alignment
-- SVG-native rendering option (without foreignObject)
+- Direct SVG embedding (already partially implemented for LatexText)
 
 ## See Also
 

@@ -61,6 +61,13 @@ export interface LatexTextConfig {
    * Note: LaTeX rendering uses its own styling, this applies to the container.
    */
   style?: Partial<Style>;
+
+  /**
+   * Enable debug mode to visualize bounding box.
+   * Draws a red border around the measured dimensions.
+   * @defaultValue false
+   */
+  debug?: boolean;
 }
 
 /**
@@ -137,39 +144,40 @@ export class LatexText extends Shape {
   }
 
   /**
-   * Pre-renders the LaTeX content to SVG using KaTeX.
+   * Pre-renders the LaTeX content to SVG using MathJax.
    * This needs to be done in a browser environment.
    * 
    * @internal
    */
   private prerenderLatex(): void {
-    if (typeof window === 'undefined' || !(window as any).katex) {
-      console.warn('KaTeX not available, LaTeX rendering will be skipped');
+    if (typeof window === 'undefined' || !(window as any).MathJax) {
+      console.warn('MathJax not available, LaTeX rendering will be skipped');
       return;
     }
 
     try {
-      const katex = (window as any).katex;
+      const MathJax = (window as any).MathJax;
       const displayMode = this.config.displayMode === "display";
       
-      // Render LaTeX to MathML which can be embedded in SVG
-      const html = katex.renderToString(this.config.content, {
-        displayMode,
-        output: 'mathml',
-        throwOnError: false,
-        fontSize: this._fontSize
+      // Wait for MathJax to be ready
+      if (!MathJax.tex2svg) {
+        console.warn('MathJax not fully loaded yet');
+        return;
+      }
+      
+      // Render LaTeX to SVG using MathJax
+      const node = MathJax.tex2svg(this.config.content, {
+        display: displayMode
       });
       
-      // Convert MathML to something we can embed in SVG
-      // KaTeX also has an HTML output which we'll need to convert
-      const htmlOutput = katex.renderToString(this.config.content, {
-        displayMode,
-        output: 'html',
-        throwOnError: false
-      });
-      
-      // Store the HTML for measurement and create SVG foreignObject
-      this._renderedSVG = htmlOutput;
+      // Extract the SVG element and convert to string
+      const svg = node.querySelector('svg');
+      if (svg) {
+        // Store the SVG innerHTML for embedding
+        this._renderedSVG = svg.outerHTML;
+      } else {
+        this._renderedSVG = node.outerHTML;
+      }
     } catch (error) {
       console.error('Failed to render LaTeX:', error);
       this._renderedSVG = `<text fill="red">LaTeX Error: ${this.config.content}</text>`;
@@ -196,7 +204,7 @@ export class LatexText extends Shape {
     try {
       const container = this._measurementContainerGetter();
       
-      // Create temporary group to hold our LaTeX
+      // Create temporary group to hold our LaTeX SVG
       const tempDiv = document.createElement('div');
       tempDiv.style.position = 'absolute';
       tempDiv.style.visibility = 'hidden';
@@ -205,20 +213,32 @@ export class LatexText extends Shape {
       tempDiv.style.margin = '0';
       tempDiv.style.padding = '0';
       tempDiv.innerHTML = this._renderedSVG;
+      
       document.body.appendChild(tempDiv);
       
-      // Measure dimensions
-      const bbox = tempDiv.getBoundingClientRect();
+      // Measure the actual SVG element, not the wrapper
+      const svgElement = tempDiv.querySelector('svg');
+      let bbox;
       
-      // Measure parts (individual elements with classes or tags)
+      if (svgElement) {
+        // Use the SVG's own bounding box for accurate measurements
+        bbox = svgElement.getBoundingClientRect();
+      } else {
+        // Fallback to div if no SVG found
+        bbox = tempDiv.getBoundingClientRect();
+      }
+      
+      // Measure parts (individual elements with MathJax classes)
       const parts = new Map<string, LatexPartBoundingBox>();
       
-      // Find all measurable parts (spans with specific classes)
-      const elements = tempDiv.querySelectorAll('.mord, .mbin, .mrel, .mop, .mfrac, .msqrt');
+      // Find all measurable parts (MathJax uses different class names)
+      // mjx-* classes for various math elements
+      const searchRoot = svgElement || tempDiv;
+      const elements = searchRoot.querySelectorAll('[data-mjx-texclass], .mjx-char, .mjx-mo, .mjx-mi, .mjx-mn, .mjx-mfrac, .mjx-msqrt');
       elements.forEach((el, index) => {
         const partBbox = (el as HTMLElement).getBoundingClientRect();
-        const className = el.className.split(' ')[0] || `part-${index}`;
-        parts.set(className + `-${index}`, {
+        const texClass = el.getAttribute('data-mjx-texclass') || el.className.split(' ')[0] || `part-${index}`;
+        parts.set(texClass + `-${index}`, {
           x: partBbox.left - bbox.left,
           y: partBbox.top - bbox.top,
           width: partBbox.width,
@@ -231,6 +251,19 @@ export class LatexText extends Shape {
         totalHeight: bbox.height,
         parts
       };
+      
+      // Debug logging if debug mode enabled
+      if (this.config.debug) {
+        console.log(`[LatexText Debug] ${this.config.name || 'unnamed'}:`, {
+          content: this.config.content,
+          measuredWidth: bbox.width,
+          measuredHeight: bbox.height,
+          fontSize: this._fontSize,
+          displayMode: this.config.displayMode,
+          measuredFrom: svgElement ? 'SVG element' : 'wrapper div',
+          svgFound: !!svgElement
+        });
+      }
       
       // Clean up
       document.body.removeChild(tempDiv);
@@ -365,14 +398,52 @@ export class LatexText extends Shape {
     const transformStr = this.getTransformString();
     const transform = transformStr ? ` transform="${transformStr}"` : "";
 
-    // Use foreignObject to embed HTML/MathML in SVG
+    // MathJax renders to SVG, so we can embed it more directly
+    // We'll still use foreignObject for consistent positioning, or extract the SVG directly
+    if (this._renderedSVG.startsWith('<svg')) {
+      // MathJax SVG - extract and position it
+      // Parse the SVG to adjust its position
+      const svgMatch = this._renderedSVG.match(/<svg([^>]*)>([\s\S]*)<\/svg>/);
+      if (svgMatch) {
+        const svgAttrs = svgMatch[1];
+        const svgContent = svgMatch[2];
+        
+        // Build full transform
+        let fullTransform = `translate(${absPos.x}, ${absPos.y})`;
+        if (transformStr) {
+          const match = transformStr.match(/transform="([^"]*)"/);
+          if (match) {
+            fullTransform += ` ${match[1]}`;
+          }
+        }
+        
+        // Create a positioned SVG group
+        const positionedSvg = `<g transform="${fullTransform}">${this._renderedSVG}</g>`;
+        
+        // Add debug rectangle if debug mode is enabled
+        let debugRect = '';
+        if (this.config.debug) {
+          debugRect = `<rect x="${absPos.x}" y="${absPos.y}" width="${this.latexWidth}" height="${this.latexHeight}" fill="none" stroke="red" stroke-width="2" stroke-dasharray="5,5" />`;
+        }
+        
+        return comment + positionedSvg + debugRect;
+      }
+    }
+    
+    // Fallback: use foreignObject
     const svg = `<foreignObject x="${absPos.x}" y="${absPos.y}" width="${this.latexWidth}" height="${this.latexHeight}"${transform}>
       <div xmlns="http://www.w3.org/1999/xhtml" style="font-size: ${this._fontSize}px; display: inline-block; margin: 0; padding: 0; line-height: 1;">
         ${this._renderedSVG}
       </div>
     </foreignObject>`;
 
-    return comment + svg;
+    // Add debug rectangle if debug mode is enabled
+    let debugRect = '';
+    if (this.config.debug) {
+      debugRect = `<rect x="${absPos.x}" y="${absPos.y}" width="${this.latexWidth}" height="${this.latexHeight}" fill="none" stroke="red" stroke-width="2" stroke-dasharray="5,5" />`;
+    }
+
+    return comment + svg + debugRect;
   }
 }
 

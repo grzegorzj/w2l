@@ -87,6 +87,13 @@ export interface MixedTextConfig {
    * Visual styling properties (fill, stroke, opacity, etc.).
    */
   style?: Partial<Style>;
+
+  /**
+   * Enable debug mode to visualize bounding box.
+   * Draws a red border around the measured dimensions.
+   * @defaultValue false
+   */
+  debug?: boolean;
 }
 
 /**
@@ -257,6 +264,8 @@ export class MixedText extends Shape {
       container.style.margin = '0';
       container.style.padding = '0';
       
+      // MathJax SVG doesn't need style overrides like KaTeX
+      
       document.body.appendChild(container);
 
       const parts: Array<MixedTextPartBoundingBox> = [];
@@ -274,15 +283,24 @@ export class MixedText extends Shape {
           span.textContent = segment.content;
           span.style.whiteSpace = 'pre';
         } else {
-          // Render LaTeX
-          if (typeof window !== 'undefined' && (window as any).katex) {
-            const katex = (window as any).katex;
+          // Render LaTeX with MathJax
+          if (typeof window !== 'undefined' && (window as any).MathJax) {
+            const MathJax = (window as any).MathJax;
             try {
-              span.innerHTML = katex.renderToString(segment.content, {
-                displayMode: segment.displayMode || false,
-                output: 'html',
-                throwOnError: false
-              });
+              if (MathJax.tex2svg) {
+                const node = MathJax.tex2svg(segment.content, {
+                  display: segment.displayMode || false
+                });
+                // Get the SVG and insert it
+                const svg = node.querySelector('svg');
+                if (svg) {
+                  span.innerHTML = svg.outerHTML;
+                } else {
+                  span.innerHTML = node.outerHTML;
+                }
+              } else {
+                span.textContent = `$${segment.content}$`;
+              }
             } catch (error) {
               span.textContent = `[LaTeX Error: ${segment.content}]`;
               span.style.color = 'red';
@@ -295,15 +313,29 @@ export class MixedText extends Shape {
         container.appendChild(span);
       });
 
-      // Measure the container
+      // Measure the container first to get baseline
       const containerBbox = container.getBoundingClientRect();
 
-      // Measure each segment
+      // Measure each segment - for LaTeX segments, measure the SVG inside
       const spans = container.querySelectorAll('[data-segment-index]');
       spans.forEach((span) => {
-        const bbox = (span as HTMLElement).getBoundingClientRect();
-        const segmentIndex = parseInt(span.getAttribute('data-segment-index') || '0');
         const segmentType = span.getAttribute('data-segment-type') as 'text' | 'latex';
+        let bbox;
+        
+        if (segmentType === 'latex') {
+          // For LaTeX, measure the SVG element directly
+          const svg = span.querySelector('svg');
+          if (svg) {
+            bbox = svg.getBoundingClientRect();
+          } else {
+            bbox = (span as HTMLElement).getBoundingClientRect();
+          }
+        } else {
+          // For text, measure the span
+          bbox = (span as HTMLElement).getBoundingClientRect();
+        }
+        
+        const segmentIndex = parseInt(span.getAttribute('data-segment-index') || '0');
         
         parts.push({
           x: bbox.left - containerBbox.left,
@@ -463,29 +495,47 @@ export class MixedText extends Shape {
     const style = { ...defaultStyle, ...this.config.style };
     const color = style.fill || "#000000";
 
-    // Build HTML content
+    // Build HTML content with margin resets for inline rendering
     let htmlContent = '<div style="display: inline-flex; align-items: baseline; flex-wrap: nowrap; margin: 0; padding: 0;">';
     
     this._segments.forEach((segment) => {
       if (segment.type === 'text') {
-        htmlContent += `<span style="white-space: pre; margin: 0; padding: 0;">${this.escapeHtml(segment.content)}</span>`;
+        htmlContent += `<span style="white-space: pre; margin: 0; padding: 0; display: inline-block;">${this.escapeHtml(segment.content)}</span>`;
       } else {
-        // LaTeX segment - will be rendered by KaTeX in browser
-        const displayClass = segment.displayMode ? ' class="katex-display"' : '';
-        htmlContent += `<span${displayClass} data-latex="${this.escapeHtml(segment.content)}" data-display="${segment.displayMode || false}" style="margin: 0; padding: 0; display: inline-block;"></span>`;
+        // LaTeX segment - will be rendered by MathJax in browser
+        // We need to store the formula and let MathJax render it
+        htmlContent += `<span data-latex="${this.escapeHtml(segment.content)}" data-display="${segment.displayMode || false}" style="margin: 0; padding: 0; display: inline-block;"></span>`;
       }
     });
     
     htmlContent += '</div>';
 
     // Use foreignObject to embed HTML in SVG
+    // MathJax SVG doesn't need as many style overrides
     const svg = `<foreignObject x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}"${transform}>
       <div xmlns="http://www.w3.org/1999/xhtml" style="font-size: ${this._fontSize}px; font-family: ${this.config.fontFamily || 'sans-serif'}; font-weight: ${this.config.fontWeight || 'normal'}; color: ${color}; display: inline-block; margin: 0; padding: 0; line-height: 1;">
         ${htmlContent}
+        <script>
+          if (window.MathJax &amp;&amp; MathJax.tex2svg) {
+            document.querySelectorAll('[data-latex]').forEach(span => {
+              const latex = span.getAttribute('data-latex');
+              const display = span.getAttribute('data-display') === 'true';
+              const node = MathJax.tex2svg(latex, { display });
+              const svg = node.querySelector('svg');
+              if (svg) span.innerHTML = svg.outerHTML;
+            });
+          }
+        </script>
       </div>
     </foreignObject>`;
 
-    return comment + svg;
+    // Add debug rectangle if debug mode is enabled
+    let debugRect = '';
+    if (this.config.debug) {
+      debugRect = `<rect x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}" fill="none" stroke="blue" stroke-width="2" stroke-dasharray="5,5" />`;
+    }
+
+    return comment + svg + debugRect;
   }
 
   /**

@@ -42,6 +42,7 @@ const einstein = new LatexText({
   fontSize: "36px",
   displayMode: "inline",
   name: "einstein-equation",
+  debug: true, // Enable debug to see bounding box
 });
 
 einstein.position({
@@ -77,6 +78,7 @@ const quadratic = new LatexText({
   fontSize: "32px",
   displayMode: "display",
   name: "quadratic-formula",
+  debug: true, // Enable debug to see bounding box
 });
 
 quadratic.position({
@@ -112,6 +114,7 @@ const euler = new LatexText({
   fontSize: "36px",
   displayMode: "inline",
   name: "euler-identity",
+  debug: true, // Enable debug to see bounding box
 });
 
 euler.position({
@@ -147,6 +150,7 @@ const integral = new LatexText({
   fontSize: "28px",
   displayMode: "inline",
   name: "gaussian-integral",
+  debug: true, // Enable debug to see bounding box
 });
 
 integral.position({
@@ -182,6 +186,7 @@ const summation = new LatexText({
   fontSize: "28px",
   displayMode: "inline",
   name: "basel-problem",
+  debug: true, // Enable debug to see bounding box
 });
 
 summation.position({
