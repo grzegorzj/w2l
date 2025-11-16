@@ -289,11 +289,26 @@ export class MixedText extends Shape {
             try {
               if (MathJax.tex2svg) {
                 const node = MathJax.tex2svg(segment.content, {
-                  display: segment.displayMode || false
+                  display: segment.displayMode || false,
+                  em: this._fontSize,        // Set em size in pixels
+                  ex: this._fontSize * 0.5,  // ex is typically half of em
+                  containerWidth: 80 * this._fontSize
                 });
-                // Get the SVG and insert it
+                // Get the SVG and fix its dimensions
                 const svg = node.querySelector('svg');
                 if (svg) {
+                  // Remove ex-based width/height, replace with pixels
+                  svg.removeAttribute('width');
+                  svg.removeAttribute('height');
+                  
+                  const viewBox = svg.getAttribute('viewBox');
+                  if (viewBox) {
+                    const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+                    const scale = this._fontSize / 1000;
+                    svg.setAttribute('width', `${vbWidth * scale}px`);
+                    svg.setAttribute('height', `${vbHeight * scale}px`);
+                  }
+                  
                   span.innerHTML = svg.outerHTML;
                 } else {
                   span.innerHTML = node.outerHTML;
@@ -517,12 +532,30 @@ export class MixedText extends Shape {
         ${htmlContent}
         <script>
           if (window.MathJax &amp;&amp; MathJax.tex2svg) {
+            const fontSize = ${this._fontSize};
             document.querySelectorAll('[data-latex]').forEach(span => {
               const latex = span.getAttribute('data-latex');
               const display = span.getAttribute('data-display') === 'true';
-              const node = MathJax.tex2svg(latex, { display });
+              const node = MathJax.tex2svg(latex, { 
+                display,
+                em: fontSize,
+                ex: fontSize * 0.5,
+                containerWidth: 80 * fontSize
+              });
               const svg = node.querySelector('svg');
-              if (svg) span.innerHTML = svg.outerHTML;
+              if (svg) {
+                // Remove ex units, use pixels from viewBox
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                const viewBox = svg.getAttribute('viewBox');
+                if (viewBox) {
+                  const parts = viewBox.split(' ').map(Number);
+                  const scale = fontSize / 1000;
+                  svg.setAttribute('width', (parts[2] * scale) + 'px');
+                  svg.setAttribute('height', (parts[3] * scale) + 'px');
+                }
+                span.innerHTML = svg.outerHTML;
+              }
             });
           }
         </script>

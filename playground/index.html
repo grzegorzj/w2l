@@ -13,7 +13,16 @@
           processEscapes: true
         },
         svg: {
-          fontCache: 'global'
+          fontCache: 'global',
+          scale: 1,           // Keep scale at 1 for consistency
+          minScale: 0.5,
+          mtextInheritFont: false,
+          merrorInheritFont: false,
+          mathmlSpacing: false,
+          skipAttributes: {},
+          exFactor: 0.5,      // Conversion factor from ex to em
+          displayAlign: 'center',
+          displayIndent: '0'
         },
         startup: {
           ready: () => {

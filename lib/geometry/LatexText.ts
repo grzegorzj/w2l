@@ -166,14 +166,33 @@ export class LatexText extends Shape {
       }
       
       // Render LaTeX to SVG using MathJax
+      // Pass em and ex sizes to ensure pixel-accurate rendering
       const node = MathJax.tex2svg(this.config.content, {
-        display: displayMode
+        display: displayMode,
+        em: this._fontSize,        // Set em size to our font size in pixels
+        ex: this._fontSize * 0.5,  // ex is typically half of em
+        containerWidth: 80 * this._fontSize  // Large container width for proper layout
       });
       
       // Extract the SVG element and convert to string
       const svg = node.querySelector('svg');
       if (svg) {
-        // Store the SVG innerHTML for embedding
+        // Remove width and height attributes with ex units - they cause scaling issues
+        // Keep viewBox for proper scaling
+        svg.removeAttribute('width');
+        svg.removeAttribute('height');
+        
+        // Set explicit width/height in pixels based on viewBox
+        const viewBox = svg.getAttribute('viewBox');
+        if (viewBox) {
+          const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+          // MathJax uses 1000 units per em
+          const scale = this._fontSize / 1000;
+          svg.setAttribute('width', `${vbWidth * scale}px`);
+          svg.setAttribute('height', `${vbHeight * scale}px`);
+        }
+        
+        // Store the SVG with pixel dimensions
         this._renderedSVG = svg.outerHTML;
       } else {
         this._renderedSVG = node.outerHTML;
@@ -219,10 +238,41 @@ export class LatexText extends Shape {
       // Measure the actual SVG element, not the wrapper
       const svgElement = tempDiv.querySelector('svg');
       let bbox;
+      let browserRenderedSize: { width: number; height: number } | null = null;
+      let viewBoxCalculatedSize: { width: number; height: number } | null = null;
       
       if (svgElement) {
-        // Use the SVG's own bounding box for accurate measurements
-        bbox = svgElement.getBoundingClientRect();
+        // Get what the browser actually renders (with ex units)
+        const browserBbox = svgElement.getBoundingClientRect();
+        browserRenderedSize = { width: browserBbox.width, height: browserBbox.height };
+        
+        // Also calculate from viewBox for comparison
+        const viewBox = svgElement.getAttribute('viewBox');
+        
+        if (viewBox) {
+          // Parse viewBox: "minX minY width height"
+          const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+          
+          // MathJax uses 1000 units per em
+          const scale = this._fontSize / 1000;
+          viewBoxCalculatedSize = {
+            width: vbWidth * scale,
+            height: vbHeight * scale
+          };
+          
+          // Use viewBox calculation as it's more precise
+          bbox = {
+            width: vbWidth * scale,
+            height: vbHeight * scale,
+            left: 0,
+            top: 0,
+            right: vbWidth * scale,
+            bottom: vbHeight * scale
+          } as DOMRect;
+        } else {
+          // No viewBox, use browser measurement
+          bbox = browserBbox;
+        }
       } else {
         // Fallback to div if no SVG found
         bbox = tempDiv.getBoundingClientRect();
@@ -254,13 +304,40 @@ export class LatexText extends Shape {
       
       // Debug logging if debug mode enabled
       if (this.config.debug) {
+        let svgUnits = { width: 'unknown', height: 'unknown' };
+        let viewBoxInfo = 'none';
+        let calculationMethod = 'unknown';
+        
+        if (svgElement) {
+          svgUnits = {
+            width: svgElement.getAttribute('width') || 'unknown',
+            height: svgElement.getAttribute('height') || 'unknown'
+          };
+          
+          const viewBox = svgElement.getAttribute('viewBox');
+          if (viewBox) {
+            const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+            const scale = this._fontSize / 1000;
+            viewBoxInfo = `${vbWidth} x ${vbHeight} (scaled: ${vbWidth * scale} x ${vbHeight * scale})`;
+            calculationMethod = 'viewBox with scale';
+          } else {
+            calculationMethod = 'getBoundingClientRect';
+          }
+        }
+        
         console.log(`[LatexText Debug] ${this.config.name || 'unnamed'}:`, {
           content: this.config.content,
-          measuredWidth: bbox.width,
-          measuredHeight: bbox.height,
+          finalDimensions: { width: bbox.width, height: bbox.height },
+          browserRendered: browserRenderedSize,
+          viewBoxCalculated: viewBoxCalculatedSize,
+          calculationMethod,
+          viewBox: viewBoxInfo,
+          svgUnits: svgUnits,
           fontSize: this._fontSize,
+          emSize: this._fontSize,
+          exSize: this._fontSize * 0.5,
+          scale: this._fontSize / 1000,
           displayMode: this.config.displayMode,
-          measuredFrom: svgElement ? 'SVG element' : 'wrapper div',
           svgFound: !!svgElement
         });
       }
