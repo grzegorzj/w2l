@@ -495,6 +495,7 @@ export class MixedText extends Shape {
 
   /**
    * Renders the mixed text to SVG using foreignObject.
+   * Pre-renders LaTeX segments to avoid script execution issues in SVG.
    * 
    * @returns SVG representation
    */
@@ -510,55 +511,65 @@ export class MixedText extends Shape {
     const style = { ...defaultStyle, ...this.config.style };
     const color = style.fill || "#000000";
 
-    // Build HTML content with margin resets for inline rendering
+    // Pre-render all segments including LaTeX
+    // This ensures LaTeX is rendered before being embedded in SVG
+    this.ensureMeasured();
+
+    // Build HTML content with pre-rendered LaTeX
     let htmlContent = '<div style="display: inline-flex; align-items: baseline; flex-wrap: nowrap; margin: 0; padding: 0;">';
     
     this._segments.forEach((segment) => {
       if (segment.type === 'text') {
         htmlContent += `<span style="white-space: pre; margin: 0; padding: 0; display: inline-block;">${this.escapeHtml(segment.content)}</span>`;
       } else {
-        // LaTeX segment - will be rendered by MathJax in browser
-        // We need to store the formula and let MathJax render it
-        htmlContent += `<span data-latex="${this.escapeHtml(segment.content)}" data-display="${segment.displayMode || false}" style="margin: 0; padding: 0; display: inline-block;"></span>`;
+        // LaTeX segment - render it now using MathJax
+        if (typeof window !== 'undefined' && (window as any).MathJax) {
+          const MathJax = (window as any).MathJax;
+          try {
+            if (MathJax.tex2svg) {
+              const node = MathJax.tex2svg(segment.content, {
+                display: segment.displayMode || false,
+                em: this._fontSize,
+                ex: this._fontSize * 0.5,
+                containerWidth: 80 * this._fontSize
+              });
+              const svg = node.querySelector('svg');
+              if (svg) {
+                // Remove ex-based dimensions and use pixel dimensions
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                
+                const viewBox = svg.getAttribute('viewBox');
+                if (viewBox) {
+                  const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+                  const scale = this._fontSize / 1000;
+                  svg.setAttribute('width', `${vbWidth * scale}px`);
+                  svg.setAttribute('height', `${vbHeight * scale}px`);
+                }
+                
+                htmlContent += `<span style="margin: 0; padding: 0; display: inline-block; vertical-align: middle;">${svg.outerHTML}</span>`;
+              } else {
+                htmlContent += `<span style="margin: 0; padding: 0; display: inline-block;">${node.outerHTML}</span>`;
+              }
+            } else {
+              htmlContent += `<span style="margin: 0; padding: 0; display: inline-block;">$${this.escapeHtml(segment.content)}$</span>`;
+            }
+          } catch (error) {
+            htmlContent += `<span style="color: red; margin: 0; padding: 0; display: inline-block;">[LaTeX Error: ${this.escapeHtml(segment.content)}]</span>`;
+          }
+        } else {
+          // Fallback if MathJax not available
+          htmlContent += `<span style="margin: 0; padding: 0; display: inline-block;">$${this.escapeHtml(segment.content)}$</span>`;
+        }
       }
     });
     
     htmlContent += '</div>';
 
     // Use foreignObject to embed HTML in SVG
-    // MathJax SVG doesn't need as many style overrides
     const svg = `<foreignObject x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}"${transform}>
       <div xmlns="http://www.w3.org/1999/xhtml" style="font-size: ${this._fontSize}px; font-family: ${this.config.fontFamily || 'sans-serif'}; font-weight: ${this.config.fontWeight || 'normal'}; color: ${color}; display: inline-block; margin: 0; padding: 0; line-height: 1;">
         ${htmlContent}
-        <script>
-          if (window.MathJax &amp;&amp; MathJax.tex2svg) {
-            const fontSize = ${this._fontSize};
-            document.querySelectorAll('[data-latex]').forEach(span => {
-              const latex = span.getAttribute('data-latex');
-              const display = span.getAttribute('data-display') === 'true';
-              const node = MathJax.tex2svg(latex, { 
-                display,
-                em: fontSize,
-                ex: fontSize * 0.5,
-                containerWidth: 80 * fontSize
-              });
-              const svg = node.querySelector('svg');
-              if (svg) {
-                // Remove ex units, use pixels from viewBox
-                svg.removeAttribute('width');
-                svg.removeAttribute('height');
-                const viewBox = svg.getAttribute('viewBox');
-                if (viewBox) {
-                  const parts = viewBox.split(' ').map(Number);
-                  const scale = fontSize / 1000;
-                  svg.setAttribute('width', (parts[2] * scale) + 'px');
-                  svg.setAttribute('height', (parts[3] * scale) + 'px');
-                }
-                span.innerHTML = svg.outerHTML;
-              }
-            });
-          }
-        </script>
       </div>
     </foreignObject>`;
 
