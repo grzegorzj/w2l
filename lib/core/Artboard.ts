@@ -241,6 +241,37 @@ export class Artboard extends Rectangle {
   }
 
   /**
+   * Recursively collects all elements including those inside containers and layouts.
+   * For containers (invisible elements), we collect their children but not the container itself.
+   * @internal
+   */
+  private collectAllElements(elements: any[]): any[] {
+    const allElements: any[] = [];
+    
+    for (const element of elements) {
+      // Check if this is a Container (invisible element with children)
+      const isContainer = element.children && Array.isArray(element.children) && 
+                          element.constructor.name === 'Container';
+      
+      if (isContainer) {
+        // For invisible containers, skip the container itself and only collect children
+        const childElements = this.collectAllElements(element.children);
+        allElements.push(...childElements);
+      } else if (element.children && Array.isArray(element.children)) {
+        // For visible elements with children (like Layout), add the element AND collect children
+        allElements.push(element);
+        const childElements = this.collectAllElements(element.children);
+        allElements.push(...childElements);
+      } else {
+        // Leaf element (no children)
+        allElements.push(element);
+      }
+    }
+    
+    return allElements;
+  }
+
+  /**
    * Sorts elements by z-index (explicit z-index > nesting depth > creation order).
    * 
    * Sorting priority:
@@ -306,8 +337,11 @@ export class Artboard extends Rectangle {
     const heightPx = size.height === "auto" ? 600 : parseUnit(size.height);
     const bgColor = this.artboardConfig.backgroundColor || "transparent";
 
-    // Sort elements by z-index (creation order + nesting depth)
-    const sortedElements = this.sortElementsByZIndex(this.elements);
+    // Recursively collect ALL elements (including those inside containers/layouts)
+    const allElements = this.collectAllElements(this.elements);
+    
+    // Sort ALL elements by z-index (creation order + nesting depth)
+    const sortedElements = this.sortElementsByZIndex(allElements);
 
     // Render all elements in z-index order
     const elementsHTML = sortedElements
