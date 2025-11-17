@@ -48,10 +48,19 @@ export type {
   TextAlign,
   TextVerticalAlign,
   WordBoundingBox,
+  TextMatch,
 } from "./Text.js";
 
 export { LatexText } from "./LatexText.js";
-export type { LatexTextConfig, LatexPartBoundingBox } from "./LatexText.js";
+export type {
+  LatexTextConfig,
+  LatexPartBoundingBox,
+  LatexMatch,
+} from "./LatexText.js";
 
 export { MixedText } from "./MixedText.js";
-export type { MixedTextConfig, MixedTextPartBoundingBox } from "./MixedText.js";
+export type {
+  MixedTextConfig,
+  MixedTextPartBoundingBox,
+  MixedTextMatch,
+} from "./MixedText.js";

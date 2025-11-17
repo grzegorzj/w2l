@@ -24,6 +24,18 @@ export interface LatexPartBoundingBox {
 }
 
 /**
+ * Result of a pattern match in LaTeX content.
+ */
+export interface LatexMatch {
+  /** The matched LaTeX source */
+  match: string;
+  /** Bounding box of the entire formula (part-level matching not yet supported) */
+  bbox: LatexPartBoundingBox;
+  /** Character offset within the LaTeX source */
+  charOffset: number;
+}
+
+/**
  * Configuration for creating a LatexText element.
  */
 export interface LatexTextConfig {
@@ -458,6 +470,64 @@ export class LatexText extends Shape {
   getAvailableParts(): string[] {
     this.ensureMeasured();
     return Array.from(this._measuredDimensions?.parts.keys() || []);
+  }
+
+  /**
+   * Finds all occurrences of a pattern in the LaTeX source and returns their bounding boxes.
+   * Note: Currently returns the bounding box of the entire formula for each match.
+   * Fine-grained part-level bounding boxes may be added in the future.
+   * 
+   * @param pattern - String or RegExp pattern to search for in the LaTeX source
+   * @returns Array of matches with their bounding boxes
+   * 
+   * @example
+   * Find power notation
+   * ```typescript
+   * const latex = new LatexText({
+   *   content: "E = mc^2"
+   * });
+   * const matches = latex.findMatches(/\^2/);
+   * matches.forEach(match => {
+   *   console.log(`Found "${match.match}" at offset ${match.charOffset}`);
+   *   // Use match.bbox to create highlights
+   * });
+   * ```
+   * 
+   * @example
+   * Find all fractions
+   * ```typescript
+   * const matches = latex.findMatches(/\\frac/);
+   * ```
+   */
+  findMatches(pattern: string | RegExp): LatexMatch[] {
+    this.ensureMeasured();
+    
+    const content = this.config.content || '';
+    const regex = typeof pattern === 'string' 
+      ? new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+      : new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+    
+    const matches: LatexMatch[] = [];
+    let match: RegExpExecArray | null;
+    
+    // Get the bounding box of the entire latex element
+    const bbox = {
+      x: 0,
+      y: 0,
+      width: this.latexWidth,
+      height: this.latexHeight
+    };
+    
+    // Find all matches in the source
+    while ((match = regex.exec(content)) !== null) {
+      matches.push({
+        match: match[0],
+        bbox,
+        charOffset: match.index
+      });
+    }
+    
+    return matches;
   }
 
   /**

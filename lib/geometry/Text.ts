@@ -166,6 +166,20 @@ export interface WordBoundingBox {
   height: number;
 }
 
+/**
+ * Result of a pattern match in text.
+ */
+export interface TextMatch {
+  /** The matched text content */
+  match: string;
+  /** Bounding box of the match */
+  bbox: WordBoundingBox;
+  /** Index of the word containing this match */
+  wordIndex: number;
+  /** Character offset within the full text */
+  charOffset: number;
+}
+
 export class Text extends Shape {
   private config: TextConfig;
   private _fontSize: number;
@@ -554,6 +568,84 @@ export class Text extends Shape {
       x: `${bbox.x + bbox.width / 2}px`,
       y: `${bbox.y + bbox.height / 2}px`
     };
+  }
+
+  /**
+   * Finds all occurrences of a pattern in the text and returns their bounding boxes.
+   * 
+   * @param pattern - String or RegExp pattern to search for
+   * @returns Array of matches with their bounding boxes
+   * 
+   * @example
+   * Find and highlight specific words
+   * ```typescript
+   * const text = new Text({ content: "The quick brown fox jumps over the lazy dog" });
+   * const matches = text.findMatches(/fox|dog/);
+   * matches.forEach(match => {
+   *   console.log(`Found "${match.match}" at word index ${match.wordIndex}`);
+   *   // Use match.bbox to create highlights
+   * });
+   * ```
+   * 
+   * @example
+   * Case-insensitive search
+   * ```typescript
+   * const matches = text.findMatches(/ENERGY/i);
+   * ```
+   */
+  findMatches(pattern: string | RegExp): TextMatch[] {
+    this.ensureMeasured();
+    
+    const content = this.config.content || '';
+    const regex = typeof pattern === 'string' 
+      ? new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+      : new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+    
+    const matches: TextMatch[] = [];
+    let match: RegExpExecArray | null;
+    
+    // Build a map of character offset to word index
+    const words = this._lines.join(' ').split(/\s+/);
+    const charToWordMap: number[] = [];
+    let currentOffset = 0;
+    
+    words.forEach((word, wordIndex) => {
+      for (let i = 0; i < word.length; i++) {
+        charToWordMap[currentOffset + i] = wordIndex;
+      }
+      currentOffset += word.length + 1; // +1 for space
+    });
+    
+    // Find all matches
+    while ((match = regex.exec(content)) !== null) {
+      const matchText = match[0];
+      const charOffset = match.index;
+      
+      // Find which word this match belongs to
+      let wordIndex = charToWordMap[charOffset];
+      if (wordIndex === undefined) {
+        // Match might be in whitespace or at boundary, find nearest word
+        for (let i = charOffset; i >= 0; i--) {
+          if (charToWordMap[i] !== undefined) {
+            wordIndex = charToWordMap[i];
+            break;
+          }
+        }
+      }
+      
+      // Get bounding box for the word containing this match
+      const bbox = this.getWordBoundingBox(wordIndex);
+      if (bbox) {
+        matches.push({
+          match: matchText,
+          bbox,
+          wordIndex,
+          charOffset
+        });
+      }
+    }
+    
+    return matches;
   }
 
   /**

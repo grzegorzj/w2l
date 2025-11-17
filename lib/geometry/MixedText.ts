@@ -38,6 +38,22 @@ export interface MixedTextPartBoundingBox {
 }
 
 /**
+ * Result of a pattern match in mixed text.
+ */
+export interface MixedTextMatch {
+  /** The matched text/latex content */
+  match: string;
+  /** Bounding box of the segment containing this match */
+  bbox: MixedTextPartBoundingBox;
+  /** Index of the segment containing this match */
+  segmentIndex: number;
+  /** Type of segment: text or latex */
+  type: "text" | "latex";
+  /** Character offset within the segment */
+  charOffset: number;
+}
+
+/**
  * Configuration for creating a MixedText element.
  */
 export interface MixedTextConfig {
@@ -480,6 +496,80 @@ export class MixedText extends Shape {
       x: `${bbox.x + bbox.width / 2}px`,
       y: `${bbox.y + bbox.height / 2}px`
     };
+  }
+
+  /**
+   * Finds all occurrences of a pattern in the mixed text and returns their bounding boxes.
+   * Can search in text segments, latex segments, or both.
+   * 
+   * @param pattern - String or RegExp pattern to search for
+   * @param options - Search options
+   * @returns Array of matches with their bounding boxes
+   * 
+   * @example
+   * Find power notation in LaTeX
+   * ```typescript
+   * const text = new MixedText({
+   *   content: "Einstein's equation $E = mc^2$ relates energy and mass."
+   * });
+   * const matches = text.findMatches(/\^2/, { type: 'latex' });
+   * matches.forEach(match => {
+   *   console.log(`Found "${match.match}" in LaTeX at segment ${match.segmentIndex}`);
+   *   // Use match.bbox to create highlights
+   * });
+   * ```
+   * 
+   * @example
+   * Find words in text parts only
+   * ```typescript
+   * const matches = text.findMatches(/energy|mass/, { type: 'text' });
+   * ```
+   * 
+   * @example
+   * Search both text and latex
+   * ```typescript
+   * const matches = text.findMatches(/E/); // Searches everywhere by default
+   * ```
+   */
+  findMatches(
+    pattern: string | RegExp,
+    options?: { type?: 'text' | 'latex' | 'both' }
+  ): MixedTextMatch[] {
+    this.ensureMeasured();
+    
+    const searchType = options?.type || 'both';
+    const regex = typeof pattern === 'string' 
+      ? new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+      : new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+    
+    const matches: MixedTextMatch[] = [];
+    
+    // Search through each segment
+    this._segments.forEach((segment) => {
+      // Skip if type doesn't match
+      if (searchType !== 'both' && segment.type !== searchType) {
+        return;
+      }
+      
+      // Reset regex lastIndex for each segment
+      regex.lastIndex = 0;
+      
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(segment.content)) !== null) {
+        const bbox = this.getSegmentBoundingBox(segment.index);
+        if (bbox) {
+          matches.push({
+            match: match[0],
+            bbox,
+            segmentIndex: segment.index,
+            type: segment.type,
+            charOffset: match.index
+          });
+        }
+      }
+    });
+    
+    return matches;
   }
 
   /**

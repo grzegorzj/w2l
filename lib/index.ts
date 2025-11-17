@@ -129,10 +129,13 @@ export type {
   TextAlign,
   TextVerticalAlign,
   WordBoundingBox,
+  TextMatch,
   LatexTextConfig,
   LatexPartBoundingBox,
+  LatexMatch,
   MixedTextConfig,
   MixedTextPartBoundingBox,
+  MixedTextMatch,
 } from "./geometry/index.js";
 
 /**
