@@ -379,6 +379,42 @@ export class Rectangle extends Shape {
   }
 
   /**
+   * Convenient alias for topCenter.
+   *
+   * @returns The actual transformed position of the top edge center
+   */
+  get top(): Point {
+    return this.topCenter;
+  }
+
+  /**
+   * Convenient alias for bottomCenter.
+   *
+   * @returns The actual transformed position of the bottom edge center
+   */
+  get bottom(): Point {
+    return this.bottomCenter;
+  }
+
+  /**
+   * Convenient alias for leftCenter.
+   *
+   * @returns The actual transformed position of the left edge center
+   */
+  get left(): Point {
+    return this.leftCenter;
+  }
+
+  /**
+   * Convenient alias for rightCenter.
+   *
+   * @returns The actual transformed position of the right edge center
+   */
+  get right(): Point {
+    return this.rightCenter;
+  }
+
+  /**
    * Gets the four sides of the rectangle with their geometric properties.
    *
    * Each side's direction follows counter-clockwise vertex ordering (see CONVENTIONS.md).

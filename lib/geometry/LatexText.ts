@@ -36,6 +36,52 @@ export interface LatexMatch {
 }
 
 /**
+ * Represents an annotated element within a LaTeX formula.
+ * Annotated using \cssId{id}{content} or \class{class}{content} commands.
+ * Provides the same positioning API as other elements.
+ */
+export interface AnnotatedLatexElement {
+  /** ID or class name of the annotation */
+  identifier: string;
+  /** Type of annotation: 'id' or 'class' */
+  type: 'id' | 'class';
+  /** Bounding box of the annotated element */
+  bbox: LatexPartBoundingBox;
+  /** The SVG element itself */
+  element: SVGElement;
+  
+  // Reference points for positioning (same as Bounded elements)
+  /** Center point of the element */
+  readonly center: Point;
+  /** Top-left corner */
+  readonly topLeft: Point;
+  /** Top-center point */
+  readonly topCenter: Point;
+  /** Top-right corner */
+  readonly topRight: Point;
+  /** Left-center point */
+  readonly leftCenter: Point;
+  /** Right-center point */
+  readonly rightCenter: Point;
+  /** Bottom-left corner */
+  readonly bottomLeft: Point;
+  /** Bottom-center point */
+  readonly bottomCenter: Point;
+  /** Bottom-right corner */
+  readonly bottomRight: Point;
+  
+  // Convenient aliases
+  /** Alias for topCenter */
+  readonly top: Point;
+  /** Alias for bottomCenter */
+  readonly bottom: Point;
+  /** Alias for leftCenter */
+  readonly left: Point;
+  /** Alias for rightCenter */
+  readonly right: Point;
+}
+
+/**
  * Configuration for creating a LatexText element.
  */
 export interface LatexTextConfig {
@@ -433,6 +479,34 @@ export class LatexText extends Shape {
   }
 
   /**
+   * Convenient alias for topCenter.
+   */
+  get top(): Point {
+    return this.topCenter;
+  }
+
+  /**
+   * Convenient alias for bottomCenter.
+   */
+  get bottom(): Point {
+    return this.bottomCenter;
+  }
+
+  /**
+   * Convenient alias for leftCenter.
+   */
+  get left(): Point {
+    return this.leftCenter;
+  }
+
+  /**
+   * Convenient alias for rightCenter.
+   */
+  get right(): Point {
+    return this.rightCenter;
+  }
+
+  /**
    * Gets the bounding box for a specific part of the LaTeX formula.
    * Parts are identified by their CSS class and index.
    * 
@@ -528,6 +602,223 @@ export class LatexText extends Shape {
     }
     
     return matches;
+  }
+
+  /**
+   * Creates an annotated element with reference points from a bbox.
+   * @internal
+   */
+  private createAnnotatedElement(
+    identifier: string,
+    type: 'id' | 'class',
+    bbox: LatexPartBoundingBox,
+    element: SVGElement
+  ): AnnotatedLatexElement {
+    return {
+      identifier,
+      type,
+      bbox,
+      element,
+      // Reference points
+      get center(): Point {
+        return {
+          x: `${bbox.x + bbox.width / 2}px`,
+          y: `${bbox.y + bbox.height / 2}px`
+        };
+      },
+      get topLeft(): Point {
+        return {
+          x: `${bbox.x}px`,
+          y: `${bbox.y}px`
+        };
+      },
+      get topCenter(): Point {
+        return {
+          x: `${bbox.x + bbox.width / 2}px`,
+          y: `${bbox.y}px`
+        };
+      },
+      get topRight(): Point {
+        return {
+          x: `${bbox.x + bbox.width}px`,
+          y: `${bbox.y}px`
+        };
+      },
+      get leftCenter(): Point {
+        return {
+          x: `${bbox.x}px`,
+          y: `${bbox.y + bbox.height / 2}px`
+        };
+      },
+      get rightCenter(): Point {
+        return {
+          x: `${bbox.x + bbox.width}px`,
+          y: `${bbox.y + bbox.height / 2}px`
+        };
+      },
+      get bottomLeft(): Point {
+        return {
+          x: `${bbox.x}px`,
+          y: `${bbox.y + bbox.height}px`
+        };
+      },
+      get bottomCenter(): Point {
+        return {
+          x: `${bbox.x + bbox.width / 2}px`,
+          y: `${bbox.y + bbox.height}px`
+        };
+      },
+      get bottomRight(): Point {
+        return {
+          x: `${bbox.x + bbox.width}px`,
+          y: `${bbox.y + bbox.height}px`
+        };
+      },
+      // Convenient aliases
+      get top(): Point {
+        return this.topCenter;
+      },
+      get bottom(): Point {
+        return this.bottomCenter;
+      },
+      get left(): Point {
+        return this.leftCenter;
+      },
+      get right(): Point {
+        return this.rightCenter;
+      }
+    };
+  }
+
+  /**
+   * Gets an annotated element by its ID.
+   * Use \cssId{id}{content} in your LaTeX source to mark elements.
+   * 
+   * @param id - The ID assigned using \cssId command
+   * @returns The annotated element with position info, or null if not found
+   * 
+   * @example
+   * ```typescript
+   * const latex = new LatexText({
+   *   content: "E = \\cssId{mass-energy}{mc^2}"
+   * });
+   * 
+   * const element = latex.getElementById('mass-energy');
+   * if (element) {
+   *   // Use reference points like other elements
+   *   circle.position({
+   *     relativeFrom: circle.center,
+   *     relativeTo: element.center,
+   *     x: "0px",
+   *     y: "0px"
+   *   });
+   * }
+   * ```
+   */
+  getElementById(id: string): AnnotatedLatexElement | null {
+    this.ensureMeasured();
+    
+    if (!this._measurementContainerGetter || typeof document === 'undefined') {
+      return null;
+    }
+    
+    try {
+      // Create a temporary container to query the rendered SVG
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.visibility = 'hidden';
+      container.innerHTML = this._renderedSVG;
+      document.body.appendChild(container);
+      
+      // Find element with the ID
+      const svgElement = container.querySelector(`#${CSS.escape(id)}`);
+      
+      if (svgElement && svgElement instanceof SVGElement) {
+        const bbox = svgElement.getBoundingClientRect();
+        const containerBbox = container.getBoundingClientRect();
+        
+        const relativeBbox: LatexPartBoundingBox = {
+          x: bbox.left - containerBbox.left,
+          y: bbox.top - containerBbox.top,
+          width: bbox.width,
+          height: bbox.height
+        };
+        
+        const result = this.createAnnotatedElement(id, 'id', relativeBbox, svgElement);
+        
+        document.body.removeChild(container);
+        return result;
+      }
+      
+      document.body.removeChild(container);
+    } catch (error) {
+      console.warn('Failed to get element by ID:', error);
+    }
+    
+    return null;
+  }
+
+  /**
+   * Gets all annotated elements with a specific class.
+   * Use \class{classname}{content} in your LaTeX source to mark elements.
+   * 
+   * @param className - The class name assigned using \class command
+   * @returns Array of annotated elements with position info
+   * 
+   * @example
+   * ```typescript
+   * const latex = new LatexText({
+   *   content: "\\class{variable}{x}^2 + \\class{variable}{y}^2 = \\class{variable}{r}^2"
+   * });
+   * 
+   * const variables = latex.getElementsByClass('variable');
+   * variables.forEach(v => {
+   *   console.log(`Variable at (${v.bbox.x}, ${v.bbox.y})`);
+   * });
+   * ```
+   */
+  getElementsByClass(className: string): AnnotatedLatexElement[] {
+    this.ensureMeasured();
+    
+    if (!this._measurementContainerGetter || typeof document === 'undefined') {
+      return [];
+    }
+    
+    try {
+      // Create a temporary container to query the rendered SVG
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.visibility = 'hidden';
+      container.innerHTML = this._renderedSVG;
+      document.body.appendChild(container);
+      
+      // Find all elements with the class
+      const elements = container.querySelectorAll(`.${CSS.escape(className)}`);
+      const results: AnnotatedLatexElement[] = [];
+      
+      const containerBbox = container.getBoundingClientRect();
+      
+      elements.forEach(svgElement => {
+        if (svgElement instanceof SVGElement) {
+          const bbox = svgElement.getBoundingClientRect();
+          
+          const relativeBbox: LatexPartBoundingBox = {
+            x: bbox.left - containerBbox.left,
+            y: bbox.top - containerBbox.top,
+            width: bbox.width,
+            height: bbox.height
+          };
+          
+          results.push(this.createAnnotatedElement(className, 'class', relativeBbox, svgElement));
+        }
+      });
+      
+      document.body.removeChild(container);
+      return results;
+    } catch (error) {
+      console.warn('Failed to get elements by class:', error);
+      return [];
+    }
   }
 
   /**

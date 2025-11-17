@@ -237,25 +237,75 @@ if (parts.length > 0) {
 }
 ```
 
+## Annotation-Based Querying
+
+For precise control over which parts of formulas to highlight or query, use LaTeX annotation commands:
+
+### Using `\cssId` and `\class`
+
+Mark specific parts of your formulas for later reference:
+
+```typescript
+// Mark specific part with unique ID
+const formula = new LatexText({
+  content: "E = \\cssId{mass-energy}{mc^2}"
+});
+
+// Query the annotated part
+const element = formula.getElementById('mass-energy');
+if (element) {
+  // element.bbox contains precise position
+  // Create highlights, position other elements, etc.
+}
+```
+
+```typescript
+// Mark similar parts with class
+const pythagoras = new LatexText({
+  content: "\\class{var}{a}^2 + \\class{var}{b}^2 = \\class{var}{c}^2"
+});
+
+// Query all variables
+const variables = pythagoras.getElementsByClass('var');
+variables.forEach(v => {
+  // Highlight each variable
+});
+```
+
+### Works in MixedText Too
+
+```typescript
+const text = new MixedText({
+  content: "Einstein's $E = \\cssId{power}{mc^2}$ is famous."
+});
+
+const power = text.getElementById('power');
+// Returns precise bbox for just the mc^2 part
+```
+
+**See [LaTeX Annotations Guide](./LATEX-ANNOTATIONS.md)** for complete documentation and examples.
+
 ## Limitations
 
 1. **Browser Environment**: LaTeX rendering requires a browser with MathJax loaded
 2. **Font Consistency**: LaTeX uses its own fonts, which may not match surrounding text perfectly
-3. **Part Granularity**: Part identification depends on MathJax's internal structure
+3. **Part Granularity**: Part identification depends on MathJax's internal structure (unless using annotations)
 4. **No Line Breaking**: LaTeX formulas don't automatically break across lines in `MixedText`
 5. **Async Loading**: MathJax loads asynchronously; ensure it's ready before rendering
 
 ## Future Enhancements
 
 Potential improvements:
-- Custom part annotations for more precise highlighting
 - Line-breaking support for long formulas in mixed text
 - Chemistry notation support (mhchem extension)
 - Better integration with text baseline alignment
 - Direct SVG embedding (already partially implemented for LatexText)
+- Automatic source-to-render mapping (complex, may not be feasible)
 
 ## See Also
 
+- [LaTeX Annotations Guide](./LATEX-ANNOTATIONS.md) - **Annotation-based querying with `\cssId` and `\class`**
+- [Pattern Matching Guide](./PATTERN-MATCHING.md) - Alternative regex-based pattern matching
 - [Complex Text Guide](./COMPLEX-TEXT.md) - Philosophy and approach to text measurement
 - [Positioning System](./POSITIONING-SYSTEM.md) - How positioning works in W2L
 - [Text Measurement Guide](./TEXT-MEASUREMENT.md) - Details on text measurement system

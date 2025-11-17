@@ -10,7 +10,8 @@
         tex: {
           inlineMath: [['$', '$'], ['\\(', '\\)']],
           displayMath: [['$$', '$$'], ['\\[', '\\]']],
-          processEscapes: true
+          processEscapes: true,
+          packages: {'[+]': ['html']}  // Enable html extension for \cssId and \class
         },
         svg: {
           fontCache: 'global',
@@ -23,6 +24,9 @@
           exFactor: 0.5,      // Conversion factor from ex to em
           displayAlign: 'center',
           displayIndent: '0'
+        },
+        loader: {
+          load: ['[tex]/html']  // Load html extension
         },
         startup: {
           ready: () => {

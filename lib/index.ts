@@ -133,9 +133,11 @@ export type {
   LatexTextConfig,
   LatexPartBoundingBox,
   LatexMatch,
+  AnnotatedLatexElement,
   MixedTextConfig,
   MixedTextPartBoundingBox,
   MixedTextMatch,
+  AnnotatedMixedElement,
 } from "./geometry/index.js";
 
 /**

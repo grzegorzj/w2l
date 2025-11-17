@@ -56,6 +56,7 @@ export type {
   LatexTextConfig,
   LatexPartBoundingBox,
   LatexMatch,
+  AnnotatedLatexElement,
 } from "./LatexText.js";
 
 export { MixedText } from "./MixedText.js";
@@ -63,4 +64,5 @@ export type {
   MixedTextConfig,
   MixedTextPartBoundingBox,
   MixedTextMatch,
+  AnnotatedMixedElement,
 } from "./MixedText.js";

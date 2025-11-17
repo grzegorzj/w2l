@@ -481,6 +481,34 @@ export class RegularPolygon extends Shape {
   }
 
   /**
+   * Convenient alias for topCenter.
+   */
+  get top(): Point {
+    return this.topCenter;
+  }
+
+  /**
+   * Convenient alias for bottomCenter.
+   */
+  get bottom(): Point {
+    return this.bottomCenter;
+  }
+
+  /**
+   * Convenient alias for leftCenter.
+   */
+  get left(): Point {
+    return this.leftCenter;
+  }
+
+  /**
+   * Convenient alias for rightCenter.
+   */
+  get right(): Point {
+    return this.rightCenter;
+  }
+
+  /**
    * Gets the bounding box of the polygon.
    *
    * @returns Object with bounding box properties
