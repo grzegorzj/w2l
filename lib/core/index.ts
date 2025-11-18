@@ -22,6 +22,7 @@ export type {
 export { Bounded } from "./Bounded.js";
 export type { Spacing, ParsedSpacing } from "./Bounded.js";
 export { Shape } from "./Shape.js";
+export type { BackgroundImageSize } from "./Shape.js";
 export type { Style, Stylable } from "./Stylable.js";
 export { styleToSVGAttributes } from "./Stylable.js";
 

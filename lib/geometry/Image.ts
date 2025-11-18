@@ -196,7 +196,7 @@ export class Image extends Shape {
    * @returns The center point of the image
    */
   get center(): Point {
-    return this.toAbsolutePoint(this._width / 2, this._height / 2);
+    return this.toAbsolutePoint(this._width / 2, this._height / 2, "center");
   }
 
   /**
@@ -205,7 +205,7 @@ export class Image extends Shape {
    * @returns The top-left point of the image
    */
   get topLeft(): Point {
-    return this.toAbsolutePoint(0, 0);
+    return this.toAbsolutePoint(0, 0, "topLeft");
   }
 
   /**
@@ -214,7 +214,7 @@ export class Image extends Shape {
    * @returns The top-center point of the image
    */
   get topCenter(): Point {
-    return this.toAbsolutePoint(this._width / 2, 0);
+    return this.toAbsolutePoint(this._width / 2, 0, "topCenter");
   }
 
   /**
@@ -223,7 +223,7 @@ export class Image extends Shape {
    * @returns The top-right point of the image
    */
   get topRight(): Point {
-    return this.toAbsolutePoint(this._width, 0);
+    return this.toAbsolutePoint(this._width, 0, "topRight");
   }
 
   /**
@@ -232,7 +232,7 @@ export class Image extends Shape {
    * @returns The left-center point of the image
    */
   get leftCenter(): Point {
-    return this.toAbsolutePoint(0, this._height / 2);
+    return this.toAbsolutePoint(0, this._height / 2, "leftCenter");
   }
 
   /**
@@ -241,7 +241,7 @@ export class Image extends Shape {
    * @returns The right-center point of the image
    */
   get rightCenter(): Point {
-    return this.toAbsolutePoint(this._width, this._height / 2);
+    return this.toAbsolutePoint(this._width, this._height / 2, "rightCenter");
   }
 
   /**
@@ -250,7 +250,7 @@ export class Image extends Shape {
    * @returns The bottom-left point of the image
    */
   get bottomLeft(): Point {
-    return this.toAbsolutePoint(0, this._height);
+    return this.toAbsolutePoint(0, this._height, "bottomLeft");
   }
 
   /**
@@ -259,7 +259,7 @@ export class Image extends Shape {
    * @returns The bottom-center point of the image
    */
   get bottomCenter(): Point {
-    return this.toAbsolutePoint(this._width / 2, this._height);
+    return this.toAbsolutePoint(this._width / 2, this._height, "bottomCenter");
   }
 
   /**
@@ -268,7 +268,7 @@ export class Image extends Shape {
    * @returns The bottom-right point of the image
    */
   get bottomRight(): Point {
-    return this.toAbsolutePoint(this._width, this._height);
+    return this.toAbsolutePoint(this._width, this._height, "bottomRight");
   }
 
   /**

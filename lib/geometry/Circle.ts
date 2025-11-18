@@ -37,6 +37,31 @@ export interface CircleConfig {
   name?: string;
 
   /**
+   * Optional background image URL.
+   * The image will be used as a fill pattern for the circle.
+   *
+   * @example
+   * ```typescript
+   * {
+   *   radius: 50,
+   *   backgroundImage: "https://example.com/image.jpg",
+   *   backgroundImageSize: "cover"
+   * }
+   * ```
+   */
+  backgroundImage?: string;
+
+  /**
+   * How the background image should be sized.
+   * - "cover": Image covers entire shape, may be cropped (default)
+   * - "contain": Entire image visible, may have empty space
+   * - "fill": Stretch to fill, may distort
+   *
+   * @default "cover"
+   */
+  backgroundImageSize?: import("../core/Shape.js").BackgroundImageSize;
+
+  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
    * Uses standard CSS/SVG property names.
    *
@@ -117,6 +142,14 @@ export class Circle extends Shape {
     } else {
       throw new Error("Circle requires either radius or diameter to be specified");
     }
+
+    // Set background image if provided
+    if (config.backgroundImage) {
+      this.setBackgroundImage(
+        config.backgroundImage,
+        config.backgroundImageSize || "cover"
+      );
+    }
   }
 
   /**
@@ -171,7 +204,7 @@ export class Circle extends Shape {
    */
   get center(): Point {
     // Use absolute position to account for parent hierarchy
-    return this.toAbsolutePoint(0, 0);
+    return this.toAbsolutePoint(0, 0, "center");
   }
 
   /**
@@ -201,7 +234,8 @@ export class Circle extends Shape {
     // Use absolute position to account for parent hierarchy
     return this.toAbsolutePoint(
       this._radius * Math.cos(radians),
-      this._radius * Math.sin(radians)
+      this._radius * Math.sin(radians),
+      `pointAt(${degrees})`
     );
   }
 
@@ -211,7 +245,7 @@ export class Circle extends Shape {
    * @returns The top point of the circle
    */
   get top(): Point {
-    return this.toAbsolutePoint(0, -this._radius);
+    return this.toAbsolutePoint(0, -this._radius, "top");
   }
 
   /**
@@ -220,7 +254,7 @@ export class Circle extends Shape {
    * @returns The bottom point of the circle
    */
   get bottom(): Point {
-    return this.toAbsolutePoint(0, this._radius);
+    return this.toAbsolutePoint(0, this._radius, "bottom");
   }
 
   /**
@@ -229,7 +263,7 @@ export class Circle extends Shape {
    * @returns The left point of the circle
    */
   get left(): Point {
-    return this.toAbsolutePoint(-this._radius, 0);
+    return this.toAbsolutePoint(-this._radius, 0, "left");
   }
 
   /**
@@ -238,7 +272,7 @@ export class Circle extends Shape {
    * @returns The right point of the circle
    */
   get right(): Point {
-    return this.toAbsolutePoint(this._radius, 0);
+    return this.toAbsolutePoint(this._radius, 0, "right");
   }
 
   // Standard reference points (matching Rectangle's 9-point system)
@@ -249,7 +283,7 @@ export class Circle extends Shape {
    * @returns The top-left corner of the circle's bounding box
    */
   get topLeft(): Point {
-    return this.toAbsolutePoint(-this._radius, -this._radius);
+    return this.toAbsolutePoint(-this._radius, -this._radius, "topLeft");
   }
 
   /**
@@ -267,7 +301,7 @@ export class Circle extends Shape {
    * @returns The top-right corner of the circle's bounding box
    */
   get topRight(): Point {
-    return this.toAbsolutePoint(this._radius, -this._radius);
+    return this.toAbsolutePoint(this._radius, -this._radius, "topRight");
   }
 
   /**
@@ -294,7 +328,7 @@ export class Circle extends Shape {
    * @returns The bottom-left corner of the circle's bounding box
    */
   get bottomLeft(): Point {
-    return this.toAbsolutePoint(-this._radius, this._radius);
+    return this.toAbsolutePoint(-this._radius, this._radius, "bottomLeft");
   }
 
   /**
@@ -312,7 +346,7 @@ export class Circle extends Shape {
    * @returns The bottom-right corner of the circle's bounding box
    */
   get bottomRight(): Point {
-    return this.toAbsolutePoint(this._radius, this._radius);
+    return this.toAbsolutePoint(this._radius, this._radius, "bottomRight");
   }
 
   /**
@@ -368,14 +402,23 @@ export class Circle extends Shape {
       strokeWidth: "1",
     };
     const style = { ...defaultStyle, ...this.config.style };
+    
+    // If background image is set, override fill with pattern
+    if (this._backgroundImage && this._patternId) {
+      style.fill = `url(#${this._patternId})`;
+    }
+    
     const styleAttrs = styleToSVGAttributes(style);
 
     const transformStr = this.getTransformString();
     const transform = transformStr ? ` transform="${transformStr}"` : "";
 
     const comment = this.getSVGComment();
+    
+    // Include pattern definition if background image is set
+    const patternDef = this.getPatternDef();
 
-    return `${comment}<circle cx="${cx}" cy="${cy}" r="${r}" ${styleAttrs}${transform} />`;
+    return `${patternDef}${comment}<circle cx="${cx}" cy="${cy}" r="${r}" ${styleAttrs}${transform} />`;
   }
 }
 

@@ -432,7 +432,7 @@ export class Text extends Shape {
    * @returns The center point of the text
    */
   get center(): Point {
-    return this.toAbsolutePoint(this.textWidth / 2, this.textHeight / 2);
+    return this.toAbsolutePoint(this.textWidth / 2, this.textHeight / 2, "center");
   }
 
   /**
@@ -440,35 +440,35 @@ export class Text extends Shape {
    */
 
   get topLeft(): Point {
-    return this.toAbsolutePoint(0, 0);
+    return this.toAbsolutePoint(0, 0, "topLeft");
   }
 
   get topCenter(): Point {
-    return this.toAbsolutePoint(this.textWidth / 2, 0);
+    return this.toAbsolutePoint(this.textWidth / 2, 0, "topCenter");
   }
 
   get topRight(): Point {
-    return this.toAbsolutePoint(this.textWidth, 0);
+    return this.toAbsolutePoint(this.textWidth, 0, "topRight");
   }
 
   get leftCenter(): Point {
-    return this.toAbsolutePoint(0, this.textHeight / 2);
+    return this.toAbsolutePoint(0, this.textHeight / 2, "leftCenter");
   }
 
   get rightCenter(): Point {
-    return this.toAbsolutePoint(this.textWidth, this.textHeight / 2);
+    return this.toAbsolutePoint(this.textWidth, this.textHeight / 2, "rightCenter");
   }
 
   get bottomLeft(): Point {
-    return this.toAbsolutePoint(0, this.textHeight);
+    return this.toAbsolutePoint(0, this.textHeight, "bottomLeft");
   }
 
   get bottomCenter(): Point {
-    return this.toAbsolutePoint(this.textWidth / 2, this.textHeight);
+    return this.toAbsolutePoint(this.textWidth / 2, this.textHeight, "bottomCenter");
   }
 
   get bottomRight(): Point {
-    return this.toAbsolutePoint(this.textWidth, this.textHeight);
+    return this.toAbsolutePoint(this.textWidth, this.textHeight, "bottomRight");
   }
 
   /**
