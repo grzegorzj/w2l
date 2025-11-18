@@ -504,10 +504,21 @@ export abstract class Element {
       }
     }
 
-    this.currentPosition = {
-      x: this.currentPosition.x + offsetX,
-      y: this.currentPosition.y + offsetY,
-    };
+    // If element has a parent and is currently relative-positioned,
+    // we need to convert currentPosition to absolute before adding the offset
+    if (this._parent && !this._isAbsolutePositioned) {
+      const absolutePos = this.getAbsolutePosition();
+      this.currentPosition = {
+        x: absolutePos.x + offsetX,
+        y: absolutePos.y + offsetY,
+      };
+    } else {
+      // Already absolute or no parent, just add offset
+      this.currentPosition = {
+        x: this.currentPosition.x + offsetX,
+        y: this.currentPosition.y + offsetY,
+      };
+    }
 
     // Mark as absolutely positioned when position() is explicitly called
     // This breaks the element out of relative parent positioning

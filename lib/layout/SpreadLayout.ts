@@ -211,6 +211,18 @@ export class SpreadLayout extends Layout {
     // These coordinates are relative to the layout's origin (not absolute world coordinates)
     elements.forEach((element, index) => {
       const elem = element as any;
+
+      // Skip elements that have been explicitly positioned (absolute mode)
+      if (elem._isAbsolutePositioned) {
+        console.log(
+          `[SpreadLayout] Element ${index} SKIPPED (absolute positioned)`,
+          {
+            name: elem.name || "unnamed",
+          }
+        );
+        return;
+      }
+
       const position = positions[index];
       const elementSize = elementSizes[index];
 
@@ -266,14 +278,36 @@ export class SpreadLayout extends Layout {
 
       // Set currentPosition in RELATIVE coordinates (relative to parent layout)
       // getAbsolutePosition() will add the parent's position when rendering
+      //
+      // IMPORTANT: currentPosition has different meanings for different shapes:
+      // - Circle: currentPosition is the CENTER
+      // - Rectangle: currentPosition is the TOP-LEFT corner
+      // We calculated targetX/targetY as CENTER positions, so we need to convert
+
+      let finalX = targetX;
+      let finalY = targetY;
+
+      // For rectangles, convert center to top-left
+      if (elem._width !== undefined && elem._height !== undefined) {
+        finalX = targetX - elem._width / 2;
+        finalY = targetY - elem._height / 2;
+      } else if (elem.width !== undefined && elem.height !== undefined) {
+        finalX = targetX - elem.width / 2;
+        finalY = targetY - elem.height / 2;
+      }
+      // For circles, targetX/targetY are already center positions, which is what currentPosition represents
+
       console.log(`[SpreadLayout] Element ${index} setting relative position`, {
         targetX,
         targetY,
+        finalX,
+        finalY,
+        isRect: elem._width !== undefined || elem.width !== undefined,
       });
 
       elem.currentPosition = {
-        x: targetX,
-        y: targetY,
+        x: finalX,
+        y: finalY,
       };
 
       console.log(`[SpreadLayout] Element ${index} AFTER positioning`, {

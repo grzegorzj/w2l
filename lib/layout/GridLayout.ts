@@ -326,6 +326,11 @@ export class GridLayout extends Layout {
    */
   private positionElementInCell(element: Element, cell: GridCell): void {
     const elem = element as any;
+    
+    // Skip elements that have been explicitly positioned (absolute mode)
+    if (elem._isAbsolutePositioned) {
+      return;
+    }
 
     // Resize element to fit cell if fitCells is enabled
     if (this.config.fitCells && element.shouldFitContent) {
@@ -375,9 +380,28 @@ export class GridLayout extends Layout {
 
     // Set currentPosition in RELATIVE coordinates (relative to parent grid)
     // getAbsolutePosition() will add the parent's position when rendering
+    //
+    // IMPORTANT: currentPosition has different meanings for different shapes:
+    // - Circle: currentPosition is the CENTER
+    // - Rectangle: currentPosition is the TOP-LEFT corner
+    // cellTargetX/Y represent CENTER positions, so we need to convert for rectangles
+    
+    let finalX = cellTargetX;
+    let finalY = cellTargetY;
+    
+    // For rectangles, convert center to top-left
+    if (elem._width !== undefined && elem._height !== undefined) {
+      finalX = cellTargetX - elem._width / 2;
+      finalY = cellTargetY - elem._height / 2;
+    } else if (elem.width !== undefined && elem.height !== undefined) {
+      finalX = cellTargetX - elem.width / 2;
+      finalY = cellTargetY - elem.height / 2;
+    }
+    // For circles, cellTargetX/Y are already center positions, which is what currentPosition represents
+    
     elem.currentPosition = {
-      x: cellTargetX,
-      y: cellTargetY,
+      x: finalX,
+      y: finalY,
     };
     
     // Notify dependent elements (e.g., elements positioned relative to this one)
