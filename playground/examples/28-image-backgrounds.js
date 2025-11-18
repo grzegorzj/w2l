@@ -2,7 +2,7 @@
  * Image Backgrounds Example - MINIMAL DEBUG VERSION
  */
 
-import { Artboard, Text, Image, Rectangle, Circle } from "w2l";
+import { Artboard, Text, Image, Rectangle, Circle, BezierCurve } from "w2l";
 
 // Create artboard
 const artboard = new Artboard({
@@ -177,6 +177,40 @@ label3.position({
 });
 
 artboard.addElement(label3);
+
+// Bezier Curve - connecting the first and last circle!
+const curve = new BezierCurve({
+  start: circle1.rightCenter,
+  end: circle3.leftCenter,
+  controlPoint1: { x: 250, y: 280 },
+  controlPoint2: { x: 450, y: 420 },
+  style: {
+    stroke: "#e74c3c",
+    strokeWidth: 3,
+    fill: "none",
+    strokeDasharray: "5,5",
+  },
+});
+
+artboard.addElement(curve);
+
+const curveLabel = new Text({
+  content: "BezierCurve connecting circles!",
+  style: {
+    fontSize: "14px",
+    fill: "#e74c3c",
+    fontWeight: "bold",
+  },
+});
+
+curveLabel.position({
+  relativeFrom: curveLabel.center,
+  relativeTo: { x: "350px", y: "250px" },
+  x: 0,
+  y: 0,
+});
+
+artboard.addElement(curveLabel);
 
 // Render
 artboard.render();
