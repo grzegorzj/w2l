@@ -226,14 +226,30 @@ export class SpreadLayout extends Layout {
         // Horizontal spread
         // position represents left edge, add half width to get center
         targetX = contentX + position + elementSize / 2;
-        targetY = this.calculateCrossAxisPosition(
-          contentY,
-          contentHeight,
-          elem
-        );
+
+        // Get cross-axis size for centering
+        const crossAxisSize =
+          typeof elem.getBoundingBox === "function"
+            ? elem.getBoundingBox(true).height
+            : elem.boundingBox?.height || elem.height || elem.radius * 2 || 0;
+
+        // calculateCrossAxisPosition returns edge position, add half size to get center
+        targetY =
+          this.calculateCrossAxisPosition(contentY, contentHeight, elem) +
+          crossAxisSize / 2;
       } else {
         // Vertical spread
-        targetX = this.calculateCrossAxisPosition(contentX, contentWidth, elem);
+        // Get cross-axis size for centering
+        const crossAxisSize =
+          typeof elem.getBoundingBox === "function"
+            ? elem.getBoundingBox(true).width
+            : elem.boundingBox?.width || elem.width || elem.radius * 2 || 0;
+
+        // calculateCrossAxisPosition returns edge position, add half size to get center
+        targetX =
+          this.calculateCrossAxisPosition(contentX, contentWidth, elem) +
+          crossAxisSize / 2;
+
         // position represents top edge, add half height to get center
         targetY = contentY + position + elementSize / 2;
       }
