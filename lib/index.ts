@@ -107,6 +107,8 @@ export {
   Text,
   LatexText,
   MixedText,
+  Image,
+  BezierCurve,
 } from "./geometry/index.js";
 
 /**
@@ -139,6 +141,8 @@ export type {
   MixedTextPartBoundingBox,
   MixedTextMatch,
   AnnotatedMixedElement,
+  ImageConfig,
+  BezierCurveConfig,
 } from "./geometry/index.js";
 
 /**
@@ -165,3 +169,15 @@ export type {
   SpreadLayoutConfig,
   GridLayoutConfig,
 } from "./layout/index.js";
+
+/**
+ * Composite components
+ * @category API Reference
+ */
+export { Arrow } from "./components/index.js";
+
+/**
+ * Component types and interfaces
+ * @category API Reference
+ */
+export type { ArrowConfig, ArrowHeadStyle } from "./components/index.js";

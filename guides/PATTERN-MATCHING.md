@@ -234,16 +234,22 @@ text.zIndex = 10;          // Text on top
 highlight.zIndex = 5;      // Highlight behind text
 ```
 
-## Examples
+## When to Use Pattern Matching
 
-See `/playground/examples/29-pattern-matching-highlights.js` for a comprehensive demonstration of:
+Pattern matching with `findMatches()` is useful for:
 
-- Finding powers in LaTeX (`^2`)
-- Highlighting keywords in text
-- Case-insensitive search
-- Multiple pattern matching
-- LaTeX command detection
-- Creating visual highlights
+- **Exploratory searching** - Finding patterns without modifying source
+- **Unknown content** - Searching in user-generated or dynamic text
+- **Quick prototyping** - Testing ideas without annotating
+
+However, for **precise, reliable highlighting** of known formula parts, consider using [LaTeX Annotations](./LATEX-ANNOTATIONS.md) with `\cssId` and `\class` commands instead. Annotations provide:
+
+- Element-level precision (not segment-level)
+- 100% reliability (no fuzzy matching)
+- Better performance (direct queries, no regex)
+- Reference points for positioning
+
+See `/playground/examples/30-latex-annotations.js` for the annotation-based approach.
 
 ## Future Enhancements
 

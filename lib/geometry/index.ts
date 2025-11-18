@@ -12,6 +12,8 @@
  * - {@link Text}: Text elements with word wrapping and typography support
  * - {@link LatexText}: LaTeX/mathematical notation rendering with measurement support
  * - {@link MixedText}: Text with embedded LaTeX formulas
+ * - {@link Image}: Raster image elements (PNG, JPG, etc.)
+ * - {@link BezierCurve}: Quadratic and cubic bezier curves for smooth paths
  *
  * @module geometry
  */
@@ -66,3 +68,9 @@ export type {
   MixedTextMatch,
   AnnotatedMixedElement,
 } from "./MixedText.js";
+
+export { Image } from "./Image.js";
+export type { ImageConfig } from "./Image.js";
+
+export { BezierCurve } from "./BezierCurve.js";
+export type { BezierCurveConfig } from "./BezierCurve.js";

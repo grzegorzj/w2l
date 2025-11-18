@@ -29,6 +29,12 @@ How W2L's intelligent alignment system works. Understand how elements automatica
 ### [LaTeX Support](./LATEX-SUPPORT.md)
 Complete guide to rendering LaTeX mathematical notation. Learn how to create standalone formulas, embed math in text, and query coordinates of formula parts for highlighting and positioning.
 
+### [LaTeX Annotations](./LATEX-ANNOTATIONS.md)
+Annotation-based querying for precise highlighting and positioning. Learn how to use `\cssId` and `\class` commands to mark and query specific formula parts with element-level precision.
+
+### [Pattern Matching](./PATTERN-MATCHING.md)
+Regex-based pattern matching for exploratory text and LaTeX searches. Learn how to find and highlight content using `findMatches()` when you need automatic searching without modifying source.
+
 ## Quick Start
 
 If you're new to W2L, we recommend reading in this order:
@@ -51,6 +57,8 @@ If you're new to W2L, we recommend reading in this order:
 | Create lines that follow elements | [Reactive Positioning](./POSITIONING.md#reactive-positioning) |
 | Align elements intelligently | [Intelligent Alignment](./INTELLIGENT-ALIGNMENT.md) |
 | Render LaTeX and mathematical notation | [LaTeX Support](./LATEX-SUPPORT.md) |
+| Highlight specific parts of formulas | [LaTeX Annotations](./LATEX-ANNOTATIONS.md) |
+| Search and highlight text/LaTeX patterns | [Pattern Matching](./PATTERN-MATCHING.md) |
 | See working examples | [Playground Examples](../playground/examples/) |
 | Look up API details | [API Documentation](../docs/index.html) (generated) |
 
@@ -78,6 +86,7 @@ Key examples:
 - `28-spread-layout-vertical.js` - Vertical spread layouts
 - `29-grid-layout.js` - Grid layout examples
 - `30-layout-absolute-positioning.js` - Layout immutability demonstration
+- `30-latex-annotations.js` - LaTeX annotation-based querying and highlighting
 
 ## Documentation Structure
 
@@ -89,7 +98,9 @@ guides/
 ├── POSITIONING.md                 (Positioning & layouts)
 ├── ADVANCED-LAYOUTS.md            (Spread & Grid layouts)
 ├── INTELLIGENT-ALIGNMENT.md       (Alignment system)
-└── LATEX-SUPPORT.md              (LaTeX mathematical notation)
+├── LATEX-SUPPORT.md               (LaTeX mathematical notation)
+├── LATEX-ANNOTATIONS.md           (Annotation-based querying)
+└── PATTERN-MATCHING.md            (Regex-based pattern matching)
 ```
 
 The auto-generated API documentation lives in `docs/` and is built from inline TSDoc comments in the source code.
