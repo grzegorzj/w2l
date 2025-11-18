@@ -14,6 +14,7 @@ export { Artboard } from "./Artboard.js";
 export type { Point, ArtboardConfig } from "./Artboard.js";
 export { Element } from "./Element.js";
 export type {
+  BoundingBox,
   PositionReference,
   RotateConfig,
   TranslateConfig,

@@ -607,6 +607,75 @@ export class Rectangle extends Shape {
   }
 
   /**
+   * Gets the bounding box of the rectangle.
+   *
+   * @param axisAligned - If true, returns axis-aligned bounding box (accounts for rotation).
+   *                      If false, returns oriented bounding box (ignores rotation).
+   * @returns The bounding box
+   *
+   * @example
+   * ```typescript
+   * const rect = new Rectangle({ width: 100, height: 50 });
+   * rect.rotate({ deg: 45 });
+   *
+   * // Get axis-aligned bounding box (space occupied on screen)
+   * const aabb = rect.getBoundingBox(true);
+   * // Returns larger box that encompasses rotated rectangle
+   *
+   * // Get oriented bounding box (rectangle's actual dimensions)
+   * const obb = rect.getBoundingBox(false);
+   * // Returns 100x50, ignoring rotation
+   * ```
+   */
+  getBoundingBox(
+    axisAligned: boolean = true
+  ): import("../core/Element.js").BoundingBox {
+    const absPos = this.getAbsolutePosition();
+
+    if (!axisAligned || this.getTotalRotation() === 0) {
+      // Oriented bounding box or no rotation - just use width/height
+      return {
+        topLeft: this.toAbsolutePoint(0, 0),
+        bottomRight: this.toAbsolutePoint(this._width, this._height),
+        width: this._width,
+        height: this._height,
+        isAxisAligned: this.getTotalRotation() === 0,
+      };
+    }
+
+    // Axis-aligned bounding box with rotation
+    // Get all four corners and find min/max
+    const corners = [
+      this.topLeft,
+      this.topRight,
+      this.bottomLeft,
+      this.bottomRight,
+    ];
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    corners.forEach((corner) => {
+      const x = parseFloat(corner.x.toString().replace("px", ""));
+      const y = parseFloat(corner.y.toString().replace("px", ""));
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    });
+
+    return {
+      topLeft: { x: `${minX}px`, y: `${minY}px` },
+      bottomRight: { x: `${maxX}px`, y: `${maxY}px` },
+      width: maxX - minX,
+      height: maxY - minY,
+      isAxisAligned: true,
+    };
+  }
+
+  /**
    * Renders the rectangle to SVG.
    *
    * @returns SVG element representing the rectangle

@@ -20,6 +20,9 @@ Mathematical conventions, coordinate systems, and coding standards. Essential fo
 ### [Positioning System](./POSITIONING.md)
 Complete guide to positioning, layouts, and child transformations. Learn how to position elements, use containers, work with column-based layouts, and create reactive connections between elements.
 
+### [Advanced Layouts](./ADVANCED-LAYOUTS.md)
+In-depth guide to SpreadLayout and GridLayout. Learn how to distribute elements with flexible spacing, create grids, and understand layout immutability principles.
+
 ### [Intelligent Alignment](./INTELLIGENT-ALIGNMENT.md)
 How W2L's intelligent alignment system works. Understand how elements automatically choose appropriate alignment points for natural, intuitive layouts.
 
@@ -33,8 +36,9 @@ If you're new to W2L, we recommend reading in this order:
 1. [Main README](../README.md) - Project overview and setup
 2. [Conventions](./CONVENTIONS.md) - Understand the basics
 3. [Positioning System](./POSITIONING.md) - Learn positioning and layouts
-4. [Intelligent Alignment](./INTELLIGENT-ALIGNMENT.md) - Master advanced alignment
-5. [Architecture](./ARCHITECTURE.md) - Dive deeper into the system
+4. [Advanced Layouts](./ADVANCED-LAYOUTS.md) - Master spread and grid layouts
+5. [Intelligent Alignment](./INTELLIGENT-ALIGNMENT.md) - Master advanced alignment
+6. [Architecture](./ARCHITECTURE.md) - Dive deeper into the system
 
 ## Finding What You Need
 
@@ -43,6 +47,7 @@ If you're new to W2L, we recommend reading in this order:
 | Understand design decisions | [Architecture](./ARCHITECTURE.md) |
 | Learn coordinate systems | [Conventions](./CONVENTIONS.md) |
 | Position elements and create layouts | [Positioning System](./POSITIONING.md) |
+| Create spread or grid layouts | [Advanced Layouts](./ADVANCED-LAYOUTS.md) |
 | Create lines that follow elements | [Reactive Positioning](./POSITIONING.md#reactive-positioning) |
 | Align elements intelligently | [Intelligent Alignment](./INTELLIGENT-ALIGNMENT.md) |
 | Render LaTeX and mathematical notation | [LaTeX Support](./LATEX-SUPPORT.md) |
@@ -68,9 +73,11 @@ Key examples:
 - `23-reactive-positioning.js` - Reactive line connections between elements
 - `24-text-word-measurement.js` - Text measurement capabilities
 - `25-text-word-highlighting.js` - Highlighting text words
-- `26-basic-latex.js` - LaTeX mathematical notation
-- `27-latex-highlighting.js` - LaTeX formula part highlighting
-- `28-mixed-text-latex.js` - Embedding LaTeX in text
+- `26-column-absolute-positioning.js` - Testing column layout immutability
+- `27-spread-layout-horizontal.js` - Horizontal spread layouts
+- `28-spread-layout-vertical.js` - Vertical spread layouts
+- `29-grid-layout.js` - Grid layout examples
+- `30-layout-absolute-positioning.js` - Layout immutability demonstration
 
 ## Documentation Structure
 
@@ -80,6 +87,7 @@ guides/
 ├── ARCHITECTURE.md                (System design)
 ├── CONVENTIONS.md                 (Standards & conventions)
 ├── POSITIONING.md                 (Positioning & layouts)
+├── ADVANCED-LAYOUTS.md            (Spread & Grid layouts)
 ├── INTELLIGENT-ALIGNMENT.md       (Alignment system)
 └── LATEX-SUPPORT.md              (LaTeX mathematical notation)
 ```

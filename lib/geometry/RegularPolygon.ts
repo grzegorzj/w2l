@@ -511,7 +511,22 @@ export class RegularPolygon extends Shape {
   /**
    * Gets the bounding box of the polygon.
    *
+   * @param axisAligned - Whether to return axis-aligned bounding box
+   * @returns The bounding box
+   */
+  getBoundingBox(axisAligned: boolean = true): import("../core/Element.js").BoundingBox {
+    const bbox = this.boundingBox;
+    return {
+      ...bbox,
+      isAxisAligned: true, // Regular polygons inscribed in circles are always axis-aligned
+    };
+  }
+
+  /**
+   * Gets the bounding box of the polygon.
+   *
    * @returns Object with bounding box properties
+   * @deprecated Use getBoundingBox() instead
    */
   get boundingBox(): {
     topLeft: Point;

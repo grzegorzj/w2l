@@ -259,26 +259,18 @@ export class Column extends Rectangle {
   }
 
   /**
-   * Renders the column background (if styled) and its children.
+   * Renders the column background (if styled).
    *
-   * @returns SVG string
+   * Children are rendered separately by the Artboard's z-index system.
+   * This ensures proper z-ordering between columns and their children.
+   *
+   * @returns SVG string of column background only
    * @internal
    */
   render(): string {
-    const parts: string[] = [];
-
-    // Render column background using inherited Rectangle.render()
-    const rectSVG = super.render();
-    if (rectSVG) {
-      parts.push(rectSVG);
-    }
-
-    // Render children
-    for (const element of this.elements) {
-      parts.push(element.render());
-    }
-
-    return parts.filter((s) => s.length > 0).join("\n");
+    // Render only the column background using inherited Rectangle.render()
+    // Children will be rendered separately by the Artboard with proper z-ordering
+    return super.render();
   }
 
   /**
@@ -450,6 +442,16 @@ export class ColumnsLayout extends Layout {
   }
 
   /**
+   * Override children getter to include columns for proper z-index sorting.
+   * This ensures the Artboard can collect and sort columns and their children.
+   *
+   * @returns Array of columns (which themselves have children)
+   */
+  get children(): Element[] {
+    return this._columns as unknown as Element[];
+  }
+
+  /**
    * Updates positions of columns when the layout moves.
    * @internal
    */
@@ -490,28 +492,16 @@ export class ColumnsLayout extends Layout {
   }
 
   /**
-   * Renders the columns layout.
+   * Renders the columns layout background only.
    *
-   * @returns SVG string representation
+   * Columns and their children are rendered separately by the Artboard's z-index system.
+   *
+   * @returns SVG string representation of just the layout background
    */
   render(): string {
-    const parts: string[] = [];
-
-    // Render the layout background (if it has a visible style)
-    const layoutSVG = super.render();
-    if (layoutSVG) {
-      parts.push(layoutSVG);
-    }
-
-    // Render all columns
-    for (const column of this._columns) {
-      const columnSVG = column.render();
-      if (columnSVG) {
-        parts.push(columnSVG);
-      }
-    }
-
-    return parts.filter((s) => s.length > 0).join("\n");
+    // Render only the layout background
+    // Columns will be rendered separately by the Artboard with proper z-ordering
+    return super.render();
   }
 
   /**

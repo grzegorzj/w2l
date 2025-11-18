@@ -82,6 +82,7 @@ export {
 export type {
   Point,
   ArtboardConfig,
+  BoundingBox,
   PositionReference,
   RotateConfig,
   TranslateConfig,
@@ -144,7 +145,14 @@ export type {
  * Layout and container classes
  * @category API Reference
  */
-export { Container, Layout, ColumnsLayout, Column } from "./layout/index.js";
+export {
+  Container,
+  Layout,
+  ColumnsLayout,
+  Column,
+  SpreadLayout,
+  GridLayout,
+} from "./layout/index.js";
 
 /**
  * Layout types and interfaces
@@ -154,4 +162,6 @@ export type {
   ContainerConfig,
   LayoutConfig,
   ColumnsLayoutConfig,
+  SpreadLayoutConfig,
+  GridLayoutConfig,
 } from "./layout/index.js";

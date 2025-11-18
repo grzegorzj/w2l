@@ -318,14 +318,34 @@ export class Circle extends Shape {
   /**
    * Gets the bounding box of the circle.
    *
-   * @returns Object with top-left and bottom-right points of the bounding box
+   * Circles are rotationally symmetric, so axis-aligned and oriented bounding boxes are identical.
+   *
+   * @param axisAligned - Whether to return axis-aligned (true) or oriented (false) bounding box
+   * @returns The bounding box
    */
-  get boundingBox(): { topLeft: Point; bottomRight: Point; width: number; height: number } {
+  getBoundingBox(axisAligned: boolean = true): import("../core/Element.js").BoundingBox {
     return {
       topLeft: this.toAbsolutePoint(-this._radius, -this._radius),
       bottomRight: this.toAbsolutePoint(this._radius, this._radius),
       width: this._radius * 2,
       height: this._radius * 2,
+      isAxisAligned: true, // Circles are always axis-aligned (rotationally symmetric)
+    };
+  }
+
+  /**
+   * Gets the bounding box of the circle.
+   *
+   * @returns Object with top-left and bottom-right points of the bounding box
+   * @deprecated Use getBoundingBox() instead
+   */
+  get boundingBox(): { topLeft: Point; bottomRight: Point; width: number; height: number } {
+    const bbox = this.getBoundingBox();
+    return {
+      topLeft: bbox.topLeft,
+      bottomRight: bbox.bottomRight,
+      width: bbox.width,
+      height: bbox.height,
     };
   }
 

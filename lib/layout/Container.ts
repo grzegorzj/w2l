@@ -295,23 +295,17 @@ export class Container extends Bounded {
   }
 
   /**
-   * Renders the container and its children.
+   * Renders the container (returns empty string as containers are invisible).
    *
-   * @returns SVG string representation of all children
+   * @returns Empty string (containers are invisible)
    *
    * @remarks
-   * Containers are invisible layout elements and do not render anything themselves.
-   * However, they render all their child elements.
+   * Containers are invisible layout elements. Their children are rendered
+   * separately by the Artboard's z-index system.
    */
   render(): string {
-    // Containers are invisible - they don't render anything themselves
-    // But they render all their children
-    const childrenSVG = this.childrenManager
-      .getChildren()
-      .map((element) => element.render())
-      .filter((svg) => svg.length > 0)
-      .join("\n");
-
-    return childrenSVG;
+    // Containers are invisible - return empty string
+    // Children will be rendered separately by the Artboard with proper z-ordering
+    return "";
   }
 }

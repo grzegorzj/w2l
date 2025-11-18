@@ -12,6 +12,24 @@ import type { Point } from "./Artboard.js";
 import { parseUnit } from "./units.js";
 
 /**
+ * Represents a bounding box for an element.
+ * 
+ * Can be either axis-aligned (ignores rotation) or oriented (accounts for rotation).
+ */
+export interface BoundingBox {
+  /** Top-left corner of the bounding box */
+  topLeft: Point;
+  /** Bottom-right corner of the bounding box */
+  bottomRight: Point;
+  /** Width of the bounding box */
+  width: number;
+  /** Height of the bounding box */
+  height: number;
+  /** Whether this is an axis-aligned bounding box (true) or oriented (false) */
+  isAxisAligned: boolean;
+}
+
+/**
  * Represents a reference point on an element for positioning calculations.
  *
  * This interface is used to specify both the source point (relativeFrom) and
@@ -342,6 +360,23 @@ export abstract class Element {
    * Subclasses must implement this to return their specific center calculation.
    */
   abstract get center(): Point;
+
+  /**
+   * Gets the axis-aligned bounding box of this element.
+   * 
+   * An axis-aligned bounding box always aligns with the coordinate axes,
+   * regardless of the element's rotation. This is useful for layout calculations
+   * where you need to know the total space an element occupies.
+   * 
+   * @returns The axis-aligned bounding box
+   * 
+   * @example
+   * ```typescript
+   * const bbox = element.getBoundingBox();
+   * console.log(`Element occupies ${bbox.width}x${bbox.height} pixels`);
+   * ```
+   */
+  abstract getBoundingBox(axisAligned?: boolean): BoundingBox;
 
   /**
    * Get the point on this element that should be used for alignment.

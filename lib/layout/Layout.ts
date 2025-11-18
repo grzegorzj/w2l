@@ -129,6 +129,15 @@ export class Layout extends Rectangle {
   }
 
   /**
+   * Gets all child elements (getter for Artboard z-index collection).
+   *
+   * @returns Array of child elements
+   */
+  get children(): Element[] {
+    return this.childrenManager.getChildren();
+  }
+
+  /**
    * Gets all layout-bound child elements.
    *
    * @returns Array of elements that are still bound to the layout
@@ -196,22 +205,17 @@ export class Layout extends Rectangle {
   }
 
   /**
-   * Renders the layout and its children.
+   * Renders the layout (background only).
+   * 
+   * Children are rendered separately by the Artboard's z-index system.
+   * This ensures proper z-ordering between multiple layouts and their children.
    *
-   * @returns SVG string representation
+   * @returns SVG string representation of just the layout background
    */
   render(): string {
-    // Render the layout itself (if it has visible style)
-    const layoutSVG = super.render();
-    
-    // Render all children
-    const childrenSVG = this.childrenManager
-      .getChildren()
-      .map((element) => element.render())
-      .filter((svg) => svg.length > 0)
-      .join("\n");
-
-    return [layoutSVG, childrenSVG].filter((s) => s.length > 0).join("\n");
+    // Render only the layout background (if it has visible style)
+    // Children will be rendered separately by the Artboard with proper z-ordering
+    return super.render();
   }
 }
 

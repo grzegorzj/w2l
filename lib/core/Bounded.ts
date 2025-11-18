@@ -227,6 +227,31 @@ export abstract class Bounded extends Element {
   }
 
   /**
+   * Gets the bounding box of this element.
+   * 
+   * Default implementation for rectangular bounded elements.
+   * Shapes with special geometry (circles, polygons) should override this.
+   * 
+   * @param axisAligned - Whether to return axis-aligned bounding box
+   * @returns The bounding box
+   */
+  getBoundingBox(axisAligned: boolean = true): import("./Element.js").BoundingBox {
+    // Default implementation for rectangular elements
+    // Subclasses should override if they have special geometry or support rotation
+    const elem = this as any;
+    const width = elem.width || elem.textWidth || 0;
+    const height = elem.height || elem.textHeight || 0;
+    
+    return {
+      topLeft: this.toAbsolutePoint(0, 0),
+      bottomRight: this.toAbsolutePoint(width, height),
+      width,
+      height,
+      isAxisAligned: true,
+    };
+  }
+
+  /**
    * Gets the appropriate alignment point based on alignment direction.
    *
    * For bounded elements, this returns edge centers or corners depending
@@ -266,50 +291,53 @@ export abstract class Bounded extends Element {
     const height = (this as any).height || 0;
     const radius = (this as any).radius || 0;
 
+    // Get absolute position to return coordinates in absolute space
+    const absPos = this.getAbsolutePosition();
+
     // For circles, use radius-based calculations
     // Note: Circle's currentPosition is already at the center
     if (radius > 0) {
-      let x = this.currentPosition.x;
-      let y = this.currentPosition.y;
+      let x = absPos.x;
+      let y = absPos.y;
 
       // Horizontal positioning
       if (horizontalAlign === "left") {
-        x = this.currentPosition.x - radius;
+        x = absPos.x - radius;
       } else if (horizontalAlign === "right") {
-        x = this.currentPosition.x + radius;
+        x = absPos.x + radius;
       }
-      // "center" uses x = this.currentPosition.x (already set)
+      // "center" uses x = absPos.x (already set)
 
       // Vertical positioning
       if (verticalAlign === "top") {
-        y = this.currentPosition.y - radius;
+        y = absPos.y - radius;
       } else if (verticalAlign === "bottom") {
-        y = this.currentPosition.y + radius;
+        y = absPos.y + radius;
       }
-      // "center" uses y = this.currentPosition.y (already set)
+      // "center" uses y = absPos.y (already set)
 
       return { x: `${x}px`, y: `${y}px` };
     }
 
     // For rectangular elements
-    let x = this.currentPosition.x;
-    let y = this.currentPosition.y;
+    let x = absPos.x;
+    let y = absPos.y;
 
     // Horizontal positioning
     if (horizontalAlign === "center") {
-      x = this.currentPosition.x + width / 2;
+      x = absPos.x + width / 2;
     } else if (horizontalAlign === "right") {
-      x = this.currentPosition.x + width;
+      x = absPos.x + width;
     }
-    // "left" uses x = this.currentPosition.x (already set)
+    // "left" uses x = absPos.x (already set)
 
     // Vertical positioning
     if (verticalAlign === "center") {
-      y = this.currentPosition.y + height / 2;
+      y = absPos.y + height / 2;
     } else if (verticalAlign === "bottom") {
-      y = this.currentPosition.y + height;
+      y = absPos.y + height;
     }
-    // "top" uses y = this.currentPosition.y (already set)
+    // "top" uses y = absPos.y (already set)
 
     return { x: `${x}px`, y: `${y}px` };
   }
