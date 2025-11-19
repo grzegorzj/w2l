@@ -27,9 +27,225 @@ export function extractCodeFromResponse(content) {
 }
 
 /**
- * Response schema for structured output
+ * Response schema for agentic code generation pipeline
  */
-const responseSchema = {
+const agenticResponseSchema = {
+  type: "object",
+  properties: {
+    plan: {
+      type: "object",
+      description:
+        "High-level plan the model will follow before doing any work.",
+      properties: {
+        goal: {
+          type: "string",
+          description: "Restatement of the task in the model's own words.",
+        },
+        steps: {
+          type: "array",
+          description: "Ordered list of steps the model will follow.",
+          items: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+                description:
+                  "Short identifier for the step, e.g. 'outline', 'generate_code'.",
+              },
+              description: {
+                type: "string",
+                description:
+                  "Natural-language description of what this step will do.",
+              },
+            },
+            required: ["id", "description"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["goal", "steps"],
+      additionalProperties: false,
+    },
+    outline: {
+      type: "array",
+      description:
+        "Detailed outline of the solution before any code is written.",
+      items: {
+        type: "object",
+        properties: {
+          section_id: {
+            type: "string",
+            description:
+              "Stable identifier for this section, used to link later steps to this outline item.",
+          },
+          title: {
+            type: "string",
+            description: "Short title for this section of the solution.",
+          },
+          description: {
+            type: "string",
+            description:
+              "Explanation of what this section will contain or achieve.",
+          },
+        },
+        required: ["section_id", "title", "description"],
+        additionalProperties: false,
+      },
+    },
+    draft_code: {
+      type: "object",
+      description: "First complete draft of the code artifact before review.",
+      properties: {
+        language: {
+          type: "string",
+          description: "Primary language or format, e.g. 'javascript'.",
+        },
+        code: {
+          type: "string",
+          description:
+            "The full code draft. Must include all imports and end with artboard.render().",
+        },
+      },
+      required: ["language", "code"],
+      additionalProperties: false,
+    },
+    review: {
+      type: "object",
+      description:
+        "Structured review stages that check the draft against documentation, APIs, and general quality.",
+      properties: {
+        documentation_checks: {
+          type: "array",
+          description:
+            "Checks that explicitly compare the draft against external documentation via tools.",
+          items: {
+            type: "object",
+            properties: {
+              check_id: {
+                type: "string",
+                description: "Identifier for this documentation check.",
+              },
+              description: {
+                type: "string",
+                description:
+                  "What is being verified against documentation (e.g. 'arguments of Rectangle constructor').",
+              },
+              related_code_snippet: {
+                type: "string",
+                description: "Relevant subset of the draft code being checked.",
+              },
+              tool_name: {
+                type: "string",
+                description:
+                  "Tool used to consult documentation, e.g. 'search_documentation'.",
+              },
+              tool_request_payload: {
+                type: "string",
+                description:
+                  "String describing the arguments for the documentation lookup (e.g., 'query: Rectangle constructor').",
+              },
+              tool_response_summary: {
+                type: "string",
+                description: "Summary of the documentation/tool response.",
+              },
+              result: {
+                type: "string",
+                enum: ["passes", "fails", "inconclusive"],
+                description: "Outcome of this check.",
+              },
+              required_changes: {
+                type: "string",
+                description:
+                  "Code changes needed (if any) to satisfy the documentation/API definition.",
+              },
+            },
+            required: [
+              "check_id",
+              "description",
+              "related_code_snippet",
+              "tool_name",
+              "tool_request_payload",
+              "tool_response_summary",
+              "result",
+              "required_changes",
+            ],
+            additionalProperties: false,
+          },
+        },
+        static_quality_review: {
+          type: "object",
+          description:
+            "Non-tool-based review of the draft code: design, readability, robustness.",
+          properties: {
+            correctness_assessment: {
+              type: "string",
+              description: "Reasoned assessment of functional correctness.",
+            },
+            robustness_assessment: {
+              type: "string",
+              description:
+                "Assessment of error handling, edge cases, and failure modes.",
+            },
+            design_assessment: {
+              type: "string",
+              description:
+                "Assessment of the structure, modularity, and API design.",
+            },
+            performance_considerations: {
+              type: "string",
+              description:
+                "Notes about complexity, performance characteristics, and potential bottlenecks.",
+            },
+          },
+          required: [
+            "correctness_assessment",
+            "robustness_assessment",
+            "design_assessment",
+            "performance_considerations",
+          ],
+          additionalProperties: false,
+        },
+      },
+      required: ["documentation_checks", "static_quality_review"],
+      additionalProperties: false,
+    },
+    final_code: {
+      type: "object",
+      description: "Final, post-review code artifact and a concise usage note.",
+      properties: {
+        language: {
+          type: "string",
+          description:
+            "Primary language or format of the final artifact, e.g. 'javascript'.",
+        },
+        code: {
+          type: "string",
+          description:
+            "The final code after all fixes from the review have been applied. Must include all imports and end with artboard.render().",
+        },
+        usage_notes: {
+          type: "string",
+          description:
+            "Short instructions on how to integrate or run this code.",
+        },
+        differences_from_draft: {
+          type: "string",
+          description:
+            "Summary of key changes compared to draft_code.code (bug fixes, API changes, refactors).",
+        },
+      },
+      required: ["language", "code", "usage_notes", "differences_from_draft"],
+      additionalProperties: false,
+    },
+  },
+  required: ["plan", "outline", "draft_code", "review", "final_code"],
+  additionalProperties: false,
+};
+
+/**
+ * Legacy response schema for simple responses
+ */
+const simpleResponseSchema = {
   type: "object",
   properties: {
     reasoning: {
@@ -40,7 +256,7 @@ const responseSchema = {
     code: {
       type: "string",
       description:
-        "The complete, executable TypeScript/JavaScript code using the w2l library. Must include all imports and end with artboard.render(). Do not include markdown code fences.",
+        "The complete, executable JavaScript code using the w2l library. Must include all imports and end with artboard.render(). Do not include markdown code fences.",
     },
     hasCode: {
       type: "boolean",
@@ -51,6 +267,9 @@ const responseSchema = {
   required: ["reasoning", "code", "hasCode"],
   additionalProperties: false,
 };
+
+// Use the agentic schema by default
+const responseSchema = agenticResponseSchema;
 
 /**
  * Stream chat completion from OpenAI with tool support
@@ -97,7 +316,7 @@ export async function streamChatCompletion(
     console.log("\n========================================\n");
 
     const stream = await openai.responses.create({
-      model: "gpt-5-codex",
+      model: "gpt-5-nano",
       input: inputMessages,
       tools: [searchDocumentationToolResponses],
       tool_choice: "auto",
@@ -255,14 +474,62 @@ export async function streamChatCompletion(
 
     try {
       const parsed = JSON.parse(fullContent);
-      reasoning = parsed.reasoning || fullContent;
-      extractedCode = parsed.hasCode && parsed.code ? parsed.code : null;
-      console.log("✅ Parsed structured output:", {
-        hasReasoning: !!reasoning,
-        hasCode: !!extractedCode,
-        reasoningLength: reasoning.length,
-        codeLength: extractedCode?.length || 0,
-      });
+
+      // Check if this is the new agentic format
+      if (parsed.plan && parsed.final_code) {
+        // Agentic format - extract code from final_code.code
+        extractedCode = parsed.final_code.code || null;
+
+        // Build a comprehensive reasoning summary
+        const planSummary =
+          `**Goal**: ${parsed.plan.goal}\n\n` +
+          `**Steps**:\n${parsed.plan.steps.map((s) => `- ${s.description}`).join("\n")}`;
+
+        const outlineSummary =
+          parsed.outline?.length > 0
+            ? `\n\n**Outline**:\n${parsed.outline.map((o) => `- ${o.title}: ${o.description}`).join("\n")}`
+            : "";
+
+        const reviewSummary = parsed.review?.static_quality_review
+          ? `\n\n**Quality Review**:\n- Correctness: ${parsed.review.static_quality_review.correctness_assessment}\n- Design: ${parsed.review.static_quality_review.design_assessment}`
+          : "";
+
+        const changesSummary = parsed.final_code.differences_from_draft
+          ? `\n\n**Changes from Draft**: ${parsed.final_code.differences_from_draft}`
+          : "";
+
+        const usageNotes = parsed.final_code.usage_notes
+          ? `\n\n**Usage**: ${parsed.final_code.usage_notes}`
+          : "";
+
+        reasoning =
+          planSummary +
+          outlineSummary +
+          reviewSummary +
+          changesSummary +
+          usageNotes;
+
+        console.log("✅ Parsed agentic output:", {
+          hasPlan: !!parsed.plan,
+          hasOutline: !!parsed.outline,
+          hasDraft: !!parsed.draft_code,
+          hasReview: !!parsed.review,
+          hasFinalCode: !!parsed.final_code,
+          codeLength: extractedCode?.length || 0,
+        });
+      } else if (parsed.reasoning && parsed.code !== undefined) {
+        // Legacy simple format
+        reasoning = parsed.reasoning || fullContent;
+        extractedCode = parsed.hasCode && parsed.code ? parsed.code : null;
+        console.log("✅ Parsed simple output:", {
+          hasReasoning: !!reasoning,
+          hasCode: !!extractedCode,
+          reasoningLength: reasoning.length,
+          codeLength: extractedCode?.length || 0,
+        });
+      } else {
+        throw new Error("Unknown response format");
+      }
 
       // Now stream the reasoning to frontend since we've parsed it
       if (reasoning) {

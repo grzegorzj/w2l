@@ -14,8 +14,12 @@ import { parseUnit } from "../core/units.js";
 
 /**
  * Configuration for creating a GridLayout.
+ * 
+ * You can either:
+ * - Provide `width` and `height` (cells will be sized to fit)
+ * - Provide `cellWidth`, `cellHeight`, `columns`, and `rows` (total size auto-calculated)
  */
-export interface GridLayoutConfig extends LayoutConfig {
+export interface GridLayoutConfig extends Omit<LayoutConfig, 'width' | 'height'> {
   /**
    * Number of columns in the grid.
    * If not specified, columns will be calculated from rows and element count.
@@ -65,14 +69,24 @@ export interface GridLayoutConfig extends LayoutConfig {
   fitCells?: boolean;
 
   /**
-   * Width of each cell. If not specified, cells will be equal width.
+   * Width of each cell. If specified with columns, total width is auto-calculated.
    */
   cellWidth?: string | number;
 
   /**
-   * Height of each cell. If not specified, cells will be equal height.
+   * Height of each cell. If specified with rows, total height is auto-calculated.
    */
   cellHeight?: string | number;
+  
+  /**
+   * Total width of the grid. Optional if cellWidth is provided.
+   */
+  width?: string | number;
+  
+  /**
+   * Total height of the grid. Optional if cellHeight is provided.
+   */
+  height?: string | number;
 }
 
 /**
@@ -162,7 +176,7 @@ interface GridCell {
  * ```
  */
 export class GridLayout extends Layout {
-  protected config: GridLayoutConfig;
+  private gridConfig: GridLayoutConfig & { width: string | number; height: string | number };
   private gridElements: Element[] = [];
   private cells: GridCell[] = [];
   private isArranged: boolean = false;
@@ -175,15 +189,44 @@ export class GridLayout extends Layout {
    * @param config - Configuration for the grid layout
    */
   constructor(config: GridLayoutConfig) {
-    super(config);
-    this.config = {
+    // Auto-calculate width/height if cellWidth/cellHeight are provided
+    const columnGap = config.gap !== undefined ? config.gap : config.columnGap || 0;
+    const rowGap = config.gap !== undefined ? config.gap : config.rowGap || 0;
+    
+    let finalWidth = config.width;
+    let finalHeight = config.height;
+    
+    // If cellWidth/cellHeight provided but not width/height, calculate them
+    if (config.cellWidth && config.columns && !finalWidth) {
+      const cellW = parseUnit(config.cellWidth);
+      const gapW = parseUnit(columnGap);
+      finalWidth = config.columns * cellW + (config.columns - 1) * gapW;
+    }
+    
+    if (config.cellHeight && config.rows && !finalHeight) {
+      const cellH = parseUnit(config.cellHeight);
+      const gapH = parseUnit(rowGap);
+      finalHeight = config.rows * cellH + (config.rows - 1) * gapH;
+    }
+    
+    // Ensure width and height are set
+    if (!finalWidth || !finalHeight) {
+      throw new Error('GridLayout requires either (width, height) or (cellWidth, cellHeight, columns, rows)');
+    }
+    
+    super({ ...config, width: finalWidth, height: finalHeight });
+    this.gridConfig = {
       columns: config.columns,
       rows: config.rows,
-      columnGap: config.gap !== undefined ? config.gap : config.columnGap || 0,
-      rowGap: config.gap !== undefined ? config.gap : config.rowGap || 0,
+      columnGap,
+      rowGap,
       horizontalAlign: config.horizontalAlign || "center",
       verticalAlign: config.verticalAlign || "center",
       fitCells: config.fitCells || false,
+      cellWidth: config.cellWidth,
+      cellHeight: config.cellHeight,
+      width: finalWidth,
+      height: finalHeight,
       ...config,
     };
   }
@@ -220,19 +263,19 @@ export class GridLayout extends Layout {
     }
 
     // If both columns and rows are specified, use them
-    if (this.config.columns && this.config.rows) {
-      this.calculatedColumns = this.config.columns;
-      this.calculatedRows = this.config.rows;
+    if (this.gridConfig.columns && this.gridConfig.rows) {
+      this.calculatedColumns = this.gridConfig.columns;
+      this.calculatedRows = this.gridConfig.rows;
     }
     // If only columns specified, calculate rows
-    else if (this.config.columns) {
-      this.calculatedColumns = this.config.columns;
-      this.calculatedRows = Math.ceil(elementCount / this.config.columns);
+    else if (this.gridConfig.columns) {
+      this.calculatedColumns = this.gridConfig.columns;
+      this.calculatedRows = Math.ceil(elementCount / this.gridConfig.columns);
     }
     // If only rows specified, calculate columns
-    else if (this.config.rows) {
-      this.calculatedRows = this.config.rows;
-      this.calculatedColumns = Math.ceil(elementCount / this.config.rows);
+    else if (this.gridConfig.rows) {
+      this.calculatedRows = this.gridConfig.rows;
+      this.calculatedColumns = Math.ceil(elementCount / this.gridConfig.rows);
     }
     // If neither specified, create a square-ish grid
     else {
@@ -254,22 +297,22 @@ export class GridLayout extends Layout {
     const contentWidth = this.width - padding.left - padding.right;
     const contentHeight = this.height - padding.top - padding.bottom;
 
-    const columnGap = parseUnit(this.config.columnGap!);
-    const rowGap = parseUnit(this.config.rowGap!);
+    const columnGap = parseUnit(this.gridConfig.columnGap!);
+    const rowGap = parseUnit(this.gridConfig.rowGap!);
 
     // Calculate cell dimensions
     let cellWidth: number;
     let cellHeight: number;
 
-    if (this.config.cellWidth) {
-      cellWidth = parseUnit(this.config.cellWidth);
+    if (this.gridConfig.cellWidth) {
+      cellWidth = parseUnit(this.gridConfig.cellWidth);
     } else {
       const totalColumnGap = columnGap * (this.calculatedColumns - 1);
       cellWidth = (contentWidth - totalColumnGap) / this.calculatedColumns;
     }
 
-    if (this.config.cellHeight) {
-      cellHeight = parseUnit(this.config.cellHeight);
+    if (this.gridConfig.cellHeight) {
+      cellHeight = parseUnit(this.gridConfig.cellHeight);
     } else {
       const totalRowGap = rowGap * (this.calculatedRows - 1);
       cellHeight = (contentHeight - totalRowGap) / this.calculatedRows;
@@ -333,7 +376,7 @@ export class GridLayout extends Layout {
     }
 
     // Resize element to fit cell if fitCells is enabled
-    if (this.config.fitCells && element.shouldFitContent) {
+    if (this.gridConfig.fitCells && element.shouldFitContent) {
       if ("_width" in elem) {
         elem._width = cell.width;
       }
@@ -344,8 +387,8 @@ export class GridLayout extends Layout {
 
     // Get element's alignment point
     const elementPoint = element.getAlignmentPoint(
-      this.config.horizontalAlign!,
-      this.config.verticalAlign!
+      this.gridConfig.horizontalAlign!,
+      this.gridConfig.verticalAlign!
     );
 
     // Get cell's target point based on alignment
@@ -353,7 +396,7 @@ export class GridLayout extends Layout {
     let cellTargetY: number;
 
     // Horizontal alignment
-    switch (this.config.horizontalAlign) {
+    switch (this.gridConfig.horizontalAlign) {
       case "left":
         cellTargetX = cell.x;
         break;
@@ -366,7 +409,7 @@ export class GridLayout extends Layout {
     }
 
     // Vertical alignment
-    switch (this.config.verticalAlign) {
+    switch (this.gridConfig.verticalAlign) {
       case "top":
         cellTargetY = cell.y;
         break;

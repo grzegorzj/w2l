@@ -122,12 +122,14 @@ export function buildCondensedContext() {
 # W2L Library Quick Reference
 
 ## Some available Classes
-- **Artboard**: Main canvas. Use \`new Artboard()\`, then \`artboard.width()\`, \`artboard.height()\`, \`artboard.add(element)\`
-- **Rectangle**: \`new Rectangle()\`, then \`width()\`, \`height()\`, \`fill()\`, \`stroke()\`, etc.
-- **Circle**: \`new Circle()\`, then \`radius()\`, \`fill()\`, etc.
-- **Triangle**: \`new Triangle()\`, then \`a()\`, \`b()\`, \`c()\` for sides, or use vertices
-- **Text**: \`new Text()\`, then \`content()\`, \`fontSize()\`, \`fontFamily()\`, etc.
-- **Container**: Layout container with \`new Container()\`, then use \`layout()\` with 'columns' and add children
+- **Artboard**: Main canvas. Use \`new Artboard({ size: { width, height } })\`, then \`artboard.addElement(element)\`
+- **Rectangle**: \`new Rectangle({ width, height, style: { fill, stroke, ... } })\`
+- **Circle**: \`new Circle({ radius, style: { fill, ... } })\`
+- **Triangle**: \`new Triangle({ a, b, c })\` for sides, or use vertices
+- **Text**: \`new Text({ content, style: { fontSize, fontFamily, fill, ... } })\`
+- **Container**: Invisible layout container. Use \`new Container({ size: { width, height }, padding })\`, then \`addElement(child)\`
+- **GridLayout**: Auto-arranges children in grid. Use \`new GridLayout({ columns, rows, width, height, gap })\`
+- **ColumnsLayout**: Creates column-based layout. Use \`new ColumnsLayout({ count, gutter, width, height })\`
 
 ## Common Patterns
 
@@ -135,27 +137,44 @@ export function buildCondensedContext() {
 \`\`\`typescript
 import { Artboard, Rectangle, Circle } from "w2l";
 
-const artboard = new Artboard();
-artboard.width(800).height(600);
+const artboard = new Artboard({
+  size: { width: 800, height: 600 }
+});
 
-const rect = new Rectangle();
-rect.width(200).height(100).fill("blue");
-artboard.add(rect);
+const rect = new Rectangle({
+  width: 200,
+  height: 100,
+  style: { fill: "blue" }
+});
+
+artboard.addElement(rect);
 \`\`\`
 
 ### Positioning (Relative)
 \`\`\`typescript
 // Position element relative to another
-rect.x(100).y(100);  // Absolute positioning
+element.position({
+  relativeFrom: element.center,
+  relativeTo: artboard.center,
+  x: 0,
+  y: 0
+});
 
-// Or use containers for layout
-const container = new Container();
-container.layout("columns").columnCount(3).gap(10);
-container.add(rect1, rect2, rect3);
+// Or use layouts for automatic arrangement
+const grid = new GridLayout({
+  columns: 3,
+  rows: 2,
+  width: 600,
+  height: 400,
+  gap: 10
+});
+grid.addElement(rect1);
+grid.addElement(rect2);
+grid.addElement(rect3);
 \`\`\`
 
 ### Styling
-All shapes support: \`fill()\`, \`stroke()\`, \`strokeWidth()\`, \`opacity()\`, \`rotate()\`, \`scale()\`
+All shapes support styling via \`style\` property: \`{ fill, stroke, strokeWidth, opacity }\` and transforms via \`rotate()\`, \`translate()\` methods
 
 ### Final pattern
 \`\`\`typescript

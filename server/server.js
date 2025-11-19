@@ -134,7 +134,7 @@ app.post("/api/conversations/:id/chat", async (req, res) => {
     // Add current code context if available
     if (currentCode) {
       messages[messages.length - 1].content +=
-        `\n\nCurrent code in the editor:\n\`\`\`typescript\n${currentCode}\n\`\`\``;
+        `\n\nCurrent code in the editor:\n\`\`\`javascript\n${currentCode}\n\`\`\``;
     }
 
     let assistantMessage = "";

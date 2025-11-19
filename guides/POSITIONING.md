@@ -282,8 +282,7 @@ The `Container` class provides invisible grouping with padding:
 
 ```typescript
 const container = new Container({
-  width: "400px",
-  height: "300px",
+  size: { width: "400px", height: "300px" },
   padding: "20px",
 });
 
@@ -442,8 +441,7 @@ Elements support CSS-like margin and padding:
 
 ```typescript
 const container = new Container({
-  width: "400px",
-  height: "300px",
+  size: { width: "400px", height: "300px" },
   padding: "20px", // All sides
   // OR
   padding: {
@@ -468,8 +466,7 @@ The `contentArea` property returns the usable space inside padding:
 
 ```typescript
 const container = new Container({
-  width: "400px",
-  height: "300px",
+  size: { width: "400px", height: "300px" },
   padding: "20px",
 });
 
