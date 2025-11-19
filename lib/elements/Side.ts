@@ -4,7 +4,7 @@
  * Provides a generic Side class that represents an edge of a shape with
  * geometric properties useful for positioning adjacent elements.
  *
- * @module geometry
+ * @module elements
  */
 
 import type { Point } from "../core/Artboard.js";

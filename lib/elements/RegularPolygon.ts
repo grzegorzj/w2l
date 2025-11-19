@@ -4,7 +4,7 @@
  * Provides regular polygon primitives (shapes with all sides and angles equal)
  * including pentagons, hexagons, octagons, and other n-sided polygons.
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

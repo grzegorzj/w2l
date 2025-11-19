@@ -4,7 +4,7 @@
  * Provides triangle primitives with various configurations including
  * right triangles, equilateral triangles, and custom triangles.
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

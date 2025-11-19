@@ -4,7 +4,7 @@
  * Provides square primitives as a specialized case of Rectangle
  * where width equals height.
  *
- * @module geometry
+ * @module elements
  */
 
 import {

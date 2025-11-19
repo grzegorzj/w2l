@@ -8,7 +8,7 @@
  */
 
 import { Layout, LayoutConfig } from "./Layout.js";
-import { Rectangle } from "../geometry/Rectangle.js";
+import { Rectangle } from "../elements/Rectangle.js";
 import type { Element } from "../core/Element.js";
 import type { Point } from "../core/Artboard.js";
 import type { Style } from "../core/Stylable.js";

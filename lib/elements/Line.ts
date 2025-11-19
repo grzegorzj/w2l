@@ -4,7 +4,7 @@
  * Provides a line primitive to connect two points, useful for visualizing
  * connections between shape points, creating diagrams, and drawing guidelines.
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

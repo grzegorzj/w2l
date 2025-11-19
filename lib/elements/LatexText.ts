@@ -4,7 +4,7 @@
  * Provides LaTeX rendering with the same measurement capabilities as Text,
  * allowing you to query coordinates of formula parts for positioning and highlighting.
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

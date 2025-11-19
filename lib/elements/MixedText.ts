@@ -4,7 +4,7 @@
  * Allows mixing regular text and LaTeX formulas in a single element,
  * with the same measurement capabilities for both text and formula parts.
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

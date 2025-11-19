@@ -7,7 +7,7 @@
  * @module layout
  */
 
-import { Rectangle, RectangleConfig } from "../geometry/Rectangle.js";
+import { Rectangle, RectangleConfig } from "../elements/Rectangle.js";
 import type { Element } from "../core/Element.js";
 import type { Point } from "../core/Artboard.js";
 import { parseUnit } from "../core/units.js";

@@ -3,7 +3,7 @@
  *
  * Provides image elements for embedding raster graphics (PNG, JPG, etc.).
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

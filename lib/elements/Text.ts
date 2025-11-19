@@ -4,7 +4,7 @@
  * Provides text primitives with typography support including word wrapping,
  * alignment, and comprehensive styling options.
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

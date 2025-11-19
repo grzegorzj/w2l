@@ -8,7 +8,7 @@
  */
 
 import { parseUnit } from "./units.js";
-import { Rectangle, type RectangleSize } from "../geometry/Rectangle.js";
+import { Rectangle, type RectangleSize } from "../elements/Rectangle.js";
 
 /**
  * Binding information for reactive positioning.

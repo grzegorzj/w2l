@@ -1,7 +1,7 @@
 /**
- * Geometry module exports.
+ * Elements module exports.
  *
- * This module contains geometric shape primitives including:
+ * This module contains visual elements including geometric shapes, text, and graphs:
  * - {@link Side}: Generic side/edge with inward and outward normals
  * - {@link Line}: Line connecting two points
  * - {@link Triangle}: Triangular shapes with various configurations
@@ -14,8 +14,9 @@
  * - {@link MixedText}: Text with embedded LaTeX formulas
  * - {@link Image}: Raster image elements (PNG, JPG, etc.)
  * - {@link BezierCurve}: Quadratic and cubic bezier curves for smooth paths
+ * - {@link FunctionGraph}: Mathematical function plotting with remarkable points
  *
- * @module geometry
+ * @module elements
  */
 
 export { Side } from "./Side.js";
@@ -74,3 +75,12 @@ export type { ImageConfig } from "./Image.js";
 
 export { BezierCurve } from "./BezierCurve.js";
 export type { BezierCurveConfig } from "./BezierCurve.js";
+
+export { FunctionGraph } from "./FunctionGraph.js";
+export type {
+  FunctionGraphConfig,
+  PlottedFunction,
+  RemarkablePoint,
+  RemarkablePointType,
+  GraphAxis,
+} from "./FunctionGraph.js";

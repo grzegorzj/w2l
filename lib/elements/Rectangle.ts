@@ -4,7 +4,7 @@
  * Provides rectangle primitives with various corner styles including
  * rounded corners and squircle (superellipse) corners.
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

@@ -9,7 +9,7 @@
 
 import { Bounded } from "../core/Bounded.js";
 import type { Point } from "../core/Artboard.js";
-import type { RectangleSize } from "../geometry/Rectangle.js";
+import type { RectangleSize } from "../elements/Rectangle.js";
 import { parseUnit } from "../core/units.js";
 import { ChildrenManager } from "./ChildrenManager.js";
 

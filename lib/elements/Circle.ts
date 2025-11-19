@@ -3,7 +3,7 @@
  *
  * Provides circle primitives with radius-based or diameter-based configuration.
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

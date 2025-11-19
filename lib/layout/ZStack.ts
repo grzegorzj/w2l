@@ -1,9 +1,9 @@
 /**
- * Stack Layout module for stacking elements on top of each other.
+ * ZStack Layout module for layering elements on the z-axis.
  *
- * This module provides the StackLayout class that stacks elements
- * on top of each other with various alignment options, similar to
- * CSS position: absolute with stacking context.
+ * This module provides the ZStack class that layers elements
+ * on top of each other (z-index stacking) with various alignment options.
+ * Similar to CSS position: absolute with stacking context.
  *
  * @module layout
  */
@@ -14,9 +14,9 @@ import type { Point } from "../core/Artboard.js";
 import { parseUnit } from "../core/units.js";
 
 /**
- * Configuration for creating a StackLayout.
+ * Configuration for creating a ZStack.
  */
-export interface StackLayoutConfig extends LayoutConfig {
+export interface ZStackConfig extends LayoutConfig {
   /**
    * Horizontal alignment of stacked elements.
    * - "left": Align to left edge
@@ -44,14 +44,14 @@ export interface StackLayoutConfig extends LayoutConfig {
 }
 
 /**
- * StackLayout stacks elements on top of each other.
+ * ZStack layers elements on top of each other (z-axis stacking).
  *
  * This layout places all added elements at the same position (aligned according
- * to configuration), creating a stacking effect. Elements are rendered in the
+ * to configuration), creating a layering effect. Elements are rendered in the
  * order they're added, with later elements appearing on top (higher z-index).
  *
  * @remarks
- * StackLayout is useful for:
+ * ZStack is useful for:
  * - Creating layered compositions
  * - Building card decks or stacked cards
  * - Creating badges or overlays on elements
@@ -65,9 +65,9 @@ export interface StackLayoutConfig extends LayoutConfig {
  * best results.
  *
  * @example
- * Stack circles on top of each other
+ * Layer circles on top of each other
  * ```typescript
- * const stack = new StackLayout({
+ * const stack = new ZStack({
  *   width: 200,
  *   height: 200,
  *   horizontalAlign: "center",
@@ -104,7 +104,7 @@ export interface StackLayoutConfig extends LayoutConfig {
  * @example
  * Create a card deck effect with layer offset
  * ```typescript
- * const deck = new StackLayout({
+ * const deck = new ZStack({
  *   width: 150,
  *   height: 200,
  *   horizontalAlign: "left",
@@ -123,17 +123,17 @@ export interface StackLayoutConfig extends LayoutConfig {
  * }
  * ```
  */
-export class StackLayout extends Layout {
-  protected config: StackLayoutConfig;
+export class ZStack extends Layout {
+  protected config: ZStackConfig;
   private stackedElements: Element[] = [];
   private isArranged: boolean = false;
 
   /**
-   * Creates a new StackLayout instance.
+   * Creates a new ZStack instance.
    *
-   * @param config - Configuration for the stack layout
+   * @param config - Configuration for the z-stack layout
    */
-  constructor(config: StackLayoutConfig) {
+  constructor(config: ZStackConfig) {
     super(config);
     this.config = {
       horizontalAlign: "center",
@@ -164,12 +164,22 @@ export class StackLayout extends Layout {
 
   /**
    * Arranges all elements in a stack according to the configuration.
+   * Can be called by parent layouts to ensure dimensions are calculated.
    * @internal
    */
-  private arrangeElements(): void {
+  arrangeElements(): void {
     if (this.isArranged || this.stackedElements.length === 0) {
       return;
     }
+
+    // IMPORTANT: Arrange child layouts first so they know their dimensions
+    // This ensures nested layouts calculate their size before we position them
+    this.stackedElements.forEach((element) => {
+      const elem = element as any;
+      if (typeof elem.arrangeElements === "function") {
+        elem.arrangeElements();
+      }
+    });
 
     const contentX = 0;
     const contentY = 0;
@@ -180,7 +190,7 @@ export class StackLayout extends Layout {
     const layerOffset = this.config.layerOffset || 0;
 
     const layoutAbsPos = this.getAbsolutePosition();
-    console.log("[StackLayout] arrangeElements START", {
+    console.log("[ZStack] arrangeElements START", {
       layoutAbsPos,
       contentWidth,
       contentHeight,
@@ -197,7 +207,7 @@ export class StackLayout extends Layout {
       // Skip elements that have been explicitly positioned (absolute mode)
       if (elem._isAbsolutePositioned) {
         console.log(
-          `[StackLayout] Element ${index} SKIPPED (absolute positioned)`,
+          `[ZStack] Element ${index} SKIPPED (absolute positioned)`,
           {
             name: elem.name || "unnamed",
           }
@@ -205,7 +215,7 @@ export class StackLayout extends Layout {
         return;
       }
 
-      console.log(`[StackLayout] Element ${index} BEFORE positioning`, {
+      console.log(`[ZStack] Element ${index} BEFORE positioning`, {
         name: elem.name || "unnamed",
         currentPosition: { ...elem.currentPosition },
         center: element.center,
@@ -253,7 +263,7 @@ export class StackLayout extends Layout {
       }
 
       console.log(
-        `[StackLayout] Element ${index} calculated targets (relative to layout)`,
+        `[ZStack] Element ${index} calculated targets (relative to layout)`,
         {
           targetX,
           targetY,
@@ -282,7 +292,7 @@ export class StackLayout extends Layout {
       }
       // For circles, targetX/targetY are already center positions
 
-      console.log(`[StackLayout] Element ${index} setting relative position`, {
+      console.log(`[ZStack] Element ${index} setting relative position`, {
         targetX,
         targetY,
         finalX,
@@ -295,7 +305,7 @@ export class StackLayout extends Layout {
         y: finalY,
       };
 
-      console.log(`[StackLayout] Element ${index} AFTER positioning`, {
+      console.log(`[ZStack] Element ${index} AFTER positioning`, {
         currentPosition: { ...elem.currentPosition },
         center: element.center,
       });
@@ -313,7 +323,7 @@ export class StackLayout extends Layout {
    * Overrides position to arrange elements after positioning the layout.
    */
   position(config: any): void {
-    console.log("[StackLayout] position() called BEFORE super.position", {
+    console.log("[ZStack] position() called BEFORE super.position", {
       layoutCurrentPos: { ...this.currentPosition },
       layoutAbsPos: this.getAbsolutePosition(),
     });
@@ -322,7 +332,7 @@ export class StackLayout extends Layout {
     super.position(config);
 
     console.log(
-      "[StackLayout] position() AFTER super.position, BEFORE arrange",
+      "[ZStack] position() AFTER super.position, BEFORE arrange",
       {
         layoutCurrentPos: { ...this.currentPosition },
         layoutAbsPos: this.getAbsolutePosition(),
@@ -335,7 +345,7 @@ export class StackLayout extends Layout {
     // Reset tracking so children's newly set positions are used as the baseline
     this.childrenManager.resetTracking();
 
-    console.log("[StackLayout] position() AFTER arrange", {
+    console.log("[ZStack] position() AFTER arrange", {
       layoutCurrentPos: { ...this.currentPosition },
       layoutAbsPos: this.getAbsolutePosition(),
     });
@@ -345,7 +355,7 @@ export class StackLayout extends Layout {
    * Overrides render to arrange elements before rendering.
    */
   render(): string {
-    console.log("[StackLayout] render() called", {
+    console.log("[ZStack] render() called", {
       layoutAbsPos: this.getAbsolutePosition(),
     });
     this.arrangeElements();

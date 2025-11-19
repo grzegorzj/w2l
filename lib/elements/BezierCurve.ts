@@ -3,7 +3,7 @@
  *
  * Provides bezier curve primitives for smooth, curved paths.
  *
- * @module geometry
+ * @module elements
  */
 
 import { Shape } from "../core/Shape.js";

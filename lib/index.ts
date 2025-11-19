@@ -93,7 +93,7 @@ export type {
 } from "./core/index.js";
 
 /**
- * Geometric shapes
+ * Visual elements (shapes, text, graphs, etc.)
  * @category API Reference
  */
 export {
@@ -109,10 +109,11 @@ export {
   MixedText,
   Image,
   BezierCurve,
-} from "./geometry/index.js";
+  FunctionGraph,
+} from "./elements/index.js";
 
 /**
- * Geometry types and interfaces
+ * Element types and interfaces
  * @category API Reference
  */
 export type {
@@ -143,7 +144,12 @@ export type {
   AnnotatedMixedElement,
   ImageConfig,
   BezierCurveConfig,
-} from "./geometry/index.js";
+  FunctionGraphConfig,
+  PlottedFunction,
+  RemarkablePoint,
+  RemarkablePointType,
+  GraphAxis,
+} from "./elements/index.js";
 
 /**
  * Layout and container classes
@@ -155,7 +161,9 @@ export {
   ColumnsLayout,
   Column,
   SpreadLayout,
-  StackLayout,
+  VStack,
+  HStack,
+  ZStack,
   GridLayout,
 } from "./layout/index.js";
 
@@ -168,7 +176,9 @@ export type {
   LayoutConfig,
   ColumnsLayoutConfig,
   SpreadLayoutConfig,
-  StackLayoutConfig,
+  VStackConfig,
+  HStackConfig,
+  ZStackConfig,
   GridLayoutConfig,
 } from "./layout/index.js";
 

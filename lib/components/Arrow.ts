@@ -9,7 +9,7 @@
 
 import { Element } from "../core/Element.js";
 import type { Point } from "../core/Artboard.js";
-import { Line } from "../geometry/Line.js";
+import { Line } from "../elements/Line.js";
 import type { Style } from "../core/Stylable.js";
 
 /**
