@@ -67,6 +67,15 @@ const grid = new GridLayout({
   cellHeight: 380,
   columnGap: 30,
   rowGap: 30,
+  horizontalAlign: "center",
+  verticalAlign: "center",
+  debugShowCells: true, // Show cell boundaries for debugging
+  style: {
+    fill: "transparent",
+    stroke: "#ff0000",
+    strokeWidth: "2px",
+    strokeDasharray: "5,5",
+  },
 });
 
 grid.position({
@@ -93,7 +102,12 @@ const quadraticGraph = new FunctionGraph({
 
 const quadraticStack = new VStack({
   spacing: 10,
-  alignment: "center",
+  style: {
+    fill: "transparent",
+    stroke: "#0000ff",
+    strokeWidth: "1px",
+    strokeDasharray: "3,3",
+  },
 });
 
 const quadraticTitle = new Text({
@@ -117,7 +131,7 @@ if (quadRoots.length > 0) {
   quadraticStack.addElement(rootNote);
 }
 
-grid.addElement(quadraticStack, 0, 0);
+grid.addElement(quadraticStack);
 
 // Example 2: Trigonometric Functions
 const trigGraph = new FunctionGraph({
@@ -143,7 +157,12 @@ const trigGraph = new FunctionGraph({
 
 const trigStack = new VStack({
   spacing: 10,
-  alignment: "center",
+  style: {
+    fill: "transparent",
+    stroke: "#0000ff",
+    strokeWidth: "1px",
+    strokeDasharray: "3,3",
+  },
 });
 
 const trigTitle = new Text({
@@ -156,7 +175,7 @@ const trigTitle = new Text({
 trigStack.addElement(trigTitle);
 trigStack.addElement(trigGraph);
 
-grid.addElement(trigStack, 0, 1);
+grid.addElement(trigStack);
 
 // Example 3: Cubic Polynomial
 const cubicGraph = new FunctionGraph({
@@ -173,7 +192,12 @@ const cubicGraph = new FunctionGraph({
 
 const cubicStack = new VStack({
   spacing: 10,
-  alignment: "center",
+  style: {
+    fill: "transparent",
+    stroke: "#0000ff",
+    strokeWidth: "1px",
+    strokeDasharray: "3,3",
+  },
 });
 
 const cubicTitle = new Text({
@@ -198,7 +222,7 @@ if (maxima.length > 0 || minima.length > 0) {
   cubicStack.addElement(extremaNote);
 }
 
-grid.addElement(cubicStack, 0, 2);
+grid.addElement(cubicStack);
 
 // Example 4: Exponential and Logarithmic
 const expLogGraph = new FunctionGraph({
@@ -223,7 +247,12 @@ const expLogGraph = new FunctionGraph({
 
 const expLogStack = new VStack({
   spacing: 10,
-  alignment: "center",
+  style: {
+    fill: "transparent",
+    stroke: "#0000ff",
+    strokeWidth: "1px",
+    strokeDasharray: "3,3",
+  },
 });
 
 const expLogTitle = new Text({
@@ -236,7 +265,7 @@ const expLogTitle = new Text({
 expLogStack.addElement(expLogTitle);
 expLogStack.addElement(expLogGraph);
 
-grid.addElement(expLogStack, 1, 0);
+grid.addElement(expLogStack);
 
 // Example 5: Rational Function
 const rationalGraph = new FunctionGraph({
@@ -254,7 +283,12 @@ const rationalGraph = new FunctionGraph({
 
 const rationalStack = new VStack({
   spacing: 10,
-  alignment: "center",
+  style: {
+    fill: "transparent",
+    stroke: "#0000ff",
+    strokeWidth: "1px",
+    strokeDasharray: "3,3",
+  },
 });
 
 const rationalTitle = new Text({
@@ -278,7 +312,7 @@ if (asymptotes.length > 0) {
   rationalStack.addElement(asymNote);
 }
 
-grid.addElement(rationalStack, 1, 1);
+grid.addElement(rationalStack);
 
 // Example 6: Piecewise Function
 const piecewiseGraph = new FunctionGraph({
@@ -299,7 +333,12 @@ const piecewiseGraph = new FunctionGraph({
 
 const piecewiseStack = new VStack({
   spacing: 10,
-  alignment: "center",
+  style: {
+    fill: "transparent",
+    stroke: "#0000ff",
+    strokeWidth: "1px",
+    strokeDasharray: "3,3",
+  },
 });
 
 const piecewiseTitle = new Text({
@@ -312,7 +351,7 @@ const piecewiseTitle = new Text({
 piecewiseStack.addElement(piecewiseTitle);
 piecewiseStack.addElement(piecewiseGraph);
 
-grid.addElement(piecewiseStack, 1, 2);
+grid.addElement(piecewiseStack);
 
 // Example 7: Absolute Value
 const absValueGraph = new FunctionGraph({
@@ -336,7 +375,12 @@ const absValueGraph = new FunctionGraph({
 
 const absValueStack = new VStack({
   spacing: 10,
-  alignment: "center",
+  style: {
+    fill: "transparent",
+    stroke: "#0000ff",
+    strokeWidth: "1px",
+    strokeDasharray: "3,3",
+  },
 });
 
 const absValueTitle = new Text({
@@ -349,7 +393,7 @@ const absValueTitle = new Text({
 absValueStack.addElement(absValueTitle);
 absValueStack.addElement(absValueGraph);
 
-grid.addElement(absValueStack, 2, 0);
+grid.addElement(absValueStack);
 
 // Example 8: Quintic Polynomial
 const quinticGraph = new FunctionGraph({
@@ -366,7 +410,12 @@ const quinticGraph = new FunctionGraph({
 
 const quinticStack = new VStack({
   spacing: 10,
-  alignment: "center",
+  style: {
+    fill: "transparent",
+    stroke: "#0000ff",
+    strokeWidth: "1px",
+    strokeDasharray: "3,3",
+  },
 });
 
 const quinticTitle = new Text({
@@ -390,7 +439,7 @@ if (inflectionPoints.length > 0) {
   quinticStack.addElement(inflectionNote);
 }
 
-grid.addElement(quinticStack, 2, 1);
+grid.addElement(quinticStack);
 
 // Example 9: Sine Wave with Higher Frequency
 const sineWaveGraph = new FunctionGraph({
@@ -407,7 +456,12 @@ const sineWaveGraph = new FunctionGraph({
 
 const sineWaveStack = new VStack({
   spacing: 10,
-  alignment: "center",
+  style: {
+    fill: "transparent",
+    stroke: "#0000ff",
+    strokeWidth: "1px",
+    strokeDasharray: "3,3",
+  },
 });
 
 const sineWaveTitle = new Text({
@@ -427,6 +481,6 @@ const dampedNote = new Text({
 });
 sineWaveStack.addElement(dampedNote);
 
-grid.addElement(sineWaveStack, 2, 2);
+grid.addElement(sineWaveStack);
 
 artboard.render();

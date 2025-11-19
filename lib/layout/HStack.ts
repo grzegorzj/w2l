@@ -152,6 +152,28 @@ export class HStack extends Layout {
   }
 
   /**
+   * Override width getter to ensure elements are arranged before returning dimensions.
+   */
+  get width(): number {
+    // Ensure elements are arranged so we have correct dimensions
+    if (!this.isArranged && this.stackedElements.length > 0) {
+      this.arrangeElements();
+    }
+    return this._width;
+  }
+
+  /**
+   * Override height getter to ensure elements are arranged before returning dimensions.
+   */
+  get height(): number {
+    // Ensure elements are arranged so we have correct dimensions
+    if (!this.isArranged && this.stackedElements.length > 0) {
+      this.arrangeElements();
+    }
+    return this._height;
+  }
+
+  /**
    * Adds an element to the horizontal stack.
    *
    * @param element - The element to add

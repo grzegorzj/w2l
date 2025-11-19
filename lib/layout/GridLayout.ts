@@ -352,6 +352,15 @@ export class GridLayout extends Layout {
       return;
     }
 
+    // IMPORTANT: Arrange child layouts first so they know their dimensions
+    // This ensures VStack/HStack/etc children calculate their size before we position them
+    this.gridElements.forEach((element) => {
+      const elem = element as any;
+      if (typeof elem.arrangeElements === 'function') {
+        elem.arrangeElements();
+      }
+    });
+
     // Calculate grid structure
     this.calculateGridDimensions();
     this.createCells();
