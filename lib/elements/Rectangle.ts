@@ -691,7 +691,7 @@ export class Rectangle extends Shape {
 
     // Default style if none provided
     const defaultStyle: Partial<Style> = {
-      fill: "#000000",
+      fill: "transparent",
       stroke: "none",
       strokeWidth: "1",
     };
