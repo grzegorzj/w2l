@@ -66,11 +66,18 @@ export interface Point {
  */
 export interface ArtboardConfig {
   /**
-   * Size of the artboard. Can be explicit dimensions or "auto" for automatic sizing.
-   * When set to "auto", the artboard will expand to fit all contained elements.
+   * Initial size of the artboard.
    * Supports CSS-style units (px, rem, em) or plain numbers (treated as pixels).
    */
-  size: RectangleSize | "auto";
+  size: RectangleSize;
+
+  /**
+   * Whether to automatically adjust artboard size to fit content.
+   * When true, artboard recalculates its size after each element is added,
+   * sizing to the furthest bounds of all elements plus padding.
+   * @defaultValue false
+   */
+  autoAdjust?: boolean;
 
   /**
    * Padding around the artboard content.
@@ -99,11 +106,11 @@ export interface ArtboardConfig {
  * The Artboard uses a standard Cartesian coordinate system with the origin (0,0)
  * at the top-left corner. Positive X extends to the right, positive Y extends downward.
  *
- * When size is set to "auto", the artboard will automatically calculate its dimensions
- * based on the positioned elements plus the specified padding.
+ * When `autoAdjust` is enabled, the artboard automatically resizes to fit all
+ * contained elements as they are added.
  *
  * @example
- * Create a fixed-size artboard
+ * Create a fixed-size artboard (clips content)
  * ```typescript
  * const artboard = new Artboard({
  *   size: { width: 800, height: 600 },
@@ -112,18 +119,21 @@ export interface ArtboardConfig {
  * ```
  *
  * @example
- * Create an auto-sizing artboard
+ * Create an auto-adjusting artboard
  * ```typescript
  * const artboard = new Artboard({
- *   size: "auto",
+ *   size: { width: 800, height: 600 }, // Initial size
+ *   autoAdjust: true,
  *   padding: "20px"
  * });
- * // Artboard will expand to fit all elements added to it
+ * // Artboard will resize to fit all elements as they're added
  * ```
  */
 export class Artboard extends Rectangle {
   private artboardConfig: ArtboardConfig;
   private elements: any[] = [];
+  private currentWidth: number;
+  private currentHeight: number;
   
   /**
    * Hidden DOM container for accurate text measurements.
@@ -147,12 +157,13 @@ export class Artboard extends Rectangle {
    * ```
    */
   constructor(config: ArtboardConfig) {
-    // Convert Artboard config to Rectangle config
-    const size = config.size === "auto" ? { width: 0, height: 0 } : config.size;
+    if (!config.size) {
+      throw new Error("Artboard requires a 'size' property with { width, height }.");
+    }
     
     super({
-      width: size.width,
-      height: size.height,
+      width: config.size.width,
+      height: config.size.height,
       name: "artboard",
       style: {
         fill: config.backgroundColor || "transparent"
@@ -160,6 +171,8 @@ export class Artboard extends Rectangle {
     });
     
     this.artboardConfig = config;
+    this.currentWidth = parseUnit(config.size.width);
+    this.currentHeight = parseUnit(config.size.height);
     
     // Set padding if provided
     if (config.padding) {
@@ -173,10 +186,62 @@ export class Artboard extends Rectangle {
    * @returns The dimensions of the artboard
    */
   get size(): RectangleSize {
-    if (this.artboardConfig.size === "auto") {
-      return { width: "auto", height: "auto" };
-    }
-    return this.artboardConfig.size;
+    return {
+      width: `${this.currentWidth}px`,
+      height: `${this.currentHeight}px`
+    };
+  }
+
+  /**
+   * Recalculates artboard size to fit all content if autoAdjust is enabled.
+   * Takes the furthest bounds of all elements and applies padding.
+   * @internal
+   */
+  private recalculateSize(): void {
+    if (!this.artboardConfig.autoAdjust) return;
+    
+    const allElements = this.collectAllElements(this.elements);
+    const padding = this.paddingBox;
+    
+    let maxX = 0;
+    let maxY = 0;
+    
+    // Find the furthest extent of all elements
+    allElements.forEach(element => {
+      if (element && typeof element.getBoundingBox === 'function') {
+        try {
+          const bbox = element.getBoundingBox();
+          // BoundingBox has topLeft, bottomRight, width, height
+          const right = parseFloat(String(bbox.bottomRight.x));
+          const bottom = parseFloat(String(bbox.bottomRight.y));
+          
+          if (isFinite(right) && isFinite(bottom)) {
+            maxX = Math.max(maxX, right);
+            maxY = Math.max(maxY, bottom);
+          }
+        } catch (e) {
+          // Skip elements that aren't fully initialized
+        }
+      }
+    });
+    
+    // Update current size to fit content plus padding
+    this.currentWidth = maxX + padding.right;
+    this.currentHeight = maxY + padding.bottom;
+  }
+
+  /**
+   * Override width getter to return current calculated width.
+   */
+  get width(): number {
+    return this.currentWidth;
+  }
+
+  /**
+   * Override height getter to return current calculated height.
+   */
+  get height(): number {
+    return this.currentHeight;
   }
   
   // Position getters (center, topLeft, etc.) are inherited from Rectangle
@@ -332,9 +397,11 @@ export class Artboard extends Rectangle {
    * ```
    */
   render(): string {
-    const size = this.size;
-    const widthPx = size.width === "auto" ? 800 : parseUnit(size.width);
-    const heightPx = size.height === "auto" ? 600 : parseUnit(size.height);
+    // Final size recalculation at render time if autoAdjust is enabled
+    this.recalculateSize();
+    
+    const widthPx = this.width;
+    const heightPx = this.height;
     const bgColor = this.artboardConfig.backgroundColor || "transparent";
 
     // Recursively collect ALL elements (including those inside containers/layouts)

@@ -256,8 +256,8 @@ export class Rectangle extends Shape {
     }
 
     // Calculate center of rectangle (rotation pivot point)
-    const centerX = x + this._width / 2;
-    const centerY = y + this._height / 2;
+    const centerX = x + this.width / 2;
+    const centerY = y + this.height / 2;
 
     // Point relative to rectangle's top-left
     const pointX = x + localX;
@@ -299,7 +299,7 @@ export class Rectangle extends Shape {
    */
   get center(): Point {
     // Use absolute position to account for parent hierarchy
-    return this.toAbsolutePoint(this._width / 2, this._height / 2, "center");
+    return this.toAbsolutePoint(this.width / 2, this.height / 2, "center");
   }
 
   /**
@@ -321,7 +321,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the top-right corner
    */
   get topRight(): Point {
-    return this.transformPoint(this._width, 0, "topRight");
+    return this.transformPoint(this.width, 0, "topRight");
   }
 
   /**
@@ -330,7 +330,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the bottom-left corner
    */
   get bottomLeft(): Point {
-    return this.transformPoint(0, this._height, "bottomLeft");
+    return this.transformPoint(0, this.height, "bottomLeft");
   }
 
   /**
@@ -339,7 +339,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the bottom-right corner
    */
   get bottomRight(): Point {
-    return this.transformPoint(this._width, this._height, "bottomRight");
+    return this.transformPoint(this.width, this.height, "bottomRight");
   }
 
   /**
@@ -348,7 +348,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the top edge center
    */
   get topCenter(): Point {
-    return this.transformPoint(this._width / 2, 0, "topCenter");
+    return this.transformPoint(this.width / 2, 0, "topCenter");
   }
 
   /**
@@ -357,7 +357,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the bottom edge center
    */
   get bottomCenter(): Point {
-    return this.transformPoint(this._width / 2, this._height, "bottomCenter");
+    return this.transformPoint(this.width / 2, this.height, "bottomCenter");
   }
 
   /**
@@ -366,7 +366,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the left edge center
    */
   get leftCenter(): Point {
-    return this.transformPoint(0, this._height / 2, "leftCenter");
+    return this.transformPoint(0, this.height / 2, "leftCenter");
   }
 
   /**
@@ -375,7 +375,7 @@ export class Rectangle extends Shape {
    * @returns The actual transformed position of the right edge center
    */
   get rightCenter(): Point {
-    return this.transformPoint(this._width, this._height / 2, "rightCenter");
+    return this.transformPoint(this.width, this.height / 2, "rightCenter");
   }
 
   /**
@@ -440,8 +440,8 @@ export class Rectangle extends Shape {
     const absPos = this.getAbsolutePosition();
     const x = absPos.x;
     const y = absPos.y;
-    const w = this._width;
-    const h = this._height;
+    const w = this.width;
+    const h = this.height;
 
     const createSide = (
       start: { x: number; y: number },
@@ -490,11 +490,11 @@ export class Rectangle extends Shape {
   } {
     const tl = this.topLeft;
     const br = this.bottomRight;
-    const length = Math.sqrt(this._width ** 2 + this._height ** 2);
+    const length = Math.sqrt(this.width ** 2 + this.height ** 2);
 
     // Direction vector: from TL to BR
-    const dx = this._width;
-    const dy = this._height;
+    const dx = this.width;
+    const dy = this.height;
 
     // Outward normal: perpendicular to diagonal, pointing away from center
     // For TL->BR diagonal, rotate 90° clockwise: (dx, dy) -> (-dy, dx)
@@ -543,11 +543,11 @@ export class Rectangle extends Shape {
   } {
     const tr = this.topRight;
     const bl = this.bottomLeft;
-    const length = Math.sqrt(this._width ** 2 + this._height ** 2);
+    const length = Math.sqrt(this.width ** 2 + this.height ** 2);
 
     // Direction vector: from TR to BL
-    const dx = -this._width;
-    const dy = this._height;
+    const dx = -this.width;
+    const dy = this.height;
 
     // Outward normal: perpendicular to diagonal, pointing away from center
     // For TR->BL diagonal, rotate 90° clockwise: (dx, dy) -> (-dy, dx)
@@ -581,8 +581,8 @@ export class Rectangle extends Shape {
     const absPos = this.getAbsolutePosition();
     const x = absPos.x;
     const y = absPos.y;
-    const w = this._width;
-    const h = this._height;
+    const w = this.width;
+    const h = this.height;
     const r = Math.min(this._cornerRadius, w / 2, h / 2);
 
     // Squircle uses a superellipse formula with n ≈ 4-5
@@ -636,9 +636,9 @@ export class Rectangle extends Shape {
       // Oriented bounding box or no rotation - just use width/height
       return {
         topLeft: this.toAbsolutePoint(0, 0),
-        bottomRight: this.toAbsolutePoint(this._width, this._height),
-        width: this._width,
-        height: this._height,
+        bottomRight: this.toAbsolutePoint(this.width, this.height),
+        width: this.width,
+        height: this.height,
         isAxisAligned: this.getTotalRotation() === 0,
       };
     }
@@ -685,8 +685,8 @@ export class Rectangle extends Shape {
     const absPos = this.getAbsolutePosition();
     const x = absPos.x;
     const y = absPos.y;
-    const w = this._width;
-    const h = this._height;
+    const w = this.width;
+    const h = this.height;
     const cornerStyle = this.config.cornerStyle || "sharp";
 
     // Default style if none provided
