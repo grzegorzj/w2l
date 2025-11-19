@@ -35,28 +35,30 @@ const artboard = new Artboard({
 
   quadratic.position({
     relativeFrom: quadratic.topLeft,
-    relativeTo: artboard.contentArea.topLeft,
+    relativeTo: artboard.topLeft,
     x: 0,
     y: 0,
   });
 
-  artboard.add(quadratic);
+  artboard.addElement(quadratic);
 
   // Add labels for remarkable points on quadratic
   const quadRoots = quadratic.getRemarkablePoints("root");
   quadRoots.forEach((root, i) => {
-    const label = new Text({
-      content: `Root: x=${root.x.toFixed(2)}`,
-      fontSize: 12,
-      style: { fill: "#c0392b" },
-    });
-    label.position({
-      relativeFrom: label.bottomCenter,
-      relativeTo: root.svgPoint,
-      x: 0,
-      y: -10,
-    });
-    artboard.add(label);
+    if (root.svgPoint) {
+      const label = new Text({
+        content: `Root: x=${root.x.toFixed(2)}`,
+        fontSize: 12,
+        style: { fill: "#c0392b" },
+      });
+      label.position({
+        relativeFrom: label.bottomCenter,
+        relativeTo: quadratic.topLeft,
+        x: root.svgPoint.x,
+        y: root.svgPoint.y - 10,
+      });
+      artboard.addElement(label);
+    }
   });
 
   // Example 2: Multiple Trigonometric Functions
@@ -94,7 +96,7 @@ const artboard = new Artboard({
     y: 0,
   });
 
-  artboard.add(trig);
+  artboard.addElement(trig);
 
   // Example 3: Polynomial with Multiple Roots
   const cubic = new FunctionGraph({
@@ -117,7 +119,7 @@ const artboard = new Artboard({
     y: 40,
   });
 
-  artboard.add(cubic);
+  artboard.addElement(cubic);
 
   // Highlight extrema on cubic
   const extrema = cubic.getRemarkablePoints("local-maximum").concat(
@@ -132,11 +134,11 @@ const artboard = new Artboard({
       });
       marker.position({
         relativeFrom: marker.center,
-        relativeTo: point.svgPoint,
-        x: 0,
-        y: 0,
+        relativeTo: cubic.topLeft,
+        x: point.svgPoint.x,
+        y: point.svgPoint.y,
       });
-      artboard.add(marker);
+      artboard.addElement(marker);
 
       const label = new Text({
         content: point.type === "local-maximum" ? "Max" : "Min",
@@ -145,11 +147,11 @@ const artboard = new Artboard({
       });
       label.position({
         relativeFrom: label.topCenter,
-        relativeTo: point.svgPoint,
-        x: 0,
-        y: 12,
+        relativeTo: cubic.topLeft,
+        x: point.svgPoint.x,
+        y: point.svgPoint.y + 12,
       });
-      artboard.add(label);
+      artboard.addElement(label);
     }
   });
 
@@ -182,7 +184,7 @@ const artboard = new Artboard({
     y: 0,
   });
 
-  artboard.add(expLog);
+  artboard.addElement(expLog);
 
   // Example 5: Rational Function with Asymptote
   const rational = new FunctionGraph({
@@ -206,7 +208,7 @@ const artboard = new Artboard({
     y: 0,
   });
 
-  artboard.add(rational);
+  artboard.addElement(rational);
 
   // Mark asymptote
   const asymptotes = rational.getRemarkablePoints("vertical-asymptote");
@@ -222,7 +224,7 @@ const artboard = new Artboard({
       x: -150,
       y: 30,
     });
-    artboard.add(asymLabel);
+    artboard.addElement(asymLabel);
   });
 
   // Example 6: Piecewise Function
@@ -250,7 +252,7 @@ const artboard = new Artboard({
     y: 40,
   });
 
-  artboard.add(piecewise);
+  artboard.addElement(piecewise);
 
   // Example 7: Absolute Value and Transformations
   const absValue = new FunctionGraph({
@@ -280,7 +282,7 @@ const artboard = new Artboard({
     y: 0,
   });
 
-  artboard.add(absValue);
+  artboard.addElement(absValue);
 
   // Example 8: Higher-Order Polynomial
   const quintic = new FunctionGraph({
@@ -303,7 +305,7 @@ const artboard = new Artboard({
     y: 0,
   });
 
-  artboard.add(quintic);
+  artboard.addElement(quintic);
 
   // Highlight inflection points
   const inflectionPoints = quintic.getRemarkablePoints("inflection-point");
@@ -315,11 +317,11 @@ const artboard = new Artboard({
       });
       marker.position({
         relativeFrom: marker.center,
-        relativeTo: point.svgPoint,
-        x: 0,
-        y: 0,
+        relativeTo: quintic.topLeft,
+        x: point.svgPoint.x,
+        y: point.svgPoint.y,
       });
-      artboard.add(marker);
+      artboard.addElement(marker);
     }
   });
 
@@ -338,7 +340,7 @@ const artboard = new Artboard({
     y: 15,
   });
 
-  artboard.add(title);
+  artboard.addElement(title);
 
   // Add description
   const description = new Text({
@@ -357,7 +359,7 @@ const artboard = new Artboard({
     y: 5,
   });
 
-  artboard.add(description);
+  artboard.addElement(description);
 
 artboard.render();
 
