@@ -155,6 +155,7 @@ export {
   ColumnsLayout,
   Column,
   SpreadLayout,
+  StackLayout,
   GridLayout,
 } from "./layout/index.js";
 
@@ -167,6 +168,7 @@ export type {
   LayoutConfig,
   ColumnsLayoutConfig,
   SpreadLayoutConfig,
+  StackLayoutConfig,
   GridLayoutConfig,
 } from "./layout/index.js";
 

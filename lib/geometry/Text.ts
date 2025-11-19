@@ -427,6 +427,26 @@ export class Text extends Shape {
   }
 
   /**
+   * Gets the width of the text block (alias for textWidth).
+   * Provided for compatibility with layout systems that expect width/height properties.
+   *
+   * @returns The text width
+   */
+  get width(): number {
+    return this.textWidth;
+  }
+
+  /**
+   * Gets the height of the text block (alias for textHeight).
+   * Provided for compatibility with layout systems that expect width/height properties.
+   *
+   * @returns The text height
+   */
+  get height(): number {
+    return this.textHeight;
+  }
+
+  /**
    * Gets the geometric center of the text block.
    *
    * @returns The center point of the text

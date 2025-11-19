@@ -6,6 +6,7 @@
  * - {@link Layout}: Base class for layout elements that transform children
  * - {@link ColumnsLayout}: Multi-column layout with automatic positioning
  * - {@link SpreadLayout}: Distributes elements evenly with flexible spacing
+ * - {@link StackLayout}: Stacks elements on top of each other
  * - {@link GridLayout}: Arranges elements in a grid pattern
  *
  * @module layout
@@ -22,6 +23,9 @@ export type { ColumnsLayoutConfig } from "./ColumnsLayout.js";
 
 export { SpreadLayout } from "./SpreadLayout.js";
 export type { SpreadLayoutConfig } from "./SpreadLayout.js";
+
+export { StackLayout } from "./StackLayout.js";
+export type { StackLayoutConfig } from "./StackLayout.js";
 
 export { GridLayout } from "./GridLayout.js";
 export type { GridLayoutConfig } from "./GridLayout.js";

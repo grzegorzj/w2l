@@ -69,6 +69,13 @@ export interface GridLayoutConfig extends Omit<LayoutConfig, 'width' | 'height'>
   fitCells?: boolean;
 
   /**
+   * Whether to show cell boundaries for debugging.
+   * Renders semi-transparent rectangles for each grid cell.
+   * @defaultValue false
+   */
+  debugShowCells?: boolean;
+
+  /**
    * Width of each cell. If specified with columns, total width is auto-calculated.
    */
   cellWidth?: string | number;
@@ -505,7 +512,22 @@ export class GridLayout extends Layout {
    */
   render(): string {
     this.arrangeElements();
-    return super.render();
+    
+    let cellsDebugSvg = '';
+    
+    // Optionally render cell boundaries for debugging
+    if (this.gridConfig.debugShowCells && this.cells.length > 0) {
+      const layoutAbsPos = this.getAbsolutePosition();
+      
+      this.cells.forEach((cell) => {
+        const absX = layoutAbsPos.x + cell.x;
+        const absY = layoutAbsPos.y + cell.y;
+        
+        cellsDebugSvg += `<rect x="${absX}" y="${absY}" width="${cell.width}" height="${cell.height}" fill="none" stroke="#ff0000" stroke-width="1" stroke-dasharray="4,4" opacity="0.5" pointer-events="none"/>`;
+      });
+    }
+    
+    return super.render() + cellsDebugSvg;
   }
 }
 
