@@ -280,23 +280,12 @@ export class VStack extends Layout {
     const stackWidth = this._width;
     let currentY = 0;
 
-    console.log("[VStack] arrangeElements START", {
-      elementCount: this.stackedElements.length,
-      stackWidth,
-      stackHeight: this._height,
-      spacing,
-      horizontalAlign: this.vstackConfig.horizontalAlign,
-    });
-
     // Position each element vertically
     this.stackedElements.forEach((element, index) => {
       const elem = element as any;
 
       // Skip elements that have been explicitly positioned (absolute mode)
       if (elem._isAbsolutePositioned) {
-        console.log(`[VStack] Element ${index} SKIPPED (absolute positioned)`, {
-          name: elem.name || "unnamed",
-        });
         return;
       }
 
@@ -342,15 +331,6 @@ export class VStack extends Layout {
         "top" // VStack always aligns elements by their top edge in vertical direction
       );
 
-      console.log(`[VStack] Element ${index} positioning`, {
-        name: elem.name || "unnamed",
-        currentY,
-        containerTargetX,
-        containerTargetY,
-        elementWidth,
-        elementHeight,
-      });
-
       // Calculate offset: where element's alignment point is relative to its currentPosition
       const absPos = elem.getAbsolutePosition();
       const elementPointX = parseFloat(String(elementPoint.x));
@@ -368,10 +348,6 @@ export class VStack extends Layout {
         y: finalY,
       };
 
-      console.log(`[VStack] Element ${index} AFTER positioning`, {
-        currentPosition: { ...elem.currentPosition },
-      });
-
       // Move current Y position for next element
       currentY += elementHeight + spacing;
 
@@ -388,8 +364,6 @@ export class VStack extends Layout {
    * Overrides position to arrange elements after positioning the stack.
    */
   position(config: any): void {
-    console.log("[VStack] position() called");
-
     // Arrange first to get correct dimensions
     this.arrangeElements();
 
@@ -404,7 +378,6 @@ export class VStack extends Layout {
    * Overrides render to arrange elements before rendering.
    */
   render(): string {
-    console.log("[VStack] render() called");
     this.arrangeElements();
     return super.render();
   }

@@ -126,9 +126,16 @@ export interface FunctionGraphConfig {
 
   /**
    * Grid spacing in x and y directions.
-   * @default [1, 1]
+   * If not provided, automatically calculated based on pixel density.
+   * @default auto-calculated for ~50-80 pixels between labels
    */
   gridSpacing?: [number, number];
+
+  /**
+   * Minimum pixel density between axis labels (used for auto-calculating gridSpacing).
+   * @default 50
+   */
+  minLabelDensity?: number;
 
   /**
    * Whether to show axes.
@@ -148,13 +155,21 @@ export interface FunctionGraphConfig {
   title?: string;
 
   /**
-   * Whether to automatically detect and mark remarkable points.
+   * Whether to automatically detect remarkable points.
+   * Set to false to disable detection entirely.
    * @default true
    */
   detectRemarkablePoints?: boolean;
 
   /**
-   * Style for remarkable point markers.
+   * Whether to automatically render remarkable points on the graph.
+   * If false, points can still be retrieved via getRemarkablePoints() and drawn manually.
+   * @default false
+   */
+  showRemarkablePoints?: boolean;
+
+  /**
+   * Style for remarkable point markers (when showRemarkablePoints is true).
    */
   remarkablePointStyle?: Partial<Style>;
 
@@ -229,10 +244,12 @@ export class FunctionGraph extends Shape {
   private samples: number;
   private showGrid: boolean;
   private gridSpacing: [number, number];
+  private minLabelDensity: number;
   private showAxes: boolean;
   private showLabels: boolean;
   private title?: string;
   private detectRemarkablePoints: boolean;
+  private showRemarkablePoints: boolean;
   private remarkablePointStyle: Partial<Style>;
   private axisStyle: Partial<Style>;
   private gridStyle: Partial<Style>;
@@ -260,15 +277,18 @@ export class FunctionGraph extends Shape {
 
     // Configuration options
     this.showGrid = config.showGrid !== false;
-    this.gridSpacing = config.gridSpacing || [1, 1];
+    this.minLabelDensity = config.minLabelDensity || 50;
+    // Calculate optimal grid spacing after range is known
+    this.gridSpacing = config.gridSpacing || this.calculateOptimalGridSpacing();
     this.showAxes = config.showAxes !== false;
     this.showLabels = config.showLabels !== false;
     this.title = config.title;
     this.detectRemarkablePoints = config.detectRemarkablePoints !== false;
+    this.showRemarkablePoints = config.showRemarkablePoints || false;
 
     // Styles
     this.remarkablePointStyle = config.remarkablePointStyle || {
-      fill: "#e74c3c",
+      fill: "blue",
       stroke: "#c0392b",
       strokeWidth: "2px",
     };
@@ -295,6 +315,62 @@ export class FunctionGraph extends Shape {
         this.computeRemarkablePoints(func, idx);
       });
     }
+  }
+
+  /**
+   * Calculate optimal grid spacing based on pixel density.
+   * Ensures labels are at least minLabelDensity pixels apart.
+   * Uses "nice" numbers (1, 2, 5, 10, 20, 50, 100, etc.) for spacing.
+   */
+  private calculateOptimalGridSpacing(): [number, number] {
+    const niceNumbers = [1, 2, 2.5, 5];
+
+    const calculateSpacing = (range: number, pixels: number): number => {
+      // Calculate how many labels we can fit with minimum density
+      const maxLabels = Math.floor(pixels / this.minLabelDensity);
+
+      // Avoid division by zero
+      if (maxLabels <= 0) return range;
+
+      // Calculate rough spacing needed
+      const roughSpacing = range / maxLabels;
+
+      // Find the magnitude (power of 10)
+      const magnitude = Math.pow(10, Math.floor(Math.log10(roughSpacing)));
+
+      // Find the nice number that's closest but larger than roughSpacing
+      const normalized = roughSpacing / magnitude;
+      let niceNumber = niceNumbers[niceNumbers.length - 1];
+
+      for (let i = 0; i < niceNumbers.length; i++) {
+        if (niceNumbers[i] >= normalized) {
+          niceNumber = niceNumbers[i];
+          break;
+        }
+      }
+
+      const spacing = niceNumber * magnitude;
+
+      // If this spacing is still too small, go up to next nice number
+      if ((pixels / range) * spacing < this.minLabelDensity * 0.8) {
+        const nextIndex = niceNumbers.indexOf(niceNumber) + 1;
+        if (nextIndex < niceNumbers.length) {
+          return niceNumbers[nextIndex] * magnitude;
+        } else {
+          return niceNumbers[0] * magnitude * 10;
+        }
+      }
+
+      return spacing;
+    };
+
+    const xRange = this.domain[1] - this.domain[0];
+    const yRange = this.range[1] - this.range[0];
+
+    const xSpacing = calculateSpacing(xRange, this.width);
+    const ySpacing = calculateSpacing(yRange, this.height);
+
+    return [xSpacing, ySpacing];
   }
 
   /**
@@ -339,8 +415,7 @@ export class FunctionGraph extends Shape {
     const x =
       (svgX / this.width) * (this.domain[1] - this.domain[0]) + this.domain[0];
     const y =
-      this.range[1] -
-      (svgY / this.height) * (this.range[1] - this.range[0]);
+      this.range[1] - (svgY / this.height) * (this.range[1] - this.range[0]);
     return { x, y };
   }
 
@@ -447,11 +522,7 @@ export class FunctionGraph extends Shape {
     for (let x = this.domain[0] + step; x <= this.domain[1]; x += step) {
       const y = fn(x);
 
-      if (
-        isFinite(prevY) &&
-        isFinite(y) &&
-        Math.sign(prevY) !== Math.sign(y)
-      ) {
+      if (isFinite(prevY) && isFinite(y) && Math.sign(prevY) !== Math.sign(y)) {
         // Sign change detected, refine with Newton's method
         let root = (prevX + x) / 2;
         let iterations = 0;
@@ -493,7 +564,11 @@ export class FunctionGraph extends Shape {
   private findExtrema(
     fn: (x: number) => number
   ): Array<{ x: number; y: number; type: "maximum" | "minimum" }> {
-    const extrema: Array<{ x: number; y: number; type: "maximum" | "minimum" }> = [];
+    const extrema: Array<{
+      x: number;
+      y: number;
+      type: "maximum" | "minimum";
+    }> = [];
     const step = (this.domain[1] - this.domain[0]) / (this.samples * 2);
     const tolerance = 1e-6;
 
@@ -580,7 +655,9 @@ export class FunctionGraph extends Shape {
           isFinite(fn(inflectionX))
         ) {
           if (
-            !inflectionPoints.some((ip) => Math.abs(ip - inflectionX) < tolerance)
+            !inflectionPoints.some(
+              (ip) => Math.abs(ip - inflectionX) < tolerance
+            )
           ) {
             inflectionPoints.push(inflectionX);
           }
@@ -600,7 +677,8 @@ export class FunctionGraph extends Shape {
   private findAsymptotesAndDiscontinuities(
     fn: (x: number) => number
   ): Array<{ x: number; type: "asymptote" | "discontinuity" }> {
-    const results: Array<{ x: number; type: "asymptote" | "discontinuity" }> = [];
+    const results: Array<{ x: number; type: "asymptote" | "discontinuity" }> =
+      [];
     const step = (this.domain[1] - this.domain[0]) / (this.samples * 2);
     const jumpThreshold = (this.range[1] - this.range[0]) * 0.5;
 
@@ -617,8 +695,9 @@ export class FunctionGraph extends Shape {
         (isFinite(prevY) && isFinite(y) && Math.abs(y - prevY) > jumpThreshold)
       ) {
         const discontinuityX = (prevX + x) / 2;
-        const type = !isFinite(y) || !isFinite(prevY) ? "asymptote" : "discontinuity";
-        
+        const type =
+          !isFinite(y) || !isFinite(prevY) ? "asymptote" : "discontinuity";
+
         // Avoid duplicates
         if (!results.some((r) => Math.abs(r.x - discontinuityX) < step * 2)) {
           results.push({ x: discontinuityX, type });
@@ -635,7 +714,10 @@ export class FunctionGraph extends Shape {
   /**
    * Compute all remarkable points for a given function.
    */
-  private computeRemarkablePoints(func: PlottedFunction, funcIndex: number): void {
+  private computeRemarkablePoints(
+    func: PlottedFunction,
+    funcIndex: number
+  ): void {
     const points: RemarkablePoint[] = [];
     const fn = func.fn;
 
@@ -700,7 +782,8 @@ export class FunctionGraph extends Shape {
     const asymptotes = this.findAsymptotesAndDiscontinuities(fn);
     asymptotes.forEach((asym) => {
       points.push({
-        type: asym.type === "asymptote" ? "vertical-asymptote" : "discontinuity",
+        type:
+          asym.type === "asymptote" ? "vertical-asymptote" : "discontinuity",
         x: asym.x,
         description: `${asym.type === "asymptote" ? "Vertical asymptote" : "Discontinuity"} at x = ${this.formatNumber(asym.x)}`,
       });
@@ -729,7 +812,8 @@ export class FunctionGraph extends Shape {
     const allPoints: RemarkablePoint[] = [];
 
     if (functionIndex !== undefined) {
-      const points = this.remarkablePointsCache.get(`function-${functionIndex}`) || [];
+      const points =
+        this.remarkablePointsCache.get(`function-${functionIndex}`) || [];
       allPoints.push(...points);
     } else {
       // Collect from all functions
@@ -761,6 +845,7 @@ export class FunctionGraph extends Shape {
 
   /**
    * Get a specific remarkable point location by type and index.
+   * Returns absolute position on the artboard.
    * Useful for positioning labels or other elements relative to remarkable points.
    *
    * @example
@@ -779,20 +864,240 @@ export class FunctionGraph extends Shape {
     index: number = 0
   ): Point | undefined {
     const points = this.getRemarkablePoints(type);
-    return points[index]?.svgPoint;
+    const point = points[index];
+
+    if (!point?.svgPoint) return undefined;
+
+    // Calculate the global index for this point across all cached remarkable points
+    let globalIndex = 0;
+    let found = false;
+
+    for (const cachedPoints of this.remarkablePointsCache.values()) {
+      for (let i = 0; i < cachedPoints.length; i++) {
+        const cachedPoint = cachedPoints[i];
+        if (cachedPoint.svgPoint) {
+          if (cachedPoint.type === type && cachedPoint === point) {
+            found = true;
+            break;
+          }
+          globalIndex++;
+        }
+      }
+      if (found) break;
+    }
+
+    // Render to DOM temporarily and query position
+    const pointId = `${this.name}-remarkable-${type}-${globalIndex}`;
+    const position = this.getRemarkablePointPositionFromDOM(pointId);
+
+    console.log(
+      `[getRemarkablePoint] type=${type}, index=${index}, globalIndex=${globalIndex}`
+    );
+    console.log(`[getRemarkablePoint] Point ID: ${pointId}`);
+    console.log(`[getRemarkablePoint] Position from DOM:`, position);
+
+    return position;
+  }
+
+  /**
+   * Render the graph temporarily to the DOM and query the absolute position of a remarkable point.
+   * @private
+   */
+  private getRemarkablePointPositionFromDOM(
+    pointId: string
+  ): Point | undefined {
+    // Create a temporary container
+    const container = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg"
+    );
+    container.setAttribute("width", "10000");
+    container.setAttribute("height", "10000");
+    container.style.position = "absolute";
+    container.style.left = "-10000px";
+    container.style.top = "-10000px";
+    container.style.visibility = "hidden";
+
+    // Render the graph
+    container.innerHTML = this.render();
+    document.body.appendChild(container);
+
+    // Find the remarkable point circle
+    const pointElement = container.querySelector(`#${CSS.escape(pointId)}`);
+
+    if (pointElement && pointElement instanceof SVGElement) {
+      const bbox = pointElement.getBoundingClientRect();
+      const containerBbox = container.getBoundingClientRect();
+
+      // Get center of the circle relative to the container
+      const relativeX = bbox.left - containerBbox.left + bbox.width / 2;
+      const relativeY = bbox.top - containerBbox.top + bbox.height / 2;
+
+      console.log(`[getRemarkablePointPositionFromDOM] Found point ${pointId}`);
+      console.log(`[getRemarkablePointPositionFromDOM] bbox:`, bbox);
+      console.log(
+        `[getRemarkablePointPositionFromDOM] containerBbox:`,
+        containerBbox
+      );
+      console.log(
+        `[getRemarkablePointPositionFromDOM] relative position: (${relativeX}, ${relativeY})`
+      );
+
+      document.body.removeChild(container);
+
+      return {
+        x: `${relativeX}px`,
+        y: `${relativeY}px`,
+      };
+    }
+
+    console.log(
+      `[getRemarkablePointPositionFromDOM] Point ${pointId} not found in DOM`
+    );
+    document.body.removeChild(container);
+    return undefined;
+  }
+
+  /**
+   * Get the absolute position of a specific axis label by its value.
+   * Returns absolute coordinates on the artboard.
+   *
+   * @param axis - Which axis to search ('x' or 'y')
+   * @param value - The numeric value to find on the axis
+   * @returns The absolute SVG position of the label tick mark, or undefined if not found
+   *
+   * @example
+   * ```typescript
+   * // Get position of x=2 label
+   * const pos = graph.getLabelPosition('x', 2);
+   * if (pos) {
+   *   marker.position({ relativeFrom: marker.center, relativeTo: pos });
+   * }
+   * ```
+   */
+  public getLabelPosition(axis: "x" | "y", value: number): Point | undefined {
+    const axisInfo = axis === "x" ? this.xAxis : this.yAxis;
+    console.log(`[getLabelPosition] axis=${axis}, value=${value}`);
+
+    if (!axisInfo) {
+      console.log(`[getLabelPosition] No axis info found!`);
+      return undefined;
+    }
+
+    console.log(
+      `[getLabelPosition] Available ticks:`,
+      axisInfo.ticks.map((t) => ({ value: t.value, position: t.position }))
+    );
+    const tick = axisInfo.ticks.find((t) => Math.abs(t.value - value) < 1e-6);
+
+    if (!tick) {
+      console.log(`[getLabelPosition] No tick found for value ${value}`);
+      return undefined;
+    }
+
+    // Return absolute position as a proper Point (strings with px units)
+    const absPos = this.getAbsolutePosition();
+    const absX = Number(absPos.x) + Number(tick.position.x);
+    const absY = Number(absPos.y) + Number(tick.position.y);
+
+    console.log(
+      `[getLabelPosition] Relative: (${tick.position.x}, ${tick.position.y}), Graph absolute: (${absPos.x}, ${absPos.y}), Result: (${absX}, ${absY})`
+    );
+
+    return {
+      x: `${absX}px`,
+      y: `${absY}px`,
+    };
+  }
+
+  /**
+   * Get all label positions for an axis.
+   * Returns an array of {value, position, label} objects with absolute positions.
+   *
+   * @param axis - Which axis to get labels from ('x' or 'y')
+   * @returns Array of label information including absolute positions
+   *
+   * @example
+   * ```typescript
+   * const xLabels = graph.getAllLabelPositions('x');
+   * xLabels.forEach(label => {
+   *   console.log(`Label "${label.label}" at value ${label.value}: ${label.position.x}, ${label.position.y}`);
+   * });
+   * ```
+   */
+  public getAllLabelPositions(
+    axis: "x" | "y"
+  ): Array<{ value: number; position: Point; label: string }> {
+    const axisInfo = axis === "x" ? this.xAxis : this.yAxis;
+    if (!axisInfo) return [];
+
+    const absPos = this.getAbsolutePosition();
+
+    return axisInfo.ticks.map((tick) => {
+      const absX = Number(absPos.x) + Number(tick.position.x);
+      const absY = Number(absPos.y) + Number(tick.position.y);
+
+      return {
+        value: tick.value,
+        position: {
+          x: `${absX}px`,
+          y: `${absY}px`,
+        },
+        label: tick.label,
+      };
+    });
+  }
+
+  /**
+   * Convert a mathematical coordinate to absolute SVG coordinate.
+   * Returns absolute coordinates on the artboard.
+   *
+   * @param x - Mathematical x coordinate
+   * @param y - Mathematical y coordinate
+   * @returns Absolute SVG position
+   *
+   * @example
+   * ```typescript
+   * // Position an annotation at mathematical point (2, 3)
+   * const pos = graph.coordinateToPosition(2, 3);
+   * annotation.position({ relativeFrom: annotation.center, relativeTo: pos });
+   * ```
+   */
+  public coordinateToPosition(x: number, y: number): Point {
+    const relPos = this.mathToSVG(x, y);
+    const absPos = this.getAbsolutePosition();
+    const absX = Number(absPos.x) + Number(relPos.x);
+    const absY = Number(absPos.y) + Number(relPos.y);
+
+    console.log(
+      `[coordinateToPosition] Math (${x}, ${y}) -> Relative (${relPos.x}, ${relPos.y}) -> Absolute (${absX}, ${absY})`
+    );
+    console.log(
+      `[coordinateToPosition] Domain: [${this.domain[0]}, ${this.domain[1]}], Range: [${this.range[0]}, ${this.range[1]}]`
+    );
+    console.log(
+      `[coordinateToPosition] Graph size: ${this.width} x ${this.height}`
+    );
+
+    return {
+      x: `${absX}px`,
+      y: `${absY}px`,
+    };
   }
 
   /**
    * Sample a function and return path data points.
    */
-  private sampleFunction(func: PlottedFunction): Array<{x: number, y: number}> {
-    const points: Array<{x: number, y: number}> = [];
+  private sampleFunction(
+    func: PlottedFunction
+  ): Array<{ x: number; y: number }> {
+    const points: Array<{ x: number; y: number }> = [];
     const step = (this.domain[1] - this.domain[0]) / this.samples;
 
     for (let x = this.domain[0]; x <= this.domain[1]; x += step) {
       const y = func.fn(x);
       if (isFinite(y) && y >= this.range[0] && y <= this.range[1]) {
-        points.push(this.mathToSVG(x, y) as {x: number, y: number});
+        points.push(this.mathToSVG(x, y) as { x: number; y: number });
       } else if (points.length > 0) {
         // Break path at discontinuities
         points.push({ x: NaN, y: NaN });
@@ -805,7 +1110,7 @@ export class FunctionGraph extends Shape {
   /**
    * Generate SVG path string from points, handling discontinuities.
    */
-  private pointsToPath(points: Array<{x: number, y: number}>): string {
+  private pointsToPath(points: Array<{ x: number; y: number }>): string {
     if (points.length === 0) return "";
 
     let path = "";
@@ -887,7 +1192,9 @@ export class FunctionGraph extends Shape {
       const xStep = this.gridSpacing[0];
       const xStart = Math.ceil(this.domain[0] / xStep) * xStep;
       for (let x = xStart; x <= this.domain[1]; x += xStep) {
-        const svgX = ((x - this.domain[0]) / (this.domain[1] - this.domain[0])) * this.width;
+        const svgX =
+          ((x - this.domain[0]) / (this.domain[1] - this.domain[0])) *
+          this.width;
         svg += `    <line x1="${svgX.toFixed(2)}" y1="0" x2="${svgX.toFixed(2)}" y2="${this.height}" ${gridAttrs} />\n`;
       }
 
@@ -895,7 +1202,9 @@ export class FunctionGraph extends Shape {
       const yStep = this.gridSpacing[1];
       const yStart = Math.ceil(this.range[0] / yStep) * yStep;
       for (let y = yStart; y <= this.range[1]; y += yStep) {
-        const svgY = this.height - ((y - this.range[0]) / (this.range[1] - this.range[0])) * this.height;
+        const svgY =
+          this.height -
+          ((y - this.range[0]) / (this.range[1] - this.range[0])) * this.height;
         svg += `    <line x1="0" y1="${svgY.toFixed(2)}" x2="${this.width}" y2="${svgY.toFixed(2)}" ${gridAttrs} />\n`;
       }
 
@@ -911,7 +1220,7 @@ export class FunctionGraph extends Shape {
       const xStart = this.xAxis.start;
       const xEnd = this.xAxis.end;
       svg += `    <line x1="${xStart.x}" y1="${xStart.y}" x2="${xEnd.x}" y2="${xEnd.y}" ${axisAttrs} />\n`;
-      
+
       // X-axis ticks and labels
       if (this.showLabels) {
         this.xAxis.ticks.forEach((tick) => {
@@ -926,7 +1235,7 @@ export class FunctionGraph extends Shape {
       const yStart = this.yAxis.start;
       const yEnd = this.yAxis.end;
       svg += `    <line x1="${yStart.x}" y1="${yStart.y}" x2="${yEnd.x}" y2="${yEnd.y}" ${axisAttrs} />\n`;
-      
+
       // Y-axis ticks and labels
       if (this.showLabels) {
         this.yAxis.ticks.forEach((tick) => {
@@ -978,18 +1287,21 @@ export class FunctionGraph extends Shape {
     });
     svg += `  </g>\n`;
 
-    // Draw remarkable points
-    if (this.detectRemarkablePoints) {
+    // Draw remarkable points (only if explicitly enabled)
+    if (this.showRemarkablePoints && this.detectRemarkablePoints) {
       svg += `  <g class="remarkable-points">\n`;
       const rpAttrs = styleToSVGAttributes(this.remarkablePointStyle);
 
+      let pointIndex = 0;
       this.remarkablePointsCache.forEach((points) => {
         points.forEach((point) => {
           if (point.svgPoint) {
             const px = Number(point.svgPoint.x);
             const py = Number(point.svgPoint.y);
             if (!isNaN(px) && !isNaN(py)) {
-              svg += `    <circle cx="${px.toFixed(2)}" cy="${py.toFixed(2)}" r="4" ${rpAttrs} />\n`;
+              const pointId = `${this.name}-remarkable-${point.type}-${pointIndex}`;
+              svg += `    <circle id="${pointId}" cx="${px.toFixed(2)}" cy="${py.toFixed(2)}" r="4" ${rpAttrs} />\n`;
+              pointIndex++;
             }
           }
         });
@@ -1003,4 +1315,3 @@ export class FunctionGraph extends Shape {
     return svg;
   }
 }
-

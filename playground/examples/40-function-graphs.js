@@ -133,7 +133,7 @@ if (quadRoots.length > 0) {
 
 grid.addElement(quadraticStack);
 
-// Example 2: Trigonometric Functions
+// Example 2: Trigonometric Functions (with auto-calculated grid spacing)
 const trigGraph = new FunctionGraph({
   functions: [
     {
@@ -151,7 +151,7 @@ const trigGraph = new FunctionGraph({
   height: 280,
   domain: [-2 * Math.PI, 2 * Math.PI],
   range: [-1.5, 1.5],
-  gridSpacing: [Math.PI / 2, 0.5],
+  // gridSpacing auto-calculated for optimal label density
   name: "TrigGraph",
 });
 
@@ -482,5 +482,26 @@ const dampedNote = new Text({
 sineWaveStack.addElement(dampedNote);
 
 grid.addElement(sineWaveStack);
+
+// Demonstrate label coordinate retrieval - add a small annotation
+// to show we can get coordinates of specific labels
+const demoAnnotation = new Text({
+  content: "📍 Label coordinate demo",
+  fontSize: 10,
+  style: { fill: "#e74c3c" },
+});
+
+// Get the position of x=0 label from the quadratic graph
+const x0Label = quadraticGraph.getLabelPosition('y', 0);
+if (x0Label) {
+  // Position relative to the quadratic graph
+  demoAnnotation.position({
+    relativeFrom: demoAnnotation.leftCenter,
+    relativeTo: quadraticGraph.topLeft,
+    x: x0Label.x + 15,
+    y: x0Label.y,
+  });
+  artboard.addElement(demoAnnotation);
+}
 
 artboard.render();
