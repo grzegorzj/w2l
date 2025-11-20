@@ -863,6 +863,10 @@ export class FunctionGraph extends Shape {
     type: RemarkablePointType,
     index: number = 0
   ): Point | undefined {
+    // IMPORTANT: Ensure parent layouts are arranged before querying positions
+    // This ensures getAbsolutePosition() returns the correct position
+    this.ensureParentLayoutsArranged();
+
     const points = this.getRemarkablePoints(type);
     const point = points[index];
 
@@ -897,6 +901,33 @@ export class FunctionGraph extends Shape {
     console.log(`[getRemarkablePoint] Position from DOM:`, position);
 
     return position;
+  }
+
+  /**
+   * Ensures all parent layouts in the hierarchy are arranged.
+   * This guarantees getAbsolutePosition() returns correct values.
+   * @private
+   */
+  private ensureParentLayoutsArranged(): void {
+    let current: any = this._parent;
+    const parents: any[] = [];
+
+    // Collect all parents up to the root
+    while (current) {
+      parents.unshift(current); // Add to front so we arrange from root down
+      current = current._parent;
+    }
+
+    // Arrange from root down, forcing re-arrangement if needed
+    parents.forEach((parent) => {
+      if (typeof parent.arrangeElements === "function") {
+        // Reset isArranged flag to force re-arrangement
+        if ("isArranged" in parent) {
+          parent.isArranged = false;
+        }
+        parent.arrangeElements();
+      }
+    });
   }
 
   /**
@@ -986,6 +1017,9 @@ export class FunctionGraph extends Shape {
    * ```
    */
   public getLabelPosition(axis: "x" | "y", value: number): Point | undefined {
+    // Ensure parent layouts are arranged before querying positions
+    this.ensureParentLayoutsArranged();
+
     const axisInfo = axis === "x" ? this.xAxis : this.yAxis;
     console.log(`[getLabelPosition] axis=${axis}, value=${value}`);
 
@@ -1038,6 +1072,9 @@ export class FunctionGraph extends Shape {
   public getAllLabelPositions(
     axis: "x" | "y"
   ): Array<{ value: number; position: Point; label: string }> {
+    // Ensure parent layouts are arranged before querying positions
+    this.ensureParentLayoutsArranged();
+
     const axisInfo = axis === "x" ? this.xAxis : this.yAxis;
     if (!axisInfo) return [];
 
@@ -1074,6 +1111,9 @@ export class FunctionGraph extends Shape {
    * ```
    */
   public coordinateToPosition(x: number, y: number): Point {
+    // Ensure parent layouts are arranged before querying positions
+    this.ensureParentLayoutsArranged();
+
     const relPos = this.mathToSVG(x, y);
     const absPos = this.getAbsolutePosition();
     const absX = Number(absPos.x) + Number(relPos.x);
