@@ -313,55 +313,76 @@ export class Rectangle extends Shape {
 
   /**
    * Gets the geometric center of the rectangle.
+   * Returns the CONTENT BOX center by default (accounting for padding).
    *
-   * @returns The center point of the rectangle (accounting for rotation)
+   * @returns The center point of the rectangle (accounting for rotation and padding)
    *
    * @remarks
    * The center is the rotation pivot point and doesn't move with rotation.
+   * With padding, this returns the center of the content area, not the border box.
    */
   get center(): Point {
-    // Use absolute position to account for parent hierarchy
-    return this.toAbsolutePoint(this.width / 2, this.height / 2, "center");
+    // Account for padding - center should be in content box
+    const padding = this.paddingBox;
+    const contentWidth = this.width - padding.left - padding.right;
+    const contentHeight = this.height - padding.top - padding.bottom;
+    return this.toAbsolutePoint(
+      padding.left + contentWidth / 2,
+      padding.top + contentHeight / 2,
+      "center"
+    );
   }
 
   /**
    * Gets the top-left corner of the rectangle.
+   * Returns the CONTENT BOX top-left by default (accounting for padding).
    *
-   * @returns The actual transformed position of the top-left corner
+   * @returns The actual transformed position of the content box top-left corner
    *
    * @remarks
-   * This returns the literal position after applying all transformations.
-   * For a rotated rectangle, this is NOT the same as currentPosition.
+   * This returns the top-left of the content area (inside padding).
+   * For the border box top-left, use getBorderBox().topLeft
    */
   get topLeft(): Point {
-    return this.transformPoint(0, 0, "topLeft");
+    const padding = this.paddingBox;
+    return this.transformPoint(padding.left, padding.top, "topLeft");
   }
 
   /**
    * Gets the top-right corner of the rectangle.
+   * Returns the CONTENT BOX top-right by default (accounting for padding).
    *
-   * @returns The actual transformed position of the top-right corner
+   * @returns The actual transformed position of the content box top-right corner
    */
   get topRight(): Point {
-    return this.transformPoint(this.width, 0, "topRight");
+    const padding = this.paddingBox;
+    return this.transformPoint(this.width - padding.right, padding.top, "topRight");
   }
 
   /**
    * Gets the bottom-left corner of the rectangle.
+   * Returns the CONTENT BOX bottom-left by default (accounting for padding).
    *
-   * @returns The actual transformed position of the bottom-left corner
+   * @returns The actual transformed position of the content box bottom-left corner
    */
   get bottomLeft(): Point {
-    return this.transformPoint(0, this.height, "bottomLeft");
+    const padding = this.paddingBox;
+    return this.transformPoint(padding.left, this.height - padding.bottom, "bottomLeft");
   }
 
   /**
    * Gets the bottom-right corner of the rectangle.
+   * Returns the CONTENT BOX bottom-right by default (accounting for padding).
    *
-   * @returns The actual transformed position of the bottom-right corner
+   * @returns The actual transformed position of the content box bottom-right corner
    */
   get bottomRight(): Point {
-    return this.transformPoint(this.width, this.height, "bottomRight");
+    const padding = this.paddingBox;
+    return this.transformPoint(
+      this.width - padding.right,
+      this.height - padding.bottom,
+      "bottomRight"
+    );
   }
 
   /**

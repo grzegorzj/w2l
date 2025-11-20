@@ -445,22 +445,19 @@ export class Artboard extends Rectangle {
       .map((element: any) => element.render())
       .join("\n    ");
 
-    // Apply padding translation to content if padding is set
-    const hasPadding = padding.left !== 0 || padding.top !== 0 || padding.right !== 0 || padding.bottom !== 0;
-    const contentTransform = hasPadding ? ` transform="translate(${padding.left}, ${padding.top})"` : "";
-
     // Generate padding guide visuals if requested
+    const hasPadding = padding.left !== 0 || padding.top !== 0 || padding.right !== 0 || padding.bottom !== 0;
     let paddingGuides = '';
     if (this.artboardConfig.showPaddingGuides && hasPadding) {
       paddingGuides = this.generatePaddingGuides(widthPx, heightPx, padding);
     }
 
+    // No transform needed! Reference points (center, topLeft, etc.) now
+    // return CONTENT BOX positions by default, so padding is baked into coordinates.
     return `<svg width="${widthPx}" height="${heightPx}" xmlns="http://www.w3.org/2000/svg">
   ${bgColor !== "transparent" ? `<rect width="${widthPx}" height="${heightPx}" fill="${bgColor}"/>` : ""}
   ${paddingGuides}
-  <g${contentTransform}>
-    ${elementsHTML}
-  </g>
+  ${elementsHTML}
 </svg>`;
   }
 

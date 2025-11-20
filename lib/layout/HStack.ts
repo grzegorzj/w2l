@@ -245,17 +245,27 @@ export class HStack extends Layout {
     // Only auto-size dimensions if fill options are false
     if (this.hstackConfig.autoWidth || this.hstackConfig.autoHeight) {
       const dims = this.calculateDimensions();
+      
+      // Get padding values
+      const padding = this.paddingBox;
+      const paddingHorizontal = padding.left + padding.right;
+      const paddingVertical = padding.top + padding.bottom;
+      
+      // Add padding to dimensions (box model: padding adds to total size)
       if (this.hstackConfig.autoWidth && !this.hstackConfig.fillWidth) {
-        this._width = dims.width;
+        this._width = dims.width + paddingHorizontal;
       }
       if (this.hstackConfig.autoHeight && !this.hstackConfig.fillHeight) {
-        this._height = dims.height;
+        this._height = dims.height + paddingVertical;
       }
     }
 
     const spacing = parseUnit(this.hstackConfig.spacing || 0);
-    const stackHeight = this._height;
-    let currentX = 0;
+    
+    // Get padding to position elements within the content area
+    const padding = this.paddingBox;
+    const contentHeight = this._height - padding.top - padding.bottom;
+    let currentX = padding.left;  // Start from padding left
 
     this.stackedElements.forEach((element, index) => {
       const elem = element as any;
@@ -283,17 +293,17 @@ export class HStack extends Layout {
       // Horizontal position: left edge of the element starts at currentX
       containerTargetX = currentX;
 
-      // Vertical alignment within the stack
+      // Vertical alignment within the content area (accounting for padding)
       switch (this.hstackConfig.verticalAlign) {
         case "top":
-          containerTargetY = 0;
+          containerTargetY = padding.top;
           break;
         case "bottom":
-          containerTargetY = stackHeight;
+          containerTargetY = padding.top + contentHeight;
           break;
         case "center":
         default:
-          containerTargetY = stackHeight / 2;
+          containerTargetY = padding.top + contentHeight / 2;
           break;
       }
 

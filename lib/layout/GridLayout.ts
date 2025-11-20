@@ -200,28 +200,46 @@ export class GridLayout extends Layout {
     const columnGap = config.gap !== undefined ? config.gap : config.columnGap || 0;
     const rowGap = config.gap !== undefined ? config.gap : config.rowGap || 0;
     
-    let finalWidth = config.width;
-    let finalHeight = config.height;
+    let contentWidth = config.width;
+    let contentHeight = config.height;
     
     // If cellWidth/cellHeight provided but not width/height, calculate them
-    if (config.cellWidth && config.columns && !finalWidth) {
+    if (config.cellWidth && config.columns && !contentWidth) {
       const cellW = parseUnit(config.cellWidth);
       const gapW = parseUnit(columnGap);
-      finalWidth = config.columns * cellW + (config.columns - 1) * gapW;
+      contentWidth = config.columns * cellW + (config.columns - 1) * gapW;
     }
     
-    if (config.cellHeight && config.rows && !finalHeight) {
+    if (config.cellHeight && config.rows && !contentHeight) {
       const cellH = parseUnit(config.cellHeight);
       const gapH = parseUnit(rowGap);
-      finalHeight = config.rows * cellH + (config.rows - 1) * gapH;
+      contentHeight = config.rows * cellH + (config.rows - 1) * gapH;
     }
     
     // Ensure width and height are set
-    if (!finalWidth || !finalHeight) {
+    if (!contentWidth || !contentHeight) {
       throw new Error('GridLayout requires either (width, height) or (cellWidth, cellHeight, columns, rows)');
     }
     
-    super({ ...config, width: finalWidth, height: finalHeight });
+    // Calculate padding values to add to total size
+    let paddingTop = 0, paddingRight = 0, paddingBottom = 0, paddingLeft = 0;
+    if (config.padding) {
+      if (typeof config.padding === 'object') {
+        paddingTop = parseUnit(config.padding.top || 0);
+        paddingRight = parseUnit(config.padding.right || 0);
+        paddingBottom = parseUnit(config.padding.bottom || 0);
+        paddingLeft = parseUnit(config.padding.left || 0);
+      } else {
+        const p = parseUnit(config.padding);
+        paddingTop = paddingRight = paddingBottom = paddingLeft = p;
+      }
+    }
+    
+    // Add padding to content dimensions to get total size
+    const totalWidth = parseUnit(contentWidth) + paddingLeft + paddingRight;
+    const totalHeight = parseUnit(contentHeight) + paddingTop + paddingBottom;
+    
+    super({ ...config, width: totalWidth, height: totalHeight });
     this.gridConfig = {
       columns: config.columns,
       rows: config.rows,
@@ -232,8 +250,8 @@ export class GridLayout extends Layout {
       fitCells: config.fitCells || false,
       cellWidth: config.cellWidth,
       cellHeight: config.cellHeight,
-      width: finalWidth,
-      height: finalHeight,
+      width: contentWidth,
+      height: contentHeight,
       ...config,
     };
   }
@@ -301,8 +319,9 @@ export class GridLayout extends Layout {
     const padding = this.paddingBox;
     const contentX = padding.left;
     const contentY = padding.top;
-    const contentWidth = this.width - padding.left - padding.right;
-    const contentHeight = this.height - padding.top - padding.bottom;
+    // Use the content dimensions from gridConfig (which are the user-specified dimensions)
+    const contentWidth = parseUnit(this.gridConfig.width);
+    const contentHeight = parseUnit(this.gridConfig.height);
 
     const columnGap = parseUnit(this.gridConfig.columnGap!);
     const rowGap = parseUnit(this.gridConfig.rowGap!);

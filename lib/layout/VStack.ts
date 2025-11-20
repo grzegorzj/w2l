@@ -268,17 +268,27 @@ export class VStack extends Layout {
     // Only auto-size width if fillWidth is false
     if (this.vstackConfig.autoWidth || this.vstackConfig.autoHeight) {
       const dims = this.calculateDimensions();
+
+      // Get padding values
+      const padding = this.paddingBox;
+      const paddingHorizontal = padding.left + padding.right;
+      const paddingVertical = padding.top + padding.bottom;
+
+      // Add padding to dimensions (box model: padding adds to total size)
       if (this.vstackConfig.autoWidth && !this.vstackConfig.fillWidth) {
-        this._width = dims.width;
+        this._width = dims.width + paddingHorizontal;
       }
       if (this.vstackConfig.autoHeight) {
-        this._height = dims.height;
+        this._height = dims.height + paddingVertical;
       }
     }
 
     const spacing = parseUnit(this.vstackConfig.spacing || 0);
-    const stackWidth = this._width;
-    let currentY = 0;
+
+    // Get padding to position elements within the content area
+    const padding = this.paddingBox;
+    const contentWidth = this._width - padding.left - padding.right;
+    let currentY = padding.top; // Start from padding top
 
     // Position each element vertically
     this.stackedElements.forEach((element, index) => {
@@ -306,17 +316,17 @@ export class VStack extends Layout {
       let containerTargetX: number;
       let containerTargetY: number;
 
-      // Horizontal alignment within the stack
+      // Horizontal alignment within the content area (accounting for padding)
       switch (this.vstackConfig.horizontalAlign) {
         case "left":
-          containerTargetX = 0;
+          containerTargetX = padding.left;
           break;
         case "right":
-          containerTargetX = stackWidth;
+          containerTargetX = padding.left + contentWidth;
           break;
         case "center":
         default:
-          containerTargetX = stackWidth / 2;
+          containerTargetX = padding.left + contentWidth / 2;
           break;
       }
 

@@ -23,9 +23,28 @@ title.position({
   y: -200
 });
 
+// Bounding box for title
+const titleBox = new Rectangle({
+  width: title.textWidth,
+  height: title.textHeight,
+  style: {
+    fill: "none",
+    stroke: "#ff0000",
+    strokeWidth: 1,
+    strokeDasharray: "3,3"
+  }
+});
+
+titleBox.position({
+  relativeFrom: titleBox.center,
+  relativeTo: title.center,
+  x: 0,
+  y: 0
+});
+
 // Explanation text
 const explanation = new Text({
-  content: "The red overlay shows the PADDING area.\nThe blue dashed line shows the CONTENT AREA.",
+  content: "The red overlay shows the PADDING area.\nThe blue dashed line shows the CONTENT AREA.\nAll elements have dashed borders to show their exact boundaries.",
   fontSize: 14,
   textAlign: "center",
   lineHeight: 1.6,
@@ -39,6 +58,25 @@ explanation.position({
   y: -150
 });
 
+// Bounding box for explanation
+const explanationBox = new Rectangle({
+  width: explanation.textWidth,
+  height: explanation.textHeight,
+  style: {
+    fill: "none",
+    stroke: "#ff0000",
+    strokeWidth: 1,
+    strokeDasharray: "3,3"
+  }
+});
+
+explanationBox.position({
+  relativeFrom: explanationBox.center,
+  relativeTo: explanation.center,
+  x: 0,
+  y: 0
+});
+
 // Sample content positioned in the content area
 const box1 = new Rectangle({
   width: 150,
@@ -46,7 +84,8 @@ const box1 = new Rectangle({
   style: {
     fill: "#4CAF50",
     stroke: "#388E3C",
-    strokeWidth: 2
+    strokeWidth: 2,
+    strokeDasharray: "5,5"
   }
 });
 
@@ -63,7 +102,8 @@ const box2 = new Rectangle({
   style: {
     fill: "#2196F3",
     stroke: "#1976D2",
-    strokeWidth: 2
+    strokeWidth: 2,
+    strokeDasharray: "5,5"
   }
 });
 
@@ -80,7 +120,8 @@ const box3 = new Rectangle({
   style: {
     fill: "#FF9800",
     stroke: "#F57C00",
-    strokeWidth: 2
+    strokeWidth: 2,
+    strokeDasharray: "5,5"
   }
 });
 
@@ -97,7 +138,8 @@ const circle = new Circle({
   style: {
     fill: "#E91E63",
     stroke: "#C2185B",
-    strokeWidth: 2
+    strokeWidth: 2,
+    strokeDasharray: "5,5"
   }
 });
 
@@ -124,6 +166,25 @@ label1.position({
   y: 200
 });
 
+// Bounding box for label1
+const label1Box = new Rectangle({
+  width: label1.textWidth,
+  height: label1.textHeight,
+  style: {
+    fill: "none",
+    stroke: "#ff0000",
+    strokeWidth: 1,
+    strokeDasharray: "3,3"
+  }
+});
+
+label1Box.position({
+  relativeFrom: label1Box.center,
+  relativeTo: label1.center,
+  x: 0,
+  y: 0
+});
+
 // Note about the padding
 const note = new Text({
   content: 'Set showPaddingGuides: true in ArtboardConfig to see this visualization',
@@ -138,14 +199,37 @@ note.position({
   y: 250
 });
 
+// Bounding box for note
+const noteBox = new Rectangle({
+  width: note.textWidth,
+  height: note.textHeight,
+  style: {
+    fill: "none",
+    stroke: "#ff0000",
+    strokeWidth: 1,
+    strokeDasharray: "3,3"
+  }
+});
+
+noteBox.position({
+  relativeFrom: noteBox.center,
+  relativeTo: note.center,
+  x: 0,
+  y: 0
+});
+
 // Add all elements
+artboard.addElement(titleBox);
 artboard.addElement(title);
+artboard.addElement(explanationBox);
 artboard.addElement(explanation);
 artboard.addElement(box1);
 artboard.addElement(box2);
 artboard.addElement(box3);
 artboard.addElement(circle);
+artboard.addElement(label1Box);
 artboard.addElement(label1);
+artboard.addElement(noteBox);
 artboard.addElement(note);
 
 artboard.render();
