@@ -192,9 +192,10 @@ export class Artboard extends Rectangle {
     };
   }
 
+
   /**
    * Recalculates artboard size to fit all content if autoAdjust is enabled.
-   * Takes the furthest bounds of all elements and applies padding.
+   * Takes the furthest bounds of all elements and applies padding on all sides.
    * @internal
    */
   private recalculateSize(): void {
@@ -203,19 +204,25 @@ export class Artboard extends Rectangle {
     const allElements = this.collectAllElements(this.elements);
     const padding = this.paddingBox;
     
-    let maxX = 0;
-    let maxY = 0;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
     
-    // Find the furthest extent of all elements
+    // Find the bounding box of all elements
     allElements.forEach(element => {
       if (element && typeof element.getBoundingBox === 'function') {
         try {
           const bbox = element.getBoundingBox();
           // BoundingBox has topLeft, bottomRight, width, height
+          const left = parseFloat(String(bbox.topLeft.x));
+          const top = parseFloat(String(bbox.topLeft.y));
           const right = parseFloat(String(bbox.bottomRight.x));
           const bottom = parseFloat(String(bbox.bottomRight.y));
           
-          if (isFinite(right) && isFinite(bottom)) {
+          if (isFinite(left) && isFinite(top) && isFinite(right) && isFinite(bottom)) {
+            minX = Math.min(minX, left);
+            minY = Math.min(minY, top);
             maxX = Math.max(maxX, right);
             maxY = Math.max(maxY, bottom);
           }
@@ -225,9 +232,16 @@ export class Artboard extends Rectangle {
       }
     });
     
-    // Update current size to fit content plus padding
-    this.currentWidth = maxX + padding.right;
-    this.currentHeight = maxY + padding.bottom;
+    // If we found valid elements, calculate size with padding on all sides
+    if (isFinite(minX) && isFinite(maxX)) {
+      // Content width/height
+      const contentWidth = maxX - minX;
+      const contentHeight = maxY - minY;
+      
+      // Add padding on all sides
+      this.currentWidth = contentWidth + padding.left + padding.right;
+      this.currentHeight = contentHeight + padding.top + padding.bottom;
+    }
   }
 
   /**

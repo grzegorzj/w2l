@@ -415,6 +415,63 @@ export class Rectangle extends Shape {
   }
 
   /**
+   * Gets the padded content area (inside the padding) of this rectangle.
+   * Use this to position elements inside the padding instead of at the edges.
+   * 
+   * @returns Object with position points for the padded content area
+   * 
+   * @example
+   * ```typescript
+   * const container = new Rectangle({
+   *   width: 400,
+   *   height: 300,
+   *   padding: "20px"
+   * });
+   * 
+   * // Position element inside the padded area (respecting padding)
+   * element.position({
+   *   relativeFrom: element.topLeft,
+   *   relativeTo: container.paddedArea.topLeft,
+   *   x: 0,
+   *   y: 0
+   * });
+   * ```
+   */
+  get paddedArea() {
+    const padding = this.paddingBox;
+    const absPos = this.getAbsolutePosition();
+    
+    // Content area starts at padding.left, padding.top
+    const contentLeft = absPos.x + padding.left;
+    const contentTop = absPos.y + padding.top;
+    const contentRight = absPos.x + this.width - padding.right;
+    const contentBottom = absPos.y + this.height - padding.bottom;
+    const contentWidth = this.width - padding.left - padding.right;
+    const contentHeight = this.height - padding.top - padding.bottom;
+    const contentCenterX = contentLeft + contentWidth / 2;
+    const contentCenterY = contentTop + contentHeight / 2;
+    
+    return {
+      // Corners
+      topLeft: { x: `${contentLeft}px`, y: `${contentTop}px` },
+      topRight: { x: `${contentRight}px`, y: `${contentTop}px` },
+      bottomLeft: { x: `${contentLeft}px`, y: `${contentBottom}px` },
+      bottomRight: { x: `${contentRight}px`, y: `${contentBottom}px` },
+      
+      // Centers
+      center: { x: `${contentCenterX}px`, y: `${contentCenterY}px` },
+      topCenter: { x: `${contentCenterX}px`, y: `${contentTop}px` },
+      bottomCenter: { x: `${contentCenterX}px`, y: `${contentBottom}px` },
+      leftCenter: { x: `${contentLeft}px`, y: `${contentCenterY}px` },
+      rightCenter: { x: `${contentRight}px`, y: `${contentCenterY}px` },
+      
+      // Dimensions
+      width: contentWidth,
+      height: contentHeight,
+    };
+  }
+
+  /**
    * Gets the four sides of the rectangle with their geometric properties.
    *
    * Each side's direction follows counter-clockwise vertex ordering (see CONVENTIONS.md).
