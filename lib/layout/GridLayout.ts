@@ -349,8 +349,11 @@ export class GridLayout extends Layout {
    */
   private arrangeElements(): void {
     if (this.isArranged || this.gridElements.length === 0) {
+      console.log("[GridLayout] arrangeElements SKIPPED", { isArranged: this.isArranged, elementCount: this.gridElements.length });
       return;
     }
+
+    console.log("[GridLayout] arrangeElements START", { elementCount: this.gridElements.length });
 
     // IMPORTANT: Arrange child layouts first so they know their dimensions
     // This ensures VStack/HStack/etc children calculate their size before we position them
@@ -365,6 +368,8 @@ export class GridLayout extends Layout {
     this.calculateGridDimensions();
     this.createCells();
 
+    console.log("[GridLayout] Calculated dimensions:", { columns: this.calculatedColumns, rows: this.calculatedRows, cellCount: this.cells.length });
+
     // Position each element in its cell
     this.gridElements.forEach((element, index) => {
       if (index >= this.cells.length) {
@@ -373,10 +378,12 @@ export class GridLayout extends Layout {
       }
 
       const cell = this.cells[index];
+      console.log(`[GridLayout] Positioning element ${index} in cell [${cell.row},${cell.column}] at (${cell.x}, ${cell.y})`);
       this.positionElementInCell(element, cell);
     });
 
     this.isArranged = true;
+    console.log("[GridLayout] arrangeElements COMPLETE");
   }
 
   /**
@@ -451,10 +458,21 @@ export class GridLayout extends Layout {
     const offsetY = elementPointY - absPos.y;
     
     // Set currentPosition so that elementPoint aligns with cellTarget
-    elem.currentPosition = {
+    const newPosition = {
       x: cellTargetX - offsetX,
       y: cellTargetY - offsetY,
     };
+    
+    console.log(`[GridLayout] positionElementInCell - cell [${cell.row},${cell.column}]:`, {
+      cellTarget: { x: cellTargetX, y: cellTargetY },
+      elementName: elem.name || "unnamed",
+      elementAbsPos: absPos,
+      elementPoint: { x: elementPointX, y: elementPointY },
+      offset: { x: offsetX, y: offsetY },
+      newPosition
+    });
+    
+    elem.currentPosition = newPosition;
     
     // Notify dependent elements (e.g., elements positioned relative to this one)
     // This ensures reactive positioning works correctly

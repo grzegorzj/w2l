@@ -4,6 +4,7 @@ import {
   Text,
   Circle,
   Rectangle,
+  GridLayout,
 } from "w2l";
 
 /**
@@ -14,7 +15,7 @@ import {
  */
 
 const artboard = new Artboard({
-  size: { width: 800, height: 700 },
+  size: { width: 900, height: 750 },
   autoAdjust: true,
   padding: "40px",
   backgroundColor: "#ffffff",
@@ -39,10 +40,10 @@ artboard.addElement(title);
 
 // Description
 const description = new Text({
-  content: "Red dots = auto-rendered remarkable points | Colored boxes = manually positioned using getRemarkablePoint()",
+  content: "Graph is in a GridLayout (1x2) in the second cell with debug borders visible. Red dots = auto-rendered remarkable points | Colored boxes = manually positioned using getRemarkablePoint()",
   fontSize: 12,
   style: { fill: "#7f8c8d" },
-  maxWidth: 720,
+  maxWidth: 800,
 });
 
 description.position({
@@ -54,14 +55,48 @@ description.position({
 
 artboard.addElement(description);
 
-// Simple function graph with remarkable points enabled
+// Create a GridLayout (1 row, 2 columns)
+const grid = new GridLayout({
+  rows: 1,
+  columns: 2,
+  cellWidth: 350,
+  cellHeight: 500,
+  gap: 20,
+  debugShowCells: true, // Show cell boundaries for debugging
+  style: {
+    stroke: "#e74c3c",
+    strokeWidth: "2px",
+    strokeDasharray: "5,5",
+    fill: "none",
+  },
+});
+
+grid.position({
+  relativeFrom: grid.topLeft,
+  relativeTo: description.bottomLeft,
+  x: 0,
+  y: 30,
+});
+
+artboard.addElement(grid);
+
+// Add a placeholder in the first cell
+const placeholder = new Text({
+  content: "Cell 1 (empty)",
+  fontSize: 14,
+  style: { fill: "#95a5a6" },
+});
+
+grid.addElement(placeholder, 0, 0);
+
+// Simple function graph with remarkable points enabled - in SECOND CELL
 const graph = new FunctionGraph({
   functions: {
     fn: (x) => x * x - 4,
     label: "f(x) = x² - 4",
     color: "#3498db",
   },
-  width: 600,
+  width: 300,
   height: 400,
   domain: [-5, 5],
   range: [-5, 6],
@@ -70,18 +105,17 @@ const graph = new FunctionGraph({
   name: "DebugGraph",
 });
 
-graph.position({
-  relativeFrom: graph.topLeft,
-  relativeTo: description.bottomLeft,
-  x: 0,
-  y: 30,
-});
-
-artboard.addElement(graph);
+grid.addElement(graph, 0, 1); // Row 0, Column 1 (second cell)
 
 console.log("=== Debugging Remarkable Points ===");
 console.log("Graph position:", graph.currentPosition);
 console.log("Graph absolute position:", graph.getAbsolutePosition());
+
+// Check what the grid cell position is
+const cell = grid.getCell(0, 1); // Row 0, Column 1 (second cell)
+console.log("Grid cell [0,1] position:", cell ? { x: cell.x, y: cell.y, width: cell.width, height: cell.height } : "not found");
+console.log("Grid position:", grid.currentPosition);
+console.log("Grid absolute position:", grid.getAbsolutePosition());
 
 // Get all remarkable points
 const roots = graph.getRemarkablePoints("root");
@@ -323,16 +357,16 @@ if (yIntercept.length > 0) {
 
 // Add note
 const note = new Text({
-  content: "If working correctly: crosshairs and boxes should be centered on the red dots",
+  content: "Graph is in GridLayout cell [0,1] (second cell) - red dashed border shows grid boundary, semi-transparent boxes show cells. If working correctly: crosshairs and boxes should be centered on the red dots",
   fontSize: 11,
   fontWeight: "bold",
   style: { fill: "#e74c3c" },
-  maxWidth: 600,
+  maxWidth: 700,
 });
 
 note.position({
   relativeFrom: note.topLeft,
-  relativeTo: graph.bottomLeft,
+  relativeTo: grid.bottomLeft,
   x: 0,
   y: 20,
 });

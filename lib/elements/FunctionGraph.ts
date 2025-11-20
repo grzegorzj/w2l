@@ -900,7 +900,8 @@ export class FunctionGraph extends Shape {
   }
 
   /**
-   * Render the graph temporarily to the DOM and query the absolute position of a remarkable point.
+   * Render the graph temporarily to the DOM and query the position of a remarkable point
+   * relative to the graph's internal coordinate space.
    * @private
    */
   private getRemarkablePointPositionFromDOM(
@@ -918,8 +919,10 @@ export class FunctionGraph extends Shape {
     container.style.top = "-10000px";
     container.style.visibility = "hidden";
 
-    // Render the graph
-    container.innerHTML = this.render();
+    // Render the graph WITHOUT the outer transform (just a plain group at 0,0)
+    // This way we get positions relative to the graph's internal coordinate space
+    const graphContent = this.renderGraphContent();
+    container.innerHTML = `<g>${graphContent}</g>`;
     document.body.appendChild(container);
 
     // Find the remarkable point circle
@@ -929,25 +932,32 @@ export class FunctionGraph extends Shape {
       const bbox = pointElement.getBoundingClientRect();
       const containerBbox = container.getBoundingClientRect();
 
-      // Get center of the circle relative to the container
-      const relativeX = bbox.left - containerBbox.left + bbox.width / 2;
-      const relativeY = bbox.top - containerBbox.top + bbox.height / 2;
+      // Get center of the circle relative to the container (which is at 0,0 in the graph's space)
+      const graphRelativeX = bbox.left - containerBbox.left + bbox.width / 2;
+      const graphRelativeY = bbox.top - containerBbox.top + bbox.height / 2;
 
       console.log(`[getRemarkablePointPositionFromDOM] Found point ${pointId}`);
-      console.log(`[getRemarkablePointPositionFromDOM] bbox:`, bbox);
       console.log(
-        `[getRemarkablePointPositionFromDOM] containerBbox:`,
-        containerBbox
+        `[getRemarkablePointPositionFromDOM] Graph-relative position: (${graphRelativeX}, ${graphRelativeY})`
+      );
+
+      // Now add the graph's current absolute position to get the final absolute position
+      const absPos = this.getAbsolutePosition();
+      const finalX = absPos.x + graphRelativeX;
+      const finalY = absPos.y + graphRelativeY;
+
+      console.log(
+        `[getRemarkablePointPositionFromDOM] Graph absolute position: (${absPos.x}, ${absPos.y})`
       );
       console.log(
-        `[getRemarkablePointPositionFromDOM] relative position: (${relativeX}, ${relativeY})`
+        `[getRemarkablePointPositionFromDOM] Final absolute position: (${finalX}, ${finalY})`
       );
 
       document.body.removeChild(container);
 
       return {
-        x: `${relativeX}px`,
-        y: `${relativeY}px`,
+        x: `${finalX}px`,
+        y: `${finalY}px`,
       };
     }
 
@@ -1168,15 +1178,13 @@ export class FunctionGraph extends Shape {
     return this.toAbsolutePoint(this.width, this.height / 2, "rightCenter");
   }
 
-  render(): string {
+  /**
+   * Render the internal graph content without the outer transform group.
+   * Used for DOM-based position queries.
+   * @private
+   */
+  private renderGraphContent(): string {
     let svg = "";
-    const absPos = this.getAbsolutePosition();
-
-    // Add comment
-    svg += `<!-- ${this.name} -->\n`;
-
-    // Create container group
-    svg += `<g transform="translate(${absPos.x.toFixed(2)}, ${absPos.y.toFixed(2)})">\n`;
 
     // Add title if provided
     if (this.title) {
@@ -1309,6 +1317,22 @@ export class FunctionGraph extends Shape {
 
       svg += `  </g>\n`;
     }
+
+    return svg;
+  }
+
+  render(): string {
+    let svg = "";
+    const absPos = this.getAbsolutePosition();
+
+    // Add comment
+    svg += `<!-- ${this.name} -->\n`;
+
+    // Create container group with transform
+    svg += `<g transform="translate(${absPos.x.toFixed(2)}, ${absPos.y.toFixed(2)})">\n`;
+
+    // Render the graph content
+    svg += this.renderGraphContent();
 
     svg += `</g>\n`;
 
