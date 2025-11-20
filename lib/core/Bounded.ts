@@ -252,33 +252,33 @@ export abstract class Bounded extends Element {
   }
 
   /**
-   * Gets the appropriate alignment point based on alignment direction.
+   * Gets the alignment point for this element when positioned by layout containers.
    *
-   * For bounded elements, this returns edge centers or corners depending
-   * on the alignment configuration.
+   * **Alignment Semantics (Edge-to-Edge by Default):**
+   * - `"top"` → element's **TOP edge** | `"bottom"` → **BOTTOM edge**  
+   * - `"left"` → element's **LEFT edge** | `"right"` → **RIGHT edge**
+   * - `"center"` → element's **CENTER point**
+   *
+   * This differs from `.position()` where you choose `relativeFrom` explicitly.
+   * Layouts use this method for automatic child positioning with proper edge alignment.
+   *
+   * **9-Point System:** left+top → topLeft | left+center → leftCenter | center+center → center | etc.
+   *
+   * **Override for Custom Behavior:** Subclasses can override to always use center or custom logic.
    *
    * @param horizontalAlign - Horizontal alignment: "left", "center", or "right"
    * @param verticalAlign - Vertical alignment: "top", "center", or "bottom"
    * @returns The point to use for alignment
    *
-   * @remarks
-   * This method is used by layouts to determine where to position elements.
-   *
-   * Alignment mappings:
-   * - left + top: topLeft
-   * - left + center: leftCenter (center of left edge)
-   * - left + bottom: bottomLeft
-   * - center + top: topCenter (center of top edge)
-   * - center + center: center
-   * - center + bottom: bottomCenter (center of bottom edge)
-   * - right + top: topRight
-   * - right + center: rightCenter (center of right edge)
-   * - right + bottom: bottomRight
-   *
    * @example
    * ```typescript
-   * // Get the center of the left edge for left-aligned content
-   * const point = element.getAlignmentPoint("left", "center");
+   * // GridLayout uses this internally
+   * const point = element.getAlignmentPoint("left", "top"); // → top-left edge
+   * 
+   * // Custom: always center
+   * class Custom extends Rectangle {
+   *   getAlignmentPoint() { return this.center; }
+   * }
    * ```
    */
   getAlignmentPoint(

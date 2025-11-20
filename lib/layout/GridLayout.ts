@@ -401,7 +401,12 @@ export class GridLayout extends Layout {
       }
     }
 
-    // Get element's alignment point
+    // Get element's alignment point (where the element wants to be anchored)
+    // This respects the alignment semantics:
+    // - "top" align uses the element's TOP edge
+    // - "left" align uses the element's LEFT edge  
+    // - "center" align uses the element's CENTER
+    // Elements can override getAlignmentPoint() to customize this behavior
     const elementPoint = element.getAlignmentPoint(
       this.gridConfig.horizontalAlign!,
       this.gridConfig.verticalAlign!
@@ -437,30 +442,18 @@ export class GridLayout extends Layout {
         cellTargetY = cell.y + cell.height / 2;
     }
 
-    // Set currentPosition in RELATIVE coordinates (relative to parent grid)
-    // getAbsolutePosition() will add the parent's position when rendering
-    //
-    // IMPORTANT: currentPosition has different meanings for different shapes:
-    // - Circle: currentPosition is the CENTER
-    // - Rectangle: currentPosition is the TOP-LEFT corner
-    // cellTargetX/Y represent CENTER positions, so we need to convert for rectangles
+    // Calculate offset: where the element's alignment point is relative to its currentPosition
+    // getAlignmentPoint returns absolute coordinates, but we need the offset from currentPosition
+    const absPos = elem.getAbsolutePosition();
+    const elementPointX = parseFloat(String(elementPoint.x));
+    const elementPointY = parseFloat(String(elementPoint.y));
+    const offsetX = elementPointX - absPos.x;
+    const offsetY = elementPointY - absPos.y;
     
-    let finalX = cellTargetX;
-    let finalY = cellTargetY;
-    
-    // For rectangles, convert center to top-left
-    if (elem._width !== undefined && elem._height !== undefined) {
-      finalX = cellTargetX - elem._width / 2;
-      finalY = cellTargetY - elem._height / 2;
-    } else if (elem.width !== undefined && elem.height !== undefined) {
-      finalX = cellTargetX - elem.width / 2;
-      finalY = cellTargetY - elem.height / 2;
-    }
-    // For circles, cellTargetX/Y are already center positions, which is what currentPosition represents
-    
+    // Set currentPosition so that elementPoint aligns with cellTarget
     elem.currentPosition = {
-      x: finalX,
-      y: finalY,
+      x: cellTargetX - offsetX,
+      y: cellTargetY - offsetY,
     };
     
     // Notify dependent elements (e.g., elements positioned relative to this one)

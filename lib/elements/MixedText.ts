@@ -457,6 +457,20 @@ export class MixedText extends Shape {
   }
 
   /**
+   * Alias for textWidth (for compatibility with layout systems).
+   */
+  get width(): number {
+    return this.textWidth;
+  }
+
+  /**
+   * Alias for textHeight (for compatibility with layout systems).
+   */
+  get height(): number {
+    return this.textHeight;
+  }
+
+  /**
    * Gets the geometric center of the mixed text.
    *
    * @returns The center point

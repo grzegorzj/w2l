@@ -176,8 +176,12 @@ export class Column extends Rectangle {
       elem._width = this._width;
     }
 
-    // Get the element's alignment point based on the column's alignment config
-    // This uses the element's default alignment behavior (currently edge-based)
+    // Get element's alignment point (where the element wants to be anchored)
+    // This respects the alignment semantics:
+    // - "top" align uses the element's TOP edge
+    // - "left" align uses the element's LEFT edge
+    // - "center" align uses the element's CENTER
+    // Elements can override getAlignmentPoint() to customize this behavior
     const elementPoint = element.getAlignmentPoint(
       this.alignmentConfig.horizontalAlign,
       this.alignmentConfig.verticalAlign
@@ -235,20 +239,19 @@ export class Column extends Rectangle {
     const columnTargetX = parseUnit(columnTarget.x);
     const columnTargetY = parseUnit(columnTarget.y);
 
-    // Calculate the offset needed to align element point to column point
+    // Calculate offset: where the element's alignment point is relative to its currentPosition
+    // getAlignmentPoint returns absolute coordinates, but we need the offset from currentPosition
+    const absPos = elem.getAbsolutePosition();
     const elementPointX = parseUnit(elementPoint.x);
     const elementPointY = parseUnit(elementPoint.y);
+    const offsetX = elementPointX - absPos.x;
+    const offsetY = elementPointY - absPos.y;
 
-    const offsetX = columnTargetX - elementPointX;
-    const offsetY = columnTargetY - elementPointY;
-
-    // Set the element's position
-    if (elem.currentPosition) {
+    // Set currentPosition so that elementPoint aligns with columnTarget
       elem.currentPosition = {
-        x: elem.currentPosition.x + offsetX,
-        y: elem.currentPosition.y + offsetY,
+      x: columnTargetX - offsetX,
+      y: columnTargetY - offsetY,
       };
-    }
   }
 
   /**

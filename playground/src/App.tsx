@@ -31,6 +31,7 @@ export function App() {
   >("idle");
   const { result, executeCode } = useCodeExecution();
   const [conversationId, setConversationId] = useState<number | null>(null);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
 
   // Create default conversation on mount
   useEffect(() => {
@@ -85,6 +86,7 @@ export function App() {
       setMessageType("error");
     } else {
       editorRef.current?.setValue(content);
+      setCurrentFile(file); // Store the file for refresh
       setMessage(`Loaded file: ${file.name}`);
       setMessageType("success");
     }
@@ -92,6 +94,21 @@ export function App() {
     // Reset the input so the same file can be loaded again if needed
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRefreshFile = async () => {
+    if (!currentFile) return;
+
+    const { content, error } = await loadFileFromInput(currentFile);
+
+    if (error) {
+      setMessage(error);
+      setMessageType("error");
+    } else {
+      editorRef.current?.setValue(content);
+      setMessage(`Refreshed file: ${currentFile.name}`);
+      setMessageType("success");
     }
   };
 
@@ -156,11 +173,13 @@ export function App() {
           />
           <div className="editor-split-container">
             <div className="editor-section" id="editor-section" style={{ flex: "0 0 50%" }}>
-          <EditorToolbar
-            onLoadFile={handleLoadFile}
-            onRun={handleRun}
-            onSaveCode={handleSaveCode}
-          />
+        <EditorToolbar
+          onLoadFile={handleLoadFile}
+          onRefreshFile={handleRefreshFile}
+          onRun={handleRun}
+          onSaveCode={handleSaveCode}
+          currentFileName={currentFile?.name || null}
+        />
           <CodeEditor ref={editorRef} initialValue={initialCode} onRun={handleRun} />
             </div>
 

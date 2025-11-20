@@ -225,7 +225,7 @@ export class Artboard extends Rectangle {
             minY = Math.min(minY, top);
             maxX = Math.max(maxX, right);
             maxY = Math.max(maxY, bottom);
-          }
+    }
         } catch (e) {
           // Skip elements that aren't fully initialized
         }

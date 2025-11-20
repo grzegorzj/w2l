@@ -275,36 +275,62 @@ export class HStack extends Layout {
       const elementWidth = bbox.width;
       const elementHeight = bbox.height;
 
-      // Horizontal position
-      const targetX = currentX + elementWidth / 2;
+      // Calculate the target point where we want to align the element
+      // For HStack: vertical position varies by alignment, horizontal is stacked from currentX
+      let containerTargetX: number;
+      let containerTargetY: number;
 
-      // Calculate vertical position based on alignment
-      let targetY: number;
+      // Horizontal position: left edge of the element starts at currentX
+      containerTargetX = currentX;
 
+      // Vertical alignment within the stack
       switch (this.hstackConfig.verticalAlign) {
         case "top":
-          targetY = elementHeight / 2;
+          containerTargetY = 0;
           break;
         case "bottom":
-          targetY = stackHeight - elementHeight / 2;
+          containerTargetY = stackHeight;
           break;
         case "center":
         default:
-          targetY = stackHeight / 2;
+          containerTargetY = stackHeight / 2;
           break;
       }
 
-      // Convert to appropriate coordinate system
-      let finalX = targetX;
-      let finalY = targetY;
+      // Get element's alignment point (respects edge-to-edge semantics)
+      // For "left" align, this returns the element's LEFT edge
+      // For "top" align, this returns the element's TOP edge
+      const elementPoint = elem.getAlignmentPoint(
+        "left", // HStack always aligns elements by their left edge in horizontal direction
+        this.hstackConfig.verticalAlign || "center"
+      );
 
-      if (elem._width !== undefined && elem._height !== undefined) {
-        finalX = targetX - elem._width / 2;
-        finalY = targetY - elem._height / 2;
-      } else if (elem.width !== undefined && elem.height !== undefined) {
-        finalX = targetX - elem.width / 2;
-        finalY = targetY - elem.height / 2;
-      }
+      // Calculate offset: where element's alignment point is relative to its currentPosition
+      const absPos = elem.getAbsolutePosition();
+      const elementPointX = parseFloat(String(elementPoint.x));
+      const elementPointY = parseFloat(String(elementPoint.y));
+      const offsetX = elementPointX - absPos.x;
+      const offsetY = elementPointY - absPos.y;
+
+      console.log(`[HStack] Element ${index} alignment:`, {
+        name: elem.name || elem.constructor.name,
+        elementWidth,
+        elementHeight,
+        elementPoint: { x: elementPoint.x, y: elementPoint.y },
+        elementPointParsed: { x: elementPointX, y: elementPointY },
+        absPos: { x: absPos.x, y: absPos.y },
+        offset: { x: offsetX, y: offsetY },
+        containerTarget: { x: containerTargetX, y: containerTargetY },
+      });
+
+      // Set currentPosition so that elementPoint aligns with containerTarget
+      const finalX = containerTargetX - offsetX;
+      const finalY = containerTargetY - offsetY;
+      
+      console.log(`[HStack] Element ${index} final position:`, {
+        finalX,
+        finalY,
+      });
 
       elem.currentPosition = {
         x: finalX,

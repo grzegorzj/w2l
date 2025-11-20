@@ -435,6 +435,20 @@ export class LatexText extends Shape {
   }
 
   /**
+   * Alias for latexWidth (for compatibility with layout systems).
+   */
+  get width(): number {
+    return this.latexWidth;
+  }
+
+  /**
+   * Alias for latexHeight (for compatibility with layout systems).
+   */
+  get height(): number {
+    return this.latexHeight;
+  }
+
+  /**
    * Gets the geometric center of the LaTeX element.
    *
    * @returns The center point

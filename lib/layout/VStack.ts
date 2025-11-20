@@ -294,12 +294,9 @@ export class VStack extends Layout {
 
       // Skip elements that have been explicitly positioned (absolute mode)
       if (elem._isAbsolutePositioned) {
-        console.log(
-          `[VStack] Element ${index} SKIPPED (absolute positioned)`,
-          {
-            name: elem.name || "unnamed",
-          }
-        );
+        console.log(`[VStack] Element ${index} SKIPPED (absolute positioned)`, {
+          name: elem.name || "unnamed",
+        });
         return;
       }
 
@@ -315,49 +312,57 @@ export class VStack extends Layout {
       const elementWidth = bbox.width;
       const elementHeight = bbox.height;
 
-      // Calculate horizontal position based on alignment
-      let targetX: number;
+      // Calculate the target point where we want to align the element
+      // For VStack: horizontal position varies by alignment, vertical is stacked from currentY
+      let containerTargetX: number;
+      let containerTargetY: number;
 
+      // Horizontal alignment within the stack
       switch (this.vstackConfig.horizontalAlign) {
         case "left":
-          targetX = elementWidth / 2;
+          containerTargetX = 0;
           break;
         case "right":
-          targetX = stackWidth - elementWidth / 2;
+          containerTargetX = stackWidth;
           break;
         case "center":
         default:
-          targetX = stackWidth / 2;
+          containerTargetX = stackWidth / 2;
           break;
       }
 
-      // Vertical position (top of element)
-      const targetY = currentY + elementHeight / 2;
+      // Vertical position: top of the element starts at currentY
+      containerTargetY = currentY;
+
+      // Get element's alignment point (respects edge-to-edge semantics)
+      // For "top" align, this returns the element's TOP edge
+      // For "left" align, this returns the element's LEFT edge
+      const elementPoint = elem.getAlignmentPoint(
+        this.vstackConfig.horizontalAlign || "center",
+        "top" // VStack always aligns elements by their top edge in vertical direction
+      );
 
       console.log(`[VStack] Element ${index} positioning`, {
         name: elem.name || "unnamed",
         currentY,
-        targetX,
-        targetY,
+        containerTargetX,
+        containerTargetY,
         elementWidth,
         elementHeight,
       });
 
-      // Set currentPosition in RELATIVE coordinates
-      // Convert center position to appropriate coordinate system
-      let finalX = targetX;
-      let finalY = targetY;
+      // Calculate offset: where element's alignment point is relative to its currentPosition
+      const absPos = elem.getAbsolutePosition();
+      const elementPointX = parseFloat(String(elementPoint.x));
+      const elementPointY = parseFloat(String(elementPoint.y));
+      const offsetX = elementPointX - absPos.x;
+      const offsetY = elementPointY - absPos.y;
 
-      // For rectangles, convert center to top-left
-      if (elem._width !== undefined && elem._height !== undefined) {
-        finalX = targetX - elem._width / 2;
-        finalY = targetY - elem._height / 2;
-      } else if (elem.width !== undefined && elem.height !== undefined) {
-        finalX = targetX - elem.width / 2;
-        finalY = targetY - elem.height / 2;
-      }
-      // For circles, targetX/targetY are already center positions
+      // Set currentPosition so that elementPoint aligns with containerTarget
+      let finalX = containerTargetX - offsetX;
+      let finalY = containerTargetY - offsetY;
 
+      // finalX and finalY are already calculated above
       elem.currentPosition = {
         x: finalX,
         y: finalY,
@@ -404,4 +409,3 @@ export class VStack extends Layout {
     return super.render();
   }
 }
-

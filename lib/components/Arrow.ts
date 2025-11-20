@@ -221,6 +221,61 @@ export class Arrow extends Element {
   }
 
   /**
+   * Gets the width of the arrow's bounding box.
+   * @returns The width in pixels
+   */
+  get width(): number {
+    const bbox = this.getBoundingBox(true);
+    return bbox.width;
+  }
+
+  /**
+   * Gets the height of the arrow's bounding box.
+   * @returns The height in pixels
+   */
+  get height(): number {
+    const bbox = this.getBoundingBox(true);
+    return bbox.height;
+  }
+
+  /**
+   * Gets the alignment point for positioning within layout containers.
+   * Arrow aligns based on its bounding box edges.
+   */
+  getAlignmentPoint(
+    horizontalAlign: "left" | "center" | "right",
+    verticalAlign: "top" | "center" | "bottom"
+  ): Point {
+    const bbox = this.getBoundingBox(true);
+    
+    // Parse bounding box coordinates
+    const topLeftX = parseFloat(String(bbox.topLeft.x));
+    const topLeftY = parseFloat(String(bbox.topLeft.y));
+    
+    // Calculate the alignment point based on bounding box
+    let x = topLeftX;
+    let y = topLeftY;
+
+    // Horizontal alignment
+    if (horizontalAlign === "center") {
+      x = topLeftX + bbox.width / 2;
+    } else if (horizontalAlign === "right") {
+      x = topLeftX + bbox.width;
+    }
+    // "left" uses x = topLeftX (already set)
+
+    // Vertical alignment
+    if (verticalAlign === "center") {
+      y = topLeftY + bbox.height / 2;
+    } else if (verticalAlign === "bottom") {
+      y = topLeftY + bbox.height;
+    }
+    // "top" uses y = topLeftY (already set)
+
+    return { x: `${x}px`, y: `${y}px` };
+  }
+
+  /**
    * Generate the SVG marker definition for the arrowhead.
    *
    * @returns SVG marker definition
