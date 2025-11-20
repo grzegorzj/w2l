@@ -90,6 +90,20 @@ export interface TextConfig {
   name?: string;
 
   /**
+   * Padding around the content (CSS-like spacing).
+   * Supports uniform values or individual sides.
+   * @defaultValue 0
+   */
+  padding?: import("../core/Bounded.js").Spacing;
+
+  /**
+   * Margin around the element (CSS-like spacing).
+   * Supports uniform values or individual sides.
+   * @defaultValue 0
+   */
+  margin?: import("../core/Bounded.js").Spacing;
+
+  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
    * Uses standard CSS/SVG property names.
    *
@@ -219,6 +233,14 @@ export class Text extends Shape {
     this._lineHeight = config.lineHeight || 1.2;
 
     this._lines = this.calculateLines();
+
+    // Set padding and margin if provided
+    if (config.padding !== undefined) {
+      this.padding = config.padding;
+    }
+    if (config.margin !== undefined) {
+      this.margin = config.margin;
+    }
   }
 
   /**

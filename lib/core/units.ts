@@ -22,6 +22,11 @@
  * ```
  */
 export function parseUnit(value: string | number, baseValue: number = 16): number {
+  // Handle undefined or null
+  if (value === undefined || value === null) {
+    return 0;
+  }
+
   // If it's already a number, return it
   if (typeof value === 'number') {
     return value;
@@ -84,6 +89,10 @@ export function parseUnit(value: string | number, baseValue: number = 16): numbe
  * @returns True if valid, false otherwise
  */
 export function isValidUnit(value: string | number): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
   if (typeof value === 'number') {
     return !isNaN(value);
   }

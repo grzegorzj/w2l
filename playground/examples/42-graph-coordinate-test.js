@@ -41,7 +41,6 @@ artboard.addElement(title);
 const graph = new FunctionGraph({
   functions: {
     fn: (x) => x,
-    label: "f(x) = x",
     color: "#3498db",
   },
   width: 400,

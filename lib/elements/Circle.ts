@@ -37,6 +37,20 @@ export interface CircleConfig {
   name?: string;
 
   /**
+   * Padding around the content (CSS-like spacing).
+   * Supports uniform values or individual sides.
+   * @defaultValue 0
+   */
+  padding?: import("../core/Bounded.js").Spacing;
+
+  /**
+   * Margin around the element (CSS-like spacing).
+   * Supports uniform values or individual sides.
+   * @defaultValue 0
+   */
+  margin?: import("../core/Bounded.js").Spacing;
+
+  /**
    * Optional background image URL.
    * The image will be used as a fill pattern for the circle.
    *
@@ -149,6 +163,14 @@ export class Circle extends Shape {
         config.backgroundImage,
         config.backgroundImageSize || "cover"
       );
+    }
+
+    // Set padding and margin if provided
+    if (config.padding !== undefined) {
+      this.padding = config.padding;
+    }
+    if (config.margin !== undefined) {
+      this.margin = config.margin;
     }
   }
 

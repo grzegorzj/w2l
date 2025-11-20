@@ -91,6 +91,13 @@ export interface ArtboardConfig {
    * @defaultValue "transparent"
    */
   backgroundColor?: string;
+
+  /**
+   * Show visual guides for the artboard's padding and content areas.
+   * Useful for debugging and understanding the box model.
+   * @defaultValue false
+   */
+  showPaddingGuides?: boolean;
 }
 
 /**
@@ -401,6 +408,8 @@ export class Artboard extends Rectangle {
    * - Creation order: Later created elements appear on top
    * - Nesting: Deeper nested elements appear on top of their parents
    *
+   * If padding is set, content is translated to respect the padding area.
+   *
    * @returns SVG string representation of the artboard
    *
    * @example
@@ -417,6 +426,7 @@ export class Artboard extends Rectangle {
     const widthPx = this.width;
     const heightPx = this.height;
     const bgColor = this.artboardConfig.backgroundColor || "transparent";
+    const padding = this.paddingBox;
 
     // Recursively collect ALL elements (including those inside containers/layouts)
     const allElements = this.collectAllElements(this.elements);
@@ -429,11 +439,84 @@ export class Artboard extends Rectangle {
       .map((element: any) => element.render())
       .join("\n    ");
 
+    // Apply padding translation to content if padding is set
+    const hasPadding = padding.left !== 0 || padding.top !== 0 || padding.right !== 0 || padding.bottom !== 0;
+    const contentTransform = hasPadding ? ` transform="translate(${padding.left}, ${padding.top})"` : "";
+
+    // Generate padding guide visuals if requested
+    let paddingGuides = '';
+    if (this.artboardConfig.showPaddingGuides && hasPadding) {
+      paddingGuides = this.generatePaddingGuides(widthPx, heightPx, padding);
+    }
+
     return `<svg width="${widthPx}" height="${heightPx}" xmlns="http://www.w3.org/2000/svg">
   ${bgColor !== "transparent" ? `<rect width="${widthPx}" height="${heightPx}" fill="${bgColor}"/>` : ""}
-  <g>
+  ${paddingGuides}
+  <g${contentTransform}>
     ${elementsHTML}
   </g>
 </svg>`;
+  }
+
+  /**
+   * Generates visual guides showing the padding and content areas.
+   * @internal
+   */
+  private generatePaddingGuides(width: number, height: number, padding: import("./Bounded.js").ParsedSpacing): string {
+    const contentX = padding.left;
+    const contentY = padding.top;
+    const contentWidth = width - padding.left - padding.right;
+    const contentHeight = height - padding.top - padding.bottom;
+
+    // Create a semi-transparent overlay for the padding areas
+    const paddingAreas = [];
+    
+    // Top padding
+    if (padding.top > 0) {
+      paddingAreas.push(`<rect x="0" y="0" width="${width}" height="${padding.top}" fill="rgba(255, 200, 200, 0.2)" stroke="none"/>`);
+    }
+    
+    // Bottom padding
+    if (padding.bottom > 0) {
+      paddingAreas.push(`<rect x="0" y="${height - padding.bottom}" width="${width}" height="${padding.bottom}" fill="rgba(255, 200, 200, 0.2)" stroke="none"/>`);
+    }
+    
+    // Left padding
+    if (padding.left > 0) {
+      paddingAreas.push(`<rect x="0" y="${padding.top}" width="${padding.left}" height="${contentHeight}" fill="rgba(255, 200, 200, 0.2)" stroke="none"/>`);
+    }
+    
+    // Right padding
+    if (padding.right > 0) {
+      paddingAreas.push(`<rect x="${width - padding.right}" y="${padding.top}" width="${padding.right}" height="${contentHeight}" fill="rgba(255, 200, 200, 0.2)" stroke="none"/>`);
+    }
+
+    // Content area border (dashed blue line)
+    const contentBorder = `<rect x="${contentX}" y="${contentY}" width="${contentWidth}" height="${contentHeight}" fill="none" stroke="#2196F3" stroke-width="2" stroke-dasharray="8,4" opacity="0.7"/>`;
+
+    // Border box outline (solid red line)
+    const borderOutline = `<rect x="0" y="0" width="${width}" height="${height}" fill="none" stroke="#F44336" stroke-width="2" opacity="0.7"/>`;
+
+    // Labels
+    const labels = [];
+    
+    // "Padding" label
+    if (padding.top >= 20) {
+      labels.push(`<text x="${width / 2}" y="${padding.top / 2 + 5}" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#D32F2F" font-weight="bold">Padding</text>`);
+    }
+    
+    // "Content Area" label
+    if (contentHeight >= 30) {
+      labels.push(`<text x="${contentX + contentWidth / 2}" y="${contentY + 20}" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1976D2" font-weight="bold">Content Area</text>`);
+    }
+
+    return `
+  <!-- Artboard Box Model Guides -->
+  <g id="artboard-padding-guides">
+    ${paddingAreas.join('\n    ')}
+    ${borderOutline}
+    ${contentBorder}
+    ${labels.join('\n    ')}
+  </g>`;
   }
 }

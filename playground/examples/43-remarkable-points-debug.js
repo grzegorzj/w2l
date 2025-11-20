@@ -93,7 +93,6 @@ grid.addElement(placeholder, 0, 0);
 const graph = new FunctionGraph({
   functions: {
     fn: (x) => x * x - 4,
-    label: "f(x) = x² - 4",
     color: "#3498db",
   },
   width: 300,

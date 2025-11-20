@@ -91,7 +91,6 @@ artboard.addElement(grid);
 const quadraticGraph = new FunctionGraph({
   functions: {
     fn: (x) => x * x - 4,
-    label: "f(x) = x² - 4",
     color: "#e74c3c",
   },
   width: 360,
@@ -138,12 +137,10 @@ const trigGraph = new FunctionGraph({
   functions: [
     {
       fn: (x) => Math.sin(x),
-      label: "sin(x)",
       color: "#3498db",
     },
     {
       fn: (x) => Math.cos(x),
-      label: "cos(x)",
       color: "#2ecc71",
     },
   ],
@@ -181,7 +178,6 @@ grid.addElement(trigStack);
 const cubicGraph = new FunctionGraph({
   functions: {
     fn: (x) => (x + 3) * (x - 1) * (x - 4) / 4,
-    label: "f(x) = (x+3)(x-1)(x-4)/4",
     color: "#e67e22",
   },
   width: 360,
@@ -229,12 +225,10 @@ const expLogGraph = new FunctionGraph({
   functions: [
     {
       fn: (x) => Math.exp(x / 2),
-      label: "e^(x/2)",
       color: "#1abc9c",
     },
     {
       fn: (x) => Math.log(x),
-      label: "ln(x)",
       color: "#34495e",
     },
   ],
@@ -271,7 +265,6 @@ grid.addElement(expLogStack);
 const rationalGraph = new FunctionGraph({
   functions: {
     fn: (x) => 1 / (x - 2),
-    label: "f(x) = 1/(x-2)",
     color: "#e84393",
   },
   width: 360,
@@ -322,7 +315,6 @@ const piecewiseGraph = new FunctionGraph({
       if (x < 1) return x * x;
       return 2 - x;
     },
-    label: "Piecewise",
     color: "#6c5ce7",
   },
   width: 360,
@@ -358,12 +350,10 @@ const absValueGraph = new FunctionGraph({
   functions: [
     {
       fn: (x) => Math.abs(x),
-      label: "|x|",
       color: "#00b894",
     },
     {
       fn: (x) => -Math.abs(x - 2) + 3,
-      label: "-|x-2|+3",
       color: "#ff7675",
     },
   ],
@@ -399,7 +389,6 @@ grid.addElement(absValueStack);
 const quinticGraph = new FunctionGraph({
   functions: {
     fn: (x) => 0.01 * x ** 5 - 0.1 * x ** 3 + x,
-    label: "f(x) = 0.01x⁵ - 0.1x³ + x",
     color: "#fd79a8",
   },
   width: 360,
@@ -445,7 +434,6 @@ grid.addElement(quinticStack);
 const sineWaveGraph = new FunctionGraph({
   functions: {
     fn: (x) => Math.sin(2 * x) * Math.exp(-x / 5),
-    label: "f(x) = sin(2x)·e^(-x/5)",
     color: "#a29bfe",
   },
   width: 360,

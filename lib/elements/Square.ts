@@ -47,6 +47,20 @@ export interface SquareConfig {
   cornerRadius?: string | number;
 
   /**
+   * Padding around the content (CSS-like spacing).
+   * Supports uniform values or individual sides.
+   * @defaultValue 0
+   */
+  padding?: import("../core/Bounded.js").Spacing;
+
+  /**
+   * Margin around the element (CSS-like spacing).
+   * Supports uniform values or individual sides.
+   * @defaultValue 0
+   */
+  margin?: import("../core/Bounded.js").Spacing;
+
+  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
    * Uses standard CSS/SVG property names.
    *
@@ -143,6 +157,8 @@ export class Square extends Rectangle {
       height: sideLength,
       cornerStyle: config.cornerStyle,
       cornerRadius: config.cornerRadius,
+      padding: config.padding,
+      margin: config.margin,
       style: config.style,
     };
 

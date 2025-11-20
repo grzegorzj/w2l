@@ -49,8 +49,6 @@ export interface RemarkablePoint {
 export interface PlottedFunction {
   /** The mathematical function to plot, takes x and returns y */
   fn: (x: number) => number;
-  /** Label for the function (e.g., "f(x) = x²") */
-  label?: string;
   /** Style for this specific function's curve */
   style?: Partial<Style>;
   /** Color for the function curve (shorthand for style.stroke) */
@@ -1323,14 +1321,6 @@ export class FunctionGraph extends Shape {
             }
           });
         }
-      }
-
-      // Draw function label
-      if (func.label) {
-        const labelX = this.width - 10;
-        const labelY = 20 + idx * 20;
-        const color = func.color || "#3498db";
-        svg += `    <text x="${labelX}" y="${labelY}" text-anchor="end" font-size="12" fill="${color}">${func.label}</text>\n`;
       }
     });
     svg += `  </g>\n`;

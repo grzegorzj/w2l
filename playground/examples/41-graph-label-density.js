@@ -90,7 +90,6 @@ autoSpacingStack.addElement(autoTitle);
 const autoGraph = new FunctionGraph({
   functions: {
     fn: (x) => Math.sin(x) * Math.cos(x / 2),
-    label: "f(x) = sin(x)·cos(x/2)",
     color: "#3498db",
   },
   width: 500,
@@ -131,7 +130,6 @@ highDensityStack.addElement(highDensityTitle);
 const highDensityGraph = new FunctionGraph({
   functions: {
     fn: (x) => Math.sin(x) * Math.cos(x / 2),
-    label: "f(x) = sin(x)·cos(x/2)",
     color: "#e74c3c",
   },
   width: 500,
@@ -189,7 +187,6 @@ coordDemoStack.addElement(coordNote);
 const demoGraph = new FunctionGraph({
   functions: {
     fn: (x) => x * x - 4,
-    label: "f(x) = x² - 4",
     color: "#9b59b6",
   },
   width: 600,

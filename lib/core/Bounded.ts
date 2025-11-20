@@ -227,6 +227,200 @@ export abstract class Bounded extends Element {
   }
 
   /**
+   * CSS Box Model Support
+   * 
+   * Returns position objects for different box model layers:
+   * - borderBox: The outer edge of the element (default positioning system)
+   * - contentBox: The content area inside padding
+   * - marginBox: The area including margins (outside the border)
+   * 
+   * Each returns an object with common position points: topLeft, center, bottomRight, etc.
+   */
+
+  /**
+   * Gets the border box - the outer edge of the element.
+   * This is the default box model layer and matches the standard positioning system.
+   * 
+   * @returns Object with position points for the border box
+   * 
+   * @example
+   * ```typescript
+   * const rect = new Rectangle({ width: 200, height: 100 });
+   * 
+   * // Position another element at the border box edge
+   * otherElement.position({
+   *   relativeFrom: otherElement.center,
+   *   relativeTo: rect.borderBox.topLeft,
+   *   x: 0,
+   *   y: 0
+   * });
+   * ```
+   */
+  getBorderBox() {
+    const elem = this as any;
+    const width = elem.width || 0;
+    const height = elem.height || 0;
+    const absPos = this.getAbsolutePosition();
+    
+    return {
+      // Corners
+      topLeft: { x: `${absPos.x}px`, y: `${absPos.y}px` },
+      topRight: { x: `${absPos.x + width}px`, y: `${absPos.y}px` },
+      bottomLeft: { x: `${absPos.x}px`, y: `${absPos.y + height}px` },
+      bottomRight: { x: `${absPos.x + width}px`, y: `${absPos.y + height}px` },
+      
+      // Edge centers
+      topCenter: { x: `${absPos.x + width / 2}px`, y: `${absPos.y}px` },
+      bottomCenter: { x: `${absPos.x + width / 2}px`, y: `${absPos.y + height}px` },
+      leftCenter: { x: `${absPos.x}px`, y: `${absPos.y + height / 2}px` },
+      rightCenter: { x: `${absPos.x + width}px`, y: `${absPos.y + height / 2}px` },
+      
+      // Center
+      center: { x: `${absPos.x + width / 2}px`, y: `${absPos.y + height / 2}px` },
+      
+      // Dimensions
+      width,
+      height,
+    };
+  }
+
+  /**
+   * Gets the content box - the area inside padding where content is placed.
+   * 
+   * @returns Object with position points for the content box
+   * 
+   * @example
+   * ```typescript
+   * const container = new Rectangle({
+   *   width: 200,
+   *   height: 100,
+   *   padding: "20px"
+   * });
+   * 
+   * // Position content inside the padding
+   * text.position({
+   *   relativeFrom: text.topLeft,
+   *   relativeTo: container.contentBox.topLeft,
+   *   x: 0,
+   *   y: 0
+   * });
+   * ```
+   */
+  getContentBox() {
+    const elem = this as any;
+    const borderWidth = elem.width || 0;
+    const borderHeight = elem.height || 0;
+    const padding = this.paddingBox;
+    const absPos = this.getAbsolutePosition();
+    
+    const contentLeft = absPos.x + padding.left;
+    const contentTop = absPos.y + padding.top;
+    const contentWidth = borderWidth - padding.left - padding.right;
+    const contentHeight = borderHeight - padding.top - padding.bottom;
+    const contentRight = contentLeft + contentWidth;
+    const contentBottom = contentTop + contentHeight;
+    const contentCenterX = contentLeft + contentWidth / 2;
+    const contentCenterY = contentTop + contentHeight / 2;
+    
+    return {
+      // Corners
+      topLeft: { x: `${contentLeft}px`, y: `${contentTop}px` },
+      topRight: { x: `${contentRight}px`, y: `${contentTop}px` },
+      bottomLeft: { x: `${contentLeft}px`, y: `${contentBottom}px` },
+      bottomRight: { x: `${contentRight}px`, y: `${contentBottom}px` },
+      
+      // Edge centers
+      topCenter: { x: `${contentCenterX}px`, y: `${contentTop}px` },
+      bottomCenter: { x: `${contentCenterX}px`, y: `${contentBottom}px` },
+      leftCenter: { x: `${contentLeft}px`, y: `${contentCenterY}px` },
+      rightCenter: { x: `${contentRight}px`, y: `${contentCenterY}px` },
+      
+      // Center
+      center: { x: `${contentCenterX}px`, y: `${contentCenterY}px` },
+      
+      // Dimensions
+      width: contentWidth,
+      height: contentHeight,
+    };
+  }
+
+  /**
+   * Gets the margin box - the area including margins around the element.
+   * 
+   * @returns Object with position points for the margin box
+   * 
+   * @example
+   * ```typescript
+   * const box = new Rectangle({
+   *   width: 200,
+   *   height: 100,
+   *   margin: "20px"
+   * });
+   * 
+   * // Position respecting the margin area
+   * otherElement.position({
+   *   relativeFrom: otherElement.topLeft,
+   *   relativeTo: box.marginBox.bottomLeft,
+   *   x: 0,
+   *   y: 0
+   * });
+   * ```
+   */
+  getMarginBox() {
+    const elem = this as any;
+    const borderWidth = elem.width || 0;
+    const borderHeight = elem.height || 0;
+    const margin = this.marginBox;  // This uses the getter which returns ParsedSpacing
+    const absPos = this.getAbsolutePosition();
+    
+    const marginLeft = absPos.x - margin.left;
+    const marginTop = absPos.y - margin.top;
+    const marginWidth = borderWidth + margin.left + margin.right;
+    const marginHeight = borderHeight + margin.top + margin.bottom;
+    const marginRight = marginLeft + marginWidth;
+    const marginBottom = marginTop + marginHeight;
+    const marginCenterX = marginLeft + marginWidth / 2;
+    const marginCenterY = marginTop + marginHeight / 2;
+    
+    return {
+      // Corners
+      topLeft: { x: `${marginLeft}px`, y: `${marginTop}px` },
+      topRight: { x: `${marginRight}px`, y: `${marginTop}px` },
+      bottomLeft: { x: `${marginLeft}px`, y: `${marginBottom}px` },
+      bottomRight: { x: `${marginRight}px`, y: `${marginBottom}px` },
+      
+      // Edge centers
+      topCenter: { x: `${marginCenterX}px`, y: `${marginTop}px` },
+      bottomCenter: { x: `${marginCenterX}px`, y: `${marginBottom}px` },
+      leftCenter: { x: `${marginLeft}px`, y: `${marginCenterY}px` },
+      rightCenter: { x: `${marginRight}px`, y: `${marginCenterY}px` },
+      
+      // Center
+      center: { x: `${marginCenterX}px`, y: `${marginCenterY}px` },
+      
+      // Dimensions
+      width: marginWidth,
+      height: marginHeight,
+    };
+  }
+
+  /**
+   * Convenience property for accessing the border box.
+   * Equivalent to getBorderBox().
+   */
+  get borderBox() {
+    return this.getBorderBox();
+  }
+
+  /**
+   * Convenience property for accessing the content box.
+   * Equivalent to getContentBox().
+   */
+  get contentBox() {
+    return this.getContentBox();
+  }
+
+  /**
    * Gets the bounding box of this element.
    * 
    * Default implementation for rectangular bounded elements.

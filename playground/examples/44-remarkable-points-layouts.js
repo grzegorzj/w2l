@@ -85,7 +85,6 @@ column1.addElement(col1Title);
 const graph1 = new FunctionGraph({
   functions: {
     fn: (x) => x * x - 4,
-    label: "f(x) = x² - 4",
     color: "#3498db",
   },
   width: 400,
@@ -126,7 +125,6 @@ column2.addElement(col2Title);
 const graph2 = new FunctionGraph({
   functions: {
     fn: (x) => Math.sin(x * 2),
-    label: "f(x) = sin(2x)",
     color: "#e74c3c",
   },
   width: 400,
