@@ -325,6 +325,32 @@ export class Text extends Shape {
       if (textElement) {
         const bbox = textElement.getBBox();
         
+        // Use getComputedTextLength() for more accurate width measurement
+        // This is especially important for special glyphs (arrows, emoji, etc.)
+        // that may render wider than their logical bounding box
+        let totalWidth = bbox.width;
+        try {
+          const computedLength = (textElement as SVGTextElement).getComputedTextLength();
+          // Use the maximum of both measurements to ensure we don't clip content
+          totalWidth = Math.max(bbox.width, computedLength);
+        } catch (e) {
+          // Fall back to bbox.width if getComputedTextLength fails
+        }
+        
+        // For height, also check getBoundingClientRect for actual rendered pixels
+        let totalHeight = bbox.height;
+        try {
+          const clientRect = textElement.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          // Convert client rect to SVG coordinates (rough approximation)
+          // Take max to avoid clipping
+          if (clientRect.height > 0) {
+            totalHeight = Math.max(bbox.height, clientRect.height);
+          }
+        } catch (e) {
+          // Fall back to bbox.height
+        }
+        
         // Measure each word (each tspan has an ID)
         const wordBBoxes: Array<WordBoundingBox> = [];
         const tspans = textElement.querySelectorAll('tspan[data-word-index]');
@@ -340,8 +366,8 @@ export class Text extends Shape {
         
         this._measuredDimensions = {
           words: wordBBoxes,
-          totalWidth: bbox.width,
-          totalHeight: bbox.height
+          totalWidth: totalWidth,
+          totalHeight: totalHeight
         };
       }
       
