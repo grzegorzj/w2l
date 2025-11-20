@@ -146,6 +146,18 @@ export abstract class Element {
   private static _creationCounter: number = 0;
 
   /**
+   * Flag indicating if this element has been measured.
+   * @internal
+   */
+  protected _measured: boolean = false;
+
+  /**
+   * Flag indicating if this element has been laid out.
+   * @internal
+   */
+  protected _layoutDone: boolean = false;
+
+  /**
    * Explicit z-index for this element.
    * When set, overrides automatic z-ordering based on creation time.
    * Higher values appear on top of lower values.
@@ -824,6 +836,108 @@ export abstract class Element {
         property
       }
     };
+  }
+
+  /**
+   * Measure this element's intrinsic size.
+   * 
+   * This is Phase 1 of the layout system. Elements that need to measure themselves
+   * (like Text) should override performMeasurement(). Fixed-size elements don't need to.
+   * 
+   * This method is idempotent - calling it multiple times is safe and efficient.
+   * 
+   * @remarks
+   * - Text/Image elements: Measure actual content size
+   * - Fixed-size elements: No-op (size already known)
+   * - Layouts with children: Measure children recursively
+   * 
+   * @example
+   * ```typescript
+   * const text = new Text({ content: "Hello" });
+   * text.measure();  // Measures text in browser
+   * text.measure();  // No-op, already measured
+   * ```
+   */
+  measure(): void {
+    if (this._measured) {
+      return;  // Already measured, skip
+    }
+    
+    // Perform measurement (subclass implements if needed)
+    this.performMeasurement();
+    
+    this._measured = true;
+  }
+
+  /**
+   * Perform the actual measurement.
+   * Override this in subclasses that need to measure content.
+   * 
+   * Default implementation is a no-op (for fixed-size elements).
+   * 
+   * @internal
+   */
+  protected performMeasurement(): void {
+    // Default: no-op for fixed-size elements (Circle, Rectangle, etc.)
+    // Text, Image, etc. override this
+  }
+
+  /**
+   * Invalidate the measurement cache.
+   * Call this when properties that affect size change.
+   * 
+   * @internal
+   */
+  protected invalidateMeasurement(): void {
+    this._measured = false;
+  }
+
+  /**
+   * Perform layout of this element and its children (if any).
+   * 
+   * This is Phase 2 of the layout system. Layouts override this to arrange children.
+   * 
+   * This method is idempotent - calling it multiple times is safe.
+   * 
+   * @remarks
+   * - Ensures all children are measured first
+   * - Calculates positions and sizes
+   * - Auto-sizing happens here
+   * 
+   * @internal
+   */
+  layout(): void {
+    if (this._layoutDone) {
+      return;  // Already laid out, skip
+    }
+    
+    // Perform layout (subclass implements if needed)
+    this.performLayout();
+    
+    this._layoutDone = true;
+  }
+
+  /**
+   * Perform the actual layout.
+   * Override this in layouts that need to arrange children.
+   * 
+   * Default implementation is a no-op.
+   * 
+   * @internal
+   */
+  protected performLayout(): void {
+    // Default: no-op for non-layout elements
+    // VStack, HStack, Grid, etc. override this
+  }
+
+  /**
+   * Invalidate the layout cache.
+   * Call this when properties that affect layout change.
+   * 
+   * @internal
+   */
+  protected invalidateLayout(): void {
+    this._layoutDone = false;
   }
 
   /**

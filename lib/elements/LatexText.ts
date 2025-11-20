@@ -262,12 +262,12 @@ export class LatexText extends Shape {
   }
 
   /**
-   * Ensures this LaTeX has been measured with actual browser metrics.
-   * Called automatically when any dimension or position getter is accessed.
+   * Perform measurement of LaTeX dimensions.
+   * Overrides Element.performMeasurement().
    * 
    * @internal
    */
-  private ensureMeasured(): void {
+  protected performMeasurement(): void {
     // Already measured?
     if (this._measuredDimensions) {
       return;
@@ -412,6 +412,17 @@ export class LatexText extends Shape {
     } catch (error) {
       console.warn('LaTeX measurement failed:', error);
     }
+  }
+
+  /**
+   * Ensures this LaTeX has been measured with actual browser metrics.
+   * Backward compatibility wrapper - calls measure().
+   * 
+   * @internal
+   * @deprecated Use measure() instead
+   */
+  private ensureMeasured(): void {
+    this.measure();
   }
 
   /**

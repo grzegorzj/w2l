@@ -303,7 +303,13 @@ export class MixedText extends Shape {
    * 
    * @internal
    */
-  private ensureMeasured(): void {
+  /**
+   * Perform measurement of mixed text dimensions.
+   * Overrides Element.performMeasurement().
+   * 
+   * @internal
+   */
+  protected performMeasurement(): void {
     if (this._measuredDimensions) {
       return;
     }
@@ -434,6 +440,17 @@ export class MixedText extends Shape {
     } catch (error) {
       console.warn('MixedText measurement failed:', error);
     }
+  }
+
+  /**
+   * Ensures this mixed text has been measured with actual browser metrics.
+   * Backward compatibility wrapper - calls measure().
+   * 
+   * @internal
+   * @deprecated Use measure() instead
+   */
+  private ensureMeasured(): void {
+    this.measure();
   }
 
   /**

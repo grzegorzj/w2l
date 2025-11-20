@@ -205,6 +205,33 @@ export class Layout extends Rectangle {
   }
 
   /**
+   * Measure this layout and all its children.
+   * Overrides Element.performMeasurement().
+   * 
+   * @internal
+   */
+  protected performMeasurement(): void {
+    // Measure all children first (recursive)
+    const children = this.getChildren();
+    children.forEach(child => {
+      if (typeof (child as any).measure === 'function') {
+        (child as any).measure();
+      }
+    });
+  }
+
+  /**
+   * Perform layout of children.
+   * Override this in subclasses (VStack, HStack, etc.).
+   * 
+   * @internal
+   */
+  protected performLayout(): void {
+    // Default: no special layout
+    // VStack, HStack, GridLayout, etc. override this
+  }
+
+  /**
    * Renders the layout (background only).
    * 
    * Children are rendered separately by the Artboard's z-index system.

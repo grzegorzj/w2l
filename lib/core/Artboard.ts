@@ -420,6 +420,12 @@ export class Artboard extends Rectangle {
    * ```
    */
   render(): string {
+    // Phase 1: Measure all elements
+    this.measureAll();
+    
+    // Phase 2: Layout all containers
+    this.layoutAll();
+    
     // Final size recalculation at render time if autoAdjust is enabled
     this.recalculateSize();
     
@@ -456,6 +462,44 @@ export class Artboard extends Rectangle {
     ${elementsHTML}
   </g>
 </svg>`;
+  }
+
+  /**
+   * Phase 1: Measure all elements (bottom-up).
+   * Ensures all text, images, and other measurable elements know their size.
+   * @internal
+   */
+  private measureAll(): void {
+    const allElements = this.collectAllElements(this.elements);
+    allElements.forEach(element => {
+      if (typeof (element as any).measure === 'function') {
+        (element as any).measure();
+      }
+    });
+  }
+
+  /**
+   * Phase 2: Layout all containers (top-down).
+   * Arranges children and calculates auto-sizes.
+   * @internal
+   */
+  private layoutAll(): void {
+    // Get all elements with depth information
+    const allElements = this.collectAllElements(this.elements);
+    
+    // Sort by depth (deepest first) to layout children before parents
+    const sorted = allElements.sort((a, b) => {
+      const depthA = this.getNestingDepth(a);
+      const depthB = this.getNestingDepth(b);
+      return depthB - depthA;  // Deepest first
+    });
+    
+    // Layout each container
+    sorted.forEach(element => {
+      if (typeof (element as any).layout === 'function') {
+        (element as any).layout();
+      }
+    });
   }
 
   /**

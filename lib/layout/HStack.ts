@@ -157,7 +157,7 @@ export class HStack extends Layout {
   get width(): number {
     // Ensure elements are arranged so we have correct dimensions
     if (!this.isArranged && this.stackedElements.length > 0) {
-      this.arrangeElements();
+      this.layout();  // Use new layout() method
     }
     return this._width;
   }
@@ -168,7 +168,7 @@ export class HStack extends Layout {
   get height(): number {
     // Ensure elements are arranged so we have correct dimensions
     if (!this.isArranged && this.stackedElements.length > 0) {
-      this.arrangeElements();
+      this.layout();  // Use new layout() method
     }
     return this._height;
   }

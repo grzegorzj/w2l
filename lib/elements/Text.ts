@@ -317,13 +317,13 @@ export class Text extends Shape {
   }
 
   /**
-   * Ensures this text has been measured with actual browser metrics.
-   * Called automatically when any dimension or position getter is accessed.
+   * Perform measurement of text dimensions.
+   * Overrides Element.performMeasurement().
    * 
    * @internal
    */
-  private ensureMeasured(): void {
-    // Already measured?
+  protected performMeasurement(): void {
+    // Already have cached dimensions?
     if (this._measuredDimensions) {
       return;
     }
@@ -399,6 +399,17 @@ export class Text extends Shape {
       // If measurement fails, fall back to estimates
       console.warn('Text measurement failed, using estimates:', error);
     }
+  }
+
+  /**
+   * Ensures this text has been measured with actual browser metrics.
+   * Backward compatibility wrapper - calls measure().
+   * 
+   * @internal
+   * @deprecated Use measure() instead
+   */
+  private ensureMeasured(): void {
+    this.measure();
   }
 
   /**
