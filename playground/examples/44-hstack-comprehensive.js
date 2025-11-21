@@ -15,6 +15,7 @@ const hstack1 = new HStackFixed({
   verticalAlign: "top",
   autoWidth: true,
   autoHeight: true,
+  debug: true,
   style: {
     fill: "transparent",
     stroke: "#e74c3c",
@@ -35,6 +36,7 @@ const hstack2 = new HStackFixed({
   verticalAlign: "center",
   autoWidth: true,
   autoHeight: true,
+  debug: true,
   style: {
     fill: "transparent",
     stroke: "#3498db",
@@ -55,6 +57,7 @@ const hstack3 = new HStackFixed({
   verticalAlign: "bottom",
   autoWidth: true,
   autoHeight: true,
+  debug: true,
   style: {
     fill: "transparent",
     stroke: "#2ecc71",
@@ -82,6 +85,7 @@ const hstack4 = new HStackFixed({
   verticalAlign: "center",
   autoWidth: true,
   autoHeight: true,
+  debug: true,
   style: {
     fill: "transparent",
     stroke: "#f39c12",
@@ -123,6 +127,7 @@ const hstack5 = new HStackFixed({
   verticalAlign: "center",
   autoWidth: true,
   autoHeight: true,
+  debug: true,
   style: {
     fill: "transparent",
     stroke: "#9b59b6",
@@ -148,6 +153,7 @@ const hstack6 = new HStackFixed({
   verticalAlign: "center",
   autoWidth: true,
   autoHeight: true,
+  debug: true,
   style: {
     fill: "transparent",
     stroke: "#1abc9c",
@@ -167,6 +173,7 @@ const outerHStack = new HStackFixed({
   verticalAlign: "center",
   autoWidth: true,
   autoHeight: true,
+  debug: true,
   style: {
     fill: "#ecf0f1",
     stroke: "#34495e",
@@ -179,6 +186,7 @@ const innerHStack1 = new HStackFixed({
   verticalAlign: "center",
   autoWidth: true,
   autoHeight: true,
+  debug: true,
   style: {
     fill: "#ffffff",
     stroke: "#e74c3c",
@@ -193,6 +201,7 @@ const innerHStack2 = new HStackFixed({
   verticalAlign: "center",
   autoWidth: true,
   autoHeight: true,
+  debug: true,
   style: {
     fill: "#ffffff",
     stroke: "#3498db",
@@ -218,43 +227,43 @@ outerHStack.addElement(innerHStack2);
 const cards = [];
 
 // Card 1
-const card1 = new VStack({ spacing: 10, horizontalAlign: "center" });
+const card1 = new VStack({ spacing: 10, horizontalAlign: "center", debug: true });
 card1.addElement(new Text({ content: "Top Align", fontSize: 14, fontWeight: "bold", style: { fill: "#2c3e50" } }));
 card1.addElement(hstack1);
 cards.push(card1);
 
 // Card 2
-const card2 = new VStack({ spacing: 10, horizontalAlign: "center" });
+const card2 = new VStack({ spacing: 10, horizontalAlign: "center", debug: true });
 card2.addElement(new Text({ content: "Center Align", fontSize: 14, fontWeight: "bold", style: { fill: "#2c3e50" } }));
 card2.addElement(hstack2);
 cards.push(card2);
 
 // Card 3
-const card3 = new VStack({ spacing: 10, horizontalAlign: "center" });
+const card3 = new VStack({ spacing: 10, horizontalAlign: "center", debug: true });
 card3.addElement(new Text({ content: "Bottom Align", fontSize: 14, fontWeight: "bold", style: { fill: "#2c3e50" } }));
 card3.addElement(hstack3);
 cards.push(card3);
 
 // Card 4
-const card4 = new VStack({ spacing: 10, horizontalAlign: "center" });
+const card4 = new VStack({ spacing: 10, horizontalAlign: "center", debug: true });
 card4.addElement(new Text({ content: "Mixed Content", fontSize: 14, fontWeight: "bold", style: { fill: "#2c3e50" } }));
 card4.addElement(hstack4);
 cards.push(card4);
 
 // Card 5
-const card5 = new VStack({ spacing: 10, horizontalAlign: "center" });
+const card5 = new VStack({ spacing: 10, horizontalAlign: "center", debug: true });
 card5.addElement(new Text({ content: "No Spacing", fontSize: 14, fontWeight: "bold", style: { fill: "#2c3e50" } }));
 card5.addElement(hstack5);
 cards.push(card5);
 
 // Card 6
-const card6 = new VStack({ spacing: 10, horizontalAlign: "center" });
+const card6 = new VStack({ spacing: 10, horizontalAlign: "center", debug: true });
 card6.addElement(new Text({ content: "Large Spacing", fontSize: 14, fontWeight: "bold", style: { fill: "#2c3e50" } }));
 card6.addElement(hstack6);
 cards.push(card6);
 
 // Card 7
-const card7 = new VStack({ spacing: 10, horizontalAlign: "center" });
+const card7 = new VStack({ spacing: 10, horizontalAlign: "center", debug: true });
 card7.addElement(new Text({ content: "Nested HStacks", fontSize: 14, fontWeight: "bold", style: { fill: "#2c3e50" } }));
 card7.addElement(outerHStack);
 cards.push(card7);
@@ -268,6 +277,7 @@ const grid = new GridLayout({
   gap: 40,
   horizontalAlign: "center",
   verticalAlign: "top",
+  debug: true,
 });
 
 cards.forEach(card => grid.addElement(card));

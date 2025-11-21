@@ -562,15 +562,27 @@ export class GridLayout extends Layout {
     
     let cellsDebugSvg = '';
     
-    // Optionally render cell boundaries for debugging
-    if (this.gridConfig.debugShowCells && this.cells.length > 0) {
+    // Show cell boundaries if either debug or debugShowCells is enabled
+    const showCells = this.gridConfig.debugShowCells || (this.gridConfig as any).debug;
+    
+    if (showCells && this.cells.length > 0) {
       const layoutAbsPos = this.getAbsolutePosition();
       
-      this.cells.forEach((cell) => {
+      console.log(`[GridLayout] Rendering ${this.cells.length} cell boundaries at absPos (${layoutAbsPos.x}, ${layoutAbsPos.y})`);
+      
+      this.cells.forEach((cell, index) => {
         const absX = layoutAbsPos.x + cell.x;
         const absY = layoutAbsPos.y + cell.y;
         
-        cellsDebugSvg += `<rect x="${absX}" y="${absY}" width="${cell.width}" height="${cell.height}" fill="none" stroke="#ff0000" stroke-width="1" stroke-dasharray="4,4" opacity="0.5" pointer-events="none"/>`;
+        console.log(`  Cell ${index} [${cell.row},${cell.column}]: (${absX}, ${absY}) ${cell.width}×${cell.height}`);
+        
+        // Draw cell border (orange dashed line)
+        cellsDebugSvg += `<rect x="${absX}" y="${absY}" width="${cell.width}" height="${cell.height}" fill="none" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.6" pointer-events="none"/>`;
+        
+        // Add cell label if there's enough space
+        if (cell.width > 40 && cell.height > 20) {
+          cellsDebugSvg += `<text x="${absX + 5}" y="${absY + 12}" font-family="monospace" font-size="9" fill="#ff9800" opacity="0.6">[${cell.row},${cell.column}]</text>`;
+        }
       });
     }
     

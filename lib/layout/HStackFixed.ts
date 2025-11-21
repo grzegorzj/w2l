@@ -222,7 +222,8 @@ export class HStackFixed extends Layout {
       );
 
       console.log(
-        `[HStackFixed] Positioning child ${index} - aligning ${elem._hstackAlignH}/${elem._hstackAlignV} to (${absoluteTargetX}, ${absoluteTargetY})`
+        `[HStackFixed] Positioning child ${index} (${elem.constructor.name}) - aligning ${elem._hstackAlignH}/${elem._hstackAlignV} to (${absoluteTargetX}, ${absoluteTargetY}), alignmentPoint:`,
+        alignmentPoint
       );
 
       // Use position() API like the manual example - this handles all the offset calculations
@@ -235,6 +236,10 @@ export class HStackFixed extends Layout {
         x: 0,
         y: 0,
       });
+
+      console.log(
+        `[HStackFixed] After positioning child ${index}: currentPosition = (${elem.currentPosition.x}, ${elem.currentPosition.y}), absPos = (${elem.getAbsolutePosition().x}, ${elem.getAbsolutePosition().y})`
+      );
     });
 
     this.childrenArranged = true;

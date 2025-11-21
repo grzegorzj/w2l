@@ -28,6 +28,13 @@ export interface LayoutConfig extends RectangleConfig {
     bottom?: string | number;
     left?: string | number;
   };
+  
+  /**
+   * Show visual debug guides for the layout's border box and content box.
+   * Useful for debugging layout behavior and understanding positioning.
+   * @defaultValue false
+   */
+  debug?: boolean;
 }
 
 /**
@@ -70,6 +77,7 @@ export interface LayoutConfig extends RectangleConfig {
  */
 export class Layout extends Rectangle {
   protected childrenManager: ChildrenManager;
+  protected layoutConfig: LayoutConfig;
 
   /**
    * Creates a new Layout instance.
@@ -78,6 +86,8 @@ export class Layout extends Rectangle {
    */
   constructor(config: LayoutConfig) {
     super(config);
+    
+    this.layoutConfig = config;
     
     if (config.padding) {
       this.padding = config.padding;
@@ -242,7 +252,66 @@ export class Layout extends Rectangle {
   render(): string {
     // Render only the layout background (if it has visible style)
     // Children will be rendered separately by the Artboard with proper z-ordering
-    return super.render();
+    let svg = super.render();
+    
+    // Add debug guides if enabled
+    if (this.layoutConfig.debug) {
+      svg += this.generateDebugGuides();
+    }
+    
+    return svg;
+  }
+  
+  /**
+   * Generates visual debug guides showing the layout's border box and content box.
+   * @internal
+   */
+  private generateDebugGuides(): string {
+    const absPos = this.getAbsolutePosition();
+    const padding = this.paddingBox;
+    
+    // Get border box dimensions
+    const borderBox = this.getBorderBox();
+    const borderWidth = parseFloat(String(borderBox.width));
+    const borderHeight = parseFloat(String(borderBox.height));
+    
+    // Get content box dimensions
+    const contentBox = this.getContentBox();
+    const contentWidth = parseFloat(String(contentBox.width));
+    const contentHeight = parseFloat(String(contentBox.height));
+    
+    console.log(
+      `[${this.constructor.name}] Debug guides at absPos (${absPos.x}, ${absPos.y}), ` +
+      `borderBox: ${borderWidth}×${borderHeight}, contentBox: ${contentWidth}×${contentHeight}`
+    );
+    
+    const guides = [];
+    
+    // Border box outline (solid red line)
+    guides.push(
+      `<rect x="${absPos.x}" y="${absPos.y}" width="${borderWidth}" height="${borderHeight}" ` +
+      `fill="none" stroke="#F44336" stroke-width="1.5" opacity="0.5"/>`
+    );
+    
+    // Content box outline (dashed blue line)
+    const contentX = absPos.x + padding.left;
+    const contentY = absPos.y + padding.top;
+    guides.push(
+      `<rect x="${contentX}" y="${contentY}" width="${contentWidth}" height="${contentHeight}" ` +
+      `fill="none" stroke="#2196F3" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.6"/>`
+    );
+    
+    // Add a small label if there's enough space
+    if (borderWidth > 60 && borderHeight > 20) {
+      const labelX = absPos.x + 5;
+      const labelY = absPos.y + 12;
+      guides.push(
+        `<text x="${labelX}" y="${labelY}" font-family="monospace" font-size="10" ` +
+        `fill="#F44336" opacity="0.7">${this.constructor.name}</text>`
+      );
+    }
+    
+    return guides.join('\n');
   }
 }
 

@@ -17,6 +17,7 @@ const stack1 = new HStackFixed({
   autoWidth: true,
   autoHeight: true,
   padding: "20px",
+  debug: true,
   style: {
     fill: "#e7f5ff",
     stroke: "#1971c2",
