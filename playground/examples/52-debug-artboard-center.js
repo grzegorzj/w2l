@@ -1,7 +1,7 @@
-// Debug Artboard Center
-// Verify that artboard.center returns the correct coordinates (400, 300)
+// Box Model Visualization
+// Shows content box vs border box reference points for artboard and nested layouts
 
-import { Artboard, Rectangle, Text, Circle } from "w2l";
+import { Artboard, Rectangle, Text, Circle, ColumnsLayout } from "w2l";
 
 const artboard = new Artboard({
   size: { width: 800, height: 600 },
@@ -11,244 +11,241 @@ const artboard = new Artboard({
 });
 
 // ============================================================================
-// STEP 1: Log and verify artboard.center
+// STEP 1: Helper function to add reference point markers
 // ============================================================================
 
-console.log("=== ARTBOARD DEBUG ===");
-console.log("Artboard dimensions:", artboard.width, "×", artboard.height);
-console.log("Padding:", artboard.paddingBox);
-console.log("");
+function addReferenceMarkers(element, contentBoxColor, borderBoxColor) {
+  // Content Box reference points
+  const contentBox = element.getContentBox();
+  const contentBoxPoints = [
+    contentBox.topLeft, contentBox.topCenter, contentBox.topRight,
+    contentBox.leftCenter, contentBox.center, contentBox.rightCenter,
+    contentBox.bottomLeft, contentBox.bottomCenter, contentBox.bottomRight,
+  ];
 
-// Extract numeric values
-const centerX = parseFloat(String(artboard.center.x));
-const centerY = parseFloat(String(artboard.center.y));
+  contentBoxPoints.forEach(point => {
+    const marker = new Circle({
+      radius: 4,
+      style: {
+        fill: contentBoxColor,
+        stroke: "#000",
+        strokeWidth: 1
+      }
+    });
+    
+    marker.position({
+      relativeFrom: marker.center,
+      relativeTo: point,
+      x: 0,
+      y: 0
+    });
+    
+    artboard.addElement(marker);
+  });
 
-console.log("CONTENT BOX (default reference points):");
-console.log("  artboard.center:", artboard.center, "→", centerX, centerY);
-console.log("  artboard.topLeft:", artboard.topLeft);
-console.log("  Content area: (60,60) to (740,540)");
-console.log("");
+  // Border Box reference points
+  const borderBox = element.getBorderBox();
+  const borderBoxPoints = [
+    borderBox.topLeft, borderBox.topCenter, borderBox.topRight,
+    borderBox.leftCenter, borderBox.center, borderBox.rightCenter,
+    borderBox.bottomLeft, borderBox.bottomCenter, borderBox.bottomRight,
+  ];
 
-console.log("BORDER BOX (absolute artboard coordinates):");
-console.log("  artboard.getBorderBox().center:", artboard.getBorderBox().center);
-console.log("  artboard.getBorderBox().topLeft:", artboard.getBorderBox().topLeft);
-console.log("  Border area: (0,0) to (800,600)");
-console.log("");
-
-console.log("CENTER CHECK:");
-console.log("  Expected: (400, 300)");
-console.log("  Actual:", centerX, centerY);
-console.log("  Match?", centerX === 400 && centerY === 300 ? "✅ YES" : "❌ NO");
-console.log("  Difference:", centerX - 400, centerY - 300);
-console.log("");
-
-console.log("BOX MODEL:");
-console.log("  🔵 BLUE circles = Content Box reference points");
-console.log("  🟠 ORANGE circles = Border Box reference points");
-console.log("  They should be 60px apart (padding amount)");
+  borderBoxPoints.forEach(point => {
+    const marker = new Circle({
+      radius: 3,
+      style: {
+        fill: borderBoxColor,
+        stroke: "#000",
+        strokeWidth: 1
+      }
+    });
+    
+    marker.position({
+      relativeFrom: marker.center,
+      relativeTo: point,
+      x: 0,
+      y: 0
+    });
+    
+    artboard.addElement(marker);
+  });
+}
 
 // ============================================================================
-// STEP 2: Create a marker and position it at artboard.center
+// STEP 2: Create 3-column layout inside artboard
 // ============================================================================
 
-const centerMarker = new Circle({
-  radius: 10,
-  style: {
-    fill: "#ff0000",
-    stroke: "#000000",
-    strokeWidth: 3
+// ColumnsLayout automatically creates columns, so we just configure it
+const columnsLayout = new ColumnsLayout({
+  count: 3,
+  width: 580,  // Total width (3 * 180 + 2 * 20 spacing)
+  height: 400,
+  spacing: 20,
+  columnStyle: {
+    fill: "transparent",
+    stroke: "#666",
+    strokeWidth: 2,
+    strokeDasharray: "5,5"
   }
 });
 
-// Position using the positioning API
-centerMarker.position({
-  relativeFrom: centerMarker.center,
+// Access the auto-created columns
+const columns = columnsLayout.columns;
+
+// Customize each column's background color and padding
+columns[0].config.style = {
+  ...columns[0].config.style,
+  fill: "#e7f5ff"
+};
+columns[0].padding = "15px";
+
+columns[1].config.style = {
+  ...columns[1].config.style,
+  fill: "#d3f9d8"
+};
+columns[1].padding = "20px";
+
+columns[2].config.style = {
+  ...columns[2].config.style,
+  fill: "#fff3bf"
+};
+columns[2].padding = "25px";
+
+// CRITICAL: Force layout to happen BEFORE positioning
+// This ensures dimensions are correct when position() calculates offsets
+const layoutWidth = columnsLayout.width;   // Triggers layout
+const layoutHeight = columnsLayout.height; // Ensures complete layout
+
+console.log("BEFORE POSITION (after forced layout):");
+console.log("  columnsLayout dimensions:", layoutWidth, "×", layoutHeight);
+console.log("  columnsLayout.center:", columnsLayout.center);
+console.log("  artboard.center:", artboard.center);
+
+// Position the columns layout in the center of the artboard's content area
+columnsLayout.position({
+  relativeFrom: columnsLayout.center,
   relativeTo: artboard.center,
   x: 0,
   y: 0
 });
 
-// ============================================================================
-// STEP 3: Create info display
-// ============================================================================
+console.log("AFTER POSITION:");
+console.log("  columnsLayout.currentPosition:", columnsLayout.currentPosition);
+console.log("  columnsLayout.center:", columnsLayout.center);
+console.log("  columnsLayout.topLeft:", columnsLayout.topLeft);
 
-const infoText = new Text({
-  content: `artboard.center: (${centerX}, ${centerY})
-Expected: (400, 300)
-Difference: (${centerX - 400}, ${centerY - 300})
-Padding: 60px
-
-✅ RED circle at artboard.center (CONTENT BOX center)
-✅ GREEN crosshairs at true center (400, 300)
-Both should overlap!`,
-  fontSize: 13,
-  lineHeight: 1.6,
-  textAlign: "left",
-  style: { fill: "#212529", fontWeight: "bold" }
-});
-
-// Position in content area (using default artboard.topLeft = content box)
-infoText.position({
-  relativeFrom: infoText.topLeft,
-  relativeTo: artboard.topLeft,
-  x: 20,
-  y: 20
+// Check children positions
+console.log("\nCHILDREN POSITIONS:");
+columns.forEach((col, i) => {
+  console.log(`  Column ${i + 1}:`);
+  console.log(`    currentPosition:`, col.currentPosition);
+  console.log(`    topLeft:`, col.topLeft);
 });
 
 // ============================================================================
-// STEP 4: Add crosshair lines for visual reference
+// STEP 3: Add a LARGE marker at columnsLayout.center to debug
 // ============================================================================
 
-// Vertical line at x=400 (absolute artboard coordinates)
-const verticalLine = new Rectangle({
-  width: 2,
-  height: 600,
+const columnsLayoutCenterMarker = new Circle({
+  radius: 10,
   style: {
-    fill: "#00ff00",
-    opacity: 0.5
+    fill: "#ff00ff",  // Bright magenta
+    stroke: "#000",
+    strokeWidth: 3
   }
 });
 
-// Use borderBox for absolute (0,0) coordinates
-verticalLine.position({
-  relativeFrom: verticalLine.topLeft,
-  relativeTo: artboard.getBorderBox().topLeft,
-  x: 400,
+columnsLayoutCenterMarker.position({
+  relativeFrom: columnsLayoutCenterMarker.center,
+  relativeTo: columnsLayout.center,
+  x: 0,
   y: 0
 });
 
-// Horizontal line at y=300 (absolute artboard coordinates)
-const horizontalLine = new Rectangle({
-  width: 800,
-  height: 2,
-  style: {
-    fill: "#00ff00",
-    opacity: 0.5
-  }
-});
-
-// Use borderBox for absolute (0,0) coordinates
-horizontalLine.position({
-  relativeFrom: horizontalLine.topLeft,
-  relativeTo: artboard.getBorderBox().topLeft,
-  x: 0,
-  y: 300
-});
-
-// Label for crosshairs
-const crosshairLabel = new Text({
-  content: "Green crosshairs = true center (400, 300) • Positioned using borderBox",
-  fontSize: 11,
-  style: { fill: "#00ff00", fontWeight: "bold" }
-});
-
-// Use borderBox to position at absolute coordinates
-crosshairLabel.position({
-  relativeFrom: crosshairLabel.topLeft,
-  relativeTo: artboard.getBorderBox().topLeft,
-  x: 20,
-  y: 560
-});
+artboard.addElement(columnsLayoutCenterMarker);
 
 // ============================================================================
-// STEP 5: Add markers at all reference points
+// STEP 4: Add markers for all elements
 // ============================================================================
 
-// Content Box reference points (BLUE) - using getContentBox()
-const contentBox = artboard.getContentBox();
-const contentBoxPoints = [
-  { name: "topLeft", point: contentBox.topLeft },
-  { name: "topCenter", point: contentBox.topCenter },
-  { name: "topRight", point: contentBox.topRight },
-  { name: "leftCenter", point: contentBox.leftCenter },
-  { name: "center", point: contentBox.center },
-  { name: "rightCenter", point: contentBox.rightCenter },
-  { name: "bottomLeft", point: contentBox.bottomLeft },
-  { name: "bottomCenter", point: contentBox.bottomCenter },
-  { name: "bottomRight", point: contentBox.bottomRight },
-];
+// Add markers for artboard
+addReferenceMarkers(artboard, "#0066ff", "#ff9500");
 
-contentBoxPoints.forEach(({ name, point }) => {
-  const marker = new Circle({
-    radius: 5,
+// Add markers for each column
+addReferenceMarkers(columns[0], "#74c0fc", "#ffa94d"); // Blue column
+addReferenceMarkers(columns[1], "#8ce99a", "#63e6be"); // Green column
+addReferenceMarkers(columns[2], "#ffd43b", "#fab005"); // Yellow column
+
+// Add LARGE markers at each column's topLeft for debugging
+columns.forEach((col, i) => {
+  const topLeftMarker = new Circle({
+    radius: 8,
     style: {
-      fill: "#0066ff",
-      stroke: "#003399",
+      fill: i === 0 ? "#ff0000" : i === 1 ? "#00ff00" : "#0000ff",
+      stroke: "#000",
       strokeWidth: 2
     }
   });
   
-  marker.position({
-    relativeFrom: marker.center,
-    relativeTo: point,
+  topLeftMarker.position({
+    relativeFrom: topLeftMarker.center,
+    relativeTo: col.topLeft,
     x: 0,
     y: 0
   });
   
-  artboard.addElement(marker);
-});
-
-// Border Box reference points (ORANGE)
-const borderBox = artboard.getBorderBox();
-const borderBoxPoints = [
-  { name: "topLeft", point: borderBox.topLeft },
-  { name: "topCenter", point: borderBox.topCenter },
-  { name: "topRight", point: borderBox.topRight },
-  { name: "leftCenter", point: borderBox.leftCenter },
-  { name: "center", point: borderBox.center },
-  { name: "rightCenter", point: borderBox.rightCenter },
-  { name: "bottomLeft", point: borderBox.bottomLeft },
-  { name: "bottomCenter", point: borderBox.bottomCenter },
-  { name: "bottomRight", point: borderBox.bottomRight },
-];
-
-borderBoxPoints.forEach(({ name, point }) => {
-  const marker = new Circle({
-    radius: 4,
-    style: {
-      fill: "#ff9500",
-      stroke: "#cc7700",
-      strokeWidth: 2
-    }
-  });
-  
-  marker.position({
-    relativeFrom: marker.center,
-    relativeTo: point,
-    x: 0,
-    y: 0
-  });
-  
-  artboard.addElement(marker);
-});
-
-// Legend for the markers
-const legend = new Text({
-  content: `🔵 Blue (larger) = Content Box points (default artboard.topLeft, etc.)
-🟠 Orange (smaller) = Border Box points (artboard.getBorderBox())`,
-  fontSize: 11,
-  lineHeight: 1.5,
-  textAlign: "left",
-  style: { fill: "#212529" }
-});
-
-legend.position({
-  relativeFrom: legend.topLeft,
-  relativeTo: artboard.getBorderBox().topLeft,
-  x: 20,
-  y: 580
+  artboard.addElement(topLeftMarker);
 });
 
 // ============================================================================
-// Add all elements and render
+// Add all elements
 // ============================================================================
 
-artboard.addElement(verticalLine);
-artboard.addElement(horizontalLine);
-artboard.addElement(centerMarker);
-artboard.addElement(infoText);
-artboard.addElement(crosshairLabel);
-artboard.addElement(legend);
+artboard.addElement(columnsLayout);
+
+// ============================================================================
+// STEP 4: Debug logging (before render)
+// ============================================================================
+
+console.log("=== BOX MODEL VISUALIZATION ===");
+console.log("");
+console.log("ARTBOARD:");
+console.log("  Dimensions:", artboard.width, "×", artboard.height);
+console.log("  Padding:", artboard.paddingBox);
+console.log("  Content Box center:", artboard.center);
+console.log("  Border Box center:", artboard.getBorderBox().center);
+console.log("");
+
+console.log("COLUMNS LAYOUT:");
+console.log("  ColumnsLayout dimensions:", columnsLayout.width, "×", columnsLayout.height);
+console.log("  ColumnsLayout center:", columnsLayout.center);
+console.log("  ColumnsLayout currentPosition:", columnsLayout.currentPosition);
+console.log("");
+
+columns.forEach((col, i) => {
+  console.log(`  Column ${i + 1}:`, col.width, "×", col.height);
+  console.log(`    Padding:`, col.paddingBox);
+  console.log(`    Content Box center:`, col.center);
+  console.log(`    Border Box center:`, col.getBorderBox().center);
+  console.log(`    currentPosition:`, col.currentPosition);
+});
+console.log("");
+
+console.log("VISUAL GUIDE:");
+console.log("  ARTBOARD:");
+console.log("    🔵 Dark Blue (large) = Content Box points");
+console.log("    🟠 Orange (medium) = Border Box points");
+console.log("");
+console.log("  COLUMNS:");
+console.log("    Light colored circles = Content Box points");
+console.log("    Darker colored circles = Border Box points");
+console.log("");
+console.log("  Each element shows padding offset between boxes!");
+
+// ============================================================================
+// Render and return
+// ============================================================================
 
 artboard.render();
 

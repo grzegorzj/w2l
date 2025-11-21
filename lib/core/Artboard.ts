@@ -457,7 +457,7 @@ export class Artboard extends Rectangle {
     return `<svg width="${widthPx}" height="${heightPx}" xmlns="http://www.w3.org/2000/svg">
   ${bgColor !== "transparent" ? `<rect width="${widthPx}" height="${heightPx}" fill="${bgColor}"/>` : ""}
   ${paddingGuides}
-  ${elementsHTML}
+    ${elementsHTML}
 </svg>`;
   }
 

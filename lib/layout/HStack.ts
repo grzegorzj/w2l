@@ -157,8 +157,10 @@ export class HStack extends Layout {
   get width(): number {
     // Ensure elements are arranged so we have correct dimensions
     if (!this.isArranged && this.stackedElements.length > 0) {
+      console.log("[HStack] width getter: triggering layout (isArranged=false)");
       this.layout();  // Use new layout() method
     }
+    console.log("[HStack] width getter returning:", this._width, "isArranged:", this.isArranged);
     return this._width;
   }
 
@@ -168,9 +170,36 @@ export class HStack extends Layout {
   get height(): number {
     // Ensure elements are arranged so we have correct dimensions
     if (!this.isArranged && this.stackedElements.length > 0) {
+      console.log("[HStack] height getter: triggering layout (isArranged=false)");
       this.layout();  // Use new layout() method
     }
+    console.log("[HStack] height getter returning:", this._height, "isArranged:", this.isArranged);
     return this._height;
+  }
+
+  /**
+   * Override center getter to debug center calculation.
+   */
+  get center() {
+    console.log("[HStack] center getter called");
+    console.log("  currentPosition:", this.currentPosition);
+    console.log("  width (will trigger getter):", this.width);
+    console.log("  height (will trigger getter):", this.height);
+    console.log("  padding:", this.padding);
+    
+    const center = super.center;
+    console.log("  calculated center:", center);
+    return center;
+  }
+
+  /**
+   * Override performLayout to call arrangeElements.
+   * This integrates with the phase system's layout() method.
+   * 
+   * @internal
+   */
+  protected performLayout(): void {
+    this.arrangeElements();
   }
 
   /**
@@ -355,6 +384,14 @@ export class HStack extends Layout {
     });
 
     this.isArranged = true;
+    
+    // CRITICAL: Reset tracking so children don't get double-moved when parent is positioned
+    // Children positions are already set relative to parent, so we don't want 
+    // updateChildPositions() to add parent's movement delta to them
+    if (typeof this.childrenManager !== 'undefined' && 
+        typeof this.childrenManager.resetTracking === 'function') {
+      this.childrenManager.resetTracking();
+    }
   }
 
   /**

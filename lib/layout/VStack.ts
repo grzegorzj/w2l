@@ -368,6 +368,16 @@ export class VStack extends Layout {
     });
 
     this.isArranged = true;
+
+    // CRITICAL: Reset tracking so children don't get double-moved when parent is positioned
+    // Children positions are already set relative to parent, so we don't want
+    // updateChildPositions() to add parent's movement delta to them
+    if (
+      typeof this.childrenManager !== "undefined" &&
+      typeof this.childrenManager.resetTracking === "function"
+    ) {
+      this.childrenManager.resetTracking();
+    }
   }
 
   /**
