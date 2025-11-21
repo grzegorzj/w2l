@@ -519,7 +519,9 @@ export class Text extends Shape {
    */
 
   get topLeft(): Point {
-    return this.toAbsolutePoint(0, 0, "topLeft");
+    const point = this.toAbsolutePoint(0, 0, "topLeft");
+    console.log(`[Text] topLeft for "${this.config.content?.substring(0, 20)}..." = (${point.x}, ${point.y}), currentPosition = (${this.currentPosition.x}, ${this.currentPosition.y})`);
+    return point;
   }
 
   get topCenter(): Point {
@@ -576,6 +578,35 @@ export class Text extends Shape {
    */
   get right(): Point {
     return this.rightCenter;
+  }
+
+  /**
+   * Gets the alignment point based on horizontal and vertical alignment.
+   * Used by layout systems to position text elements correctly.
+   *
+   * @param horizontalAlign - Horizontal alignment (left, center, right)
+   * @param verticalAlign - Vertical alignment (top, center, bottom)
+   * @returns The point corresponding to the specified alignment
+   */
+  getAlignmentPoint(
+    horizontalAlign: "left" | "center" | "right",
+    verticalAlign: "top" | "center" | "bottom"
+  ): Point {
+    // Map alignment to the correct reference point
+    if (horizontalAlign === "left") {
+      if (verticalAlign === "top") return this.topLeft;
+      if (verticalAlign === "bottom") return this.bottomLeft;
+      return this.leftCenter; // center
+    } else if (horizontalAlign === "right") {
+      if (verticalAlign === "top") return this.topRight;
+      if (verticalAlign === "bottom") return this.bottomRight;
+      return this.rightCenter; // center
+    } else {
+      // horizontalAlign === "center"
+      if (verticalAlign === "top") return this.topCenter;
+      if (verticalAlign === "bottom") return this.bottomCenter;
+      return this.center; // center-center
+    }
   }
 
   /**
@@ -787,6 +818,8 @@ export class Text extends Shape {
     const absPos = this.getAbsolutePosition();
     const x = absPos.x;
     const y = absPos.y;
+    
+    console.log(`[Text] Rendering "${this.config.content?.substring(0, 20)}..." at absPos (${x}, ${y}), will render SVG at y=${y + this._fontSize} (baseline)`);
 
     const fontSize = this._fontSize;
     const fontFamily = this.config.fontFamily || "sans-serif";

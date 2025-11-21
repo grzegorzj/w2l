@@ -215,30 +215,51 @@ export class HStackFixed extends Layout {
       const absoluteTargetX = stackX + elem._hstackTargetX;
       const absoluteTargetY = stackY + elem._hstackTargetY;
 
-      // Get the element's alignment point for this alignment
-      const alignmentPoint = elem.getAlignmentPoint(
-        elem._hstackAlignH,
-        elem._hstackAlignV
-      );
+      // Get element dimensions
+      const elementWidth =
+        elem.width || elem._width || (elem.radius ? elem.radius * 2 : 0);
+      const elementHeight =
+        elem.height || elem._height || (elem.radius ? elem.radius * 2 : 0);
+
+      // Calculate offset based on alignment (without using current position)
+      let offsetX = 0;
+      let offsetY = 0;
+
+      // Horizontal alignment offset
+      if (elem._hstackAlignH === "center") {
+        offsetX = -elementWidth / 2;
+      } else if (elem._hstackAlignH === "right") {
+        offsetX = -elementWidth;
+      }
+      // left = 0 offset
+
+      // Vertical alignment offset
+      if (elem._hstackAlignV === "center") {
+        offsetY = -elementHeight / 2;
+      } else if (elem._hstackAlignV === "bottom") {
+        offsetY = -elementHeight;
+      }
+      // top = 0 offset
+
+      // Calculate final position
+      const finalX = absoluteTargetX + offsetX;
+      const finalY = absoluteTargetY + offsetY;
 
       console.log(
-        `[HStackFixed] Positioning child ${index} (${elem.constructor.name}) - aligning ${elem._hstackAlignH}/${elem._hstackAlignV} to (${absoluteTargetX}, ${absoluteTargetY}), alignmentPoint:`,
-        alignmentPoint
+        `[HStackFixed] Positioning child ${index} (${elem.constructor.name}) - ` +
+          `aligning ${elem._hstackAlignH}/${elem._hstackAlignV}, ` +
+          `dimensions: ${elementWidth}×${elementHeight}, ` +
+          `target: (${absoluteTargetX}, ${absoluteTargetY}), ` +
+          `offset: (${offsetX}, ${offsetY}), ` +
+          `final: (${finalX}, ${finalY})`
       );
 
-      // Use position() API like the manual example - this handles all the offset calculations
-      element.position({
-        relativeFrom: alignmentPoint,
-        relativeTo: {
-          x: `${absoluteTargetX}px`,
-          y: `${absoluteTargetY}px`,
-        },
-        x: 0,
-        y: 0,
-      });
+      // Set position directly
+      elem.currentPosition = { x: finalX, y: finalY };
+      elem._isAbsolutePositioned = true;
 
       console.log(
-        `[HStackFixed] After positioning child ${index}: currentPosition = (${elem.currentPosition.x}, ${elem.currentPosition.y}), absPos = (${elem.getAbsolutePosition().x}, ${elem.getAbsolutePosition().y})`
+        `[HStackFixed] After positioning child ${index}: currentPosition = (${elem.currentPosition.x}, ${elem.currentPosition.y})`
       );
     });
 

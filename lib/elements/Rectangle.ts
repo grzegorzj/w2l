@@ -458,6 +458,35 @@ export class Rectangle extends Shape {
   }
 
   /**
+   * Gets the alignment point based on horizontal and vertical alignment.
+   * Used by layout systems to position elements correctly.
+   *
+   * @param horizontalAlign - Horizontal alignment (left, center, right)
+   * @param verticalAlign - Vertical alignment (top, center, bottom)
+   * @returns The point corresponding to the specified alignment
+   */
+  getAlignmentPoint(
+    horizontalAlign: "left" | "center" | "right",
+    verticalAlign: "top" | "center" | "bottom"
+  ): Point {
+    // Map alignment to the correct reference point
+    if (horizontalAlign === "left") {
+      if (verticalAlign === "top") return this.topLeft;
+      if (verticalAlign === "bottom") return this.bottomLeft;
+      return this.leftCenter; // center
+    } else if (horizontalAlign === "right") {
+      if (verticalAlign === "top") return this.topRight;
+      if (verticalAlign === "bottom") return this.bottomRight;
+      return this.rightCenter; // center
+    } else {
+      // horizontalAlign === "center"
+      if (verticalAlign === "top") return this.topCenter;
+      if (verticalAlign === "bottom") return this.bottomCenter;
+      return this.center; // center-center
+    }
+  }
+
+  /**
    * Gets the padded content area (inside the padding) of this rectangle.
    * Use this to position elements inside the padding instead of at the edges.
    * 
