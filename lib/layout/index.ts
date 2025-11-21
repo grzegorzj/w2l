@@ -32,6 +32,9 @@ export type { VStackConfig } from "./VStack.js";
 export { HStack } from "./HStack.js";
 export type { HStackConfig } from "./HStack.js";
 
+export { HStackFixed } from "./HStackFixed.js";
+export type { HStackFixedConfig } from "./HStackFixed.js";
+
 export { ZStack } from "./ZStack.js";
 export type { ZStackConfig } from "./ZStack.js";
 

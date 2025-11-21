@@ -1,6 +1,6 @@
-// Example 44: HStack - Comprehensive Testing
+// Example 44: HStack - Comprehensive Testing (using HStackFixed)
 // Tests all HStack features: spacing, alignment, auto-sizing, nesting
-import { Artboard, HStack, VStack, GridLayout, Circle, Rectangle, Text } from "w2l";
+import { Artboard, HStackFixed, VStack, GridLayout, Circle, Rectangle, Text } from "w2l";
 
 const artboard = new Artboard({
   size: { width: 1600, height: 1000 },
@@ -10,15 +10,17 @@ const artboard = new Artboard({
 });
 
 // Test 1: Top alignment
-const hstack1 = new HStack({
+const hstack1 = new HStackFixed({
   spacing: 15,
   verticalAlign: "top",
+  autoWidth: true,
+  autoHeight: true,
   style: {
     fill: "transparent",
     stroke: "#e74c3c",
     strokeWidth: "2px",
     strokeDasharray: "5,3",
-  },
+  }
 });
 
 hstack1.addElement(new Circle({ radius: 25, style: { fill: "#e74c3c" } }));
@@ -28,15 +30,17 @@ hstack1.addElement(new Circle({ radius: 30, style: { fill: "#e74c3c" } }));
 
 
 // Test 2: Center alignment (default)
-const hstack2 = new HStack({
+const hstack2 = new HStackFixed({
   spacing: 20,
   verticalAlign: "center",
+  autoWidth: true,
+  autoHeight: true,
   style: {
     fill: "transparent",
     stroke: "#3498db",
     strokeWidth: "2px",
     strokeDasharray: "5,3",
-  },
+  }
 });
 
 hstack2.addElement(new Rectangle({ width: 40, height: 60, style: { fill: "#3498db" } }));
@@ -46,15 +50,17 @@ hstack2.addElement(new Rectangle({ width: 40, height: 50, style: { fill: "#3498d
 
 
 // Test 3: Bottom alignment
-const hstack3 = new HStack({
+const hstack3 = new HStackFixed({
   spacing: 12,
   verticalAlign: "bottom",
+  autoWidth: true,
+  autoHeight: true,
   style: {
     fill: "transparent",
     stroke: "#2ecc71",
     strokeWidth: "2px",
     strokeDasharray: "5,3",
-  },
+  }
 });
 
 const heights = [30, 50, 35, 60, 40];
@@ -71,15 +77,17 @@ heights.forEach((height) => {
 
 
 // Test 4: Mixed content types
-const hstack4 = new HStack({
+const hstack4 = new HStackFixed({
   spacing: 18,
   verticalAlign: "center",
+  autoWidth: true,
+  autoHeight: true,
   style: {
     fill: "transparent",
     stroke: "#f39c12",
     strokeWidth: "2px",
     strokeDasharray: "5,3",
-  },
+  }
 });
 
 const text1 = new Text({
@@ -110,15 +118,17 @@ hstack4.addElement(arrowText);
 
 
 // Test 5: No spacing (tight pack)
-const hstack5 = new HStack({
+const hstack5 = new HStackFixed({
   spacing: 0,
   verticalAlign: "center",
+  autoWidth: true,
+  autoHeight: true,
   style: {
     fill: "transparent",
     stroke: "#9b59b6",
     strokeWidth: "2px",
     strokeDasharray: "5,3",
-  },
+  }
 });
 
 for (let i = 0; i < 6; i++) {
@@ -133,15 +143,17 @@ for (let i = 0; i < 6; i++) {
 
 
 // Test 6: Large spacing
-const hstack6 = new HStack({
+const hstack6 = new HStackFixed({
   spacing: 50,
   verticalAlign: "center",
+  autoWidth: true,
+  autoHeight: true,
   style: {
     fill: "transparent",
     stroke: "#1abc9c",
     strokeWidth: "2px",
     strokeDasharray: "5,3",
-  },
+  }
 });
 
 hstack6.addElement(new Circle({ radius: 30, style: { fill: "#1abc9c" } }));
@@ -150,36 +162,42 @@ hstack6.addElement(new Circle({ radius: 30, style: { fill: "#1abc9c" } }));
 
 
 // Test 7: Nested HStacks
-const outerHStack = new HStack({
+const outerHStack = new HStackFixed({
   spacing: 25,
   verticalAlign: "center",
+  autoWidth: true,
+  autoHeight: true,
   style: {
     fill: "#ecf0f1",
     stroke: "#34495e",
     strokeWidth: "3px",
-  },
+  }
 });
 
-const innerHStack1 = new HStack({
+const innerHStack1 = new HStackFixed({
   spacing: 10,
   verticalAlign: "center",
+  autoWidth: true,
+  autoHeight: true,
   style: {
     fill: "#ffffff",
     stroke: "#e74c3c",
     strokeWidth: "2px",
-  },
+  }
 });
 innerHStack1.addElement(new Circle({ radius: 20, style: { fill: "#e74c3c" } }));
 innerHStack1.addElement(new Circle({ radius: 20, style: { fill: "#e74c3c" } }));
 
-const innerHStack2 = new HStack({
+const innerHStack2 = new HStackFixed({
   spacing: 10,
   verticalAlign: "center",
+  autoWidth: true,
+  autoHeight: true,
   style: {
     fill: "#ffffff",
     stroke: "#3498db",
     strokeWidth: "2px",
-  },
+  }
 });
 innerHStack2.addElement(new Rectangle({ width: 40, height: 40, style: { fill: "#3498db" } }));
 innerHStack2.addElement(new Rectangle({ width: 40, height: 40, style: { fill: "#3498db" } }));
@@ -263,7 +281,7 @@ grid.position({
 
 // Main title
 const title = new Text({
-  content: "HStack Comprehensive Test Suite",
+  content: "HStackFixed Comprehensive Test Suite",
   fontSize: 24,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },

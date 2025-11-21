@@ -163,6 +163,7 @@ export {
   SpreadLayout,
   VStack,
   HStack,
+  HStackFixed,
   ZStack,
   GridLayout,
 } from "./layout/index.js";
@@ -178,6 +179,7 @@ export type {
   SpreadLayoutConfig,
   VStackConfig,
   HStackConfig,
+  HStackFixedConfig,
   ZStackConfig,
   GridLayoutConfig,
 } from "./layout/index.js";

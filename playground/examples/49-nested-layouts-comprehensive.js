@@ -2,7 +2,7 @@
 // Demonstrates GridLayout, HStack, VStack all working together with auto-sizing
 // Shows off the new phase system preventing circular dependencies!
 
-import { Artboard, Rectangle, Circle, Text, GridLayout, HStack, VStack } from "w2l";
+import { Artboard, Rectangle, Circle, Text, GridLayout, HStack, VStack, ColumnsLayout } from "w2l";
 
 const artboard = new Artboard({
   size: { width: 1200, height: 900 },
@@ -88,27 +88,32 @@ cell1VStack.addElement(colorBar1);
 // Cell 2: HStack with mixed elements
 // ============================================================================
 
-const cell2HStack = new HStack({
+// Using ColumnsLayout instead of HStack to test positioning
+const cell2HStack = new ColumnsLayout({
+  count: 3,
+  width: 200,  // Approximate: 50 (circle) + 20 (spacing) + 80 (text) + 20 (spacing) + 50 (circle)
+  height: 100,
   spacing: 20,
-  verticalAlign: "center",
   padding: "20px",
-  autoHeight: true,
-  autoWidth: true,
   style: {
     fill: "#fff3bf",
     stroke: "#f59f00",
     strokeWidth: 2
+  },
+  columnStyle: {
+    fill: "transparent",
+    stroke: "none"
   }
 });
 
-// Add circles and text
+// Add circles and text to columns
 const circle1 = new Circle({
   radius: 25,
   style: { fill: "#f59f00", stroke: "#f08c00", strokeWidth: 2 }
 });
 
 const hstackText = new Text({
-  content: "HStack\nwith\ncircles",
+  content: "Columns\nwith\ncircles",
   fontSize: 14,
   textAlign: "center",
   lineHeight: 1.3,
@@ -120,9 +125,10 @@ const circle2 = new Circle({
   style: { fill: "#fab005", stroke: "#f59f00", strokeWidth: 2 }
 });
 
-cell2HStack.addElement(circle1);
-cell2HStack.addElement(hstackText);
-cell2HStack.addElement(circle2);
+// Add to columns - ColumnsLayout automatically centers elements in each column
+cell2HStack.columns[0].addElement(circle1);
+cell2HStack.columns[1].addElement(hstackText);
+cell2HStack.columns[2].addElement(circle2);
 
 // ============================================================================
 // Cell 3: Nested layouts (VStack containing HStacks)
@@ -149,16 +155,20 @@ const nestedTitle = new Text({
 cell3Container.addElement(nestedTitle);
 
 // First nested HStack
-const nestedHStack1 = new HStack({
+const nestedHStack1 = new ColumnsLayout({
+  count: 2,
+  width: 100,  // Approximate: 30 (icon) + 10 (spacing) + 60 (text)
+  height: 40,
   spacing: 10,
-  verticalAlign: "center",
-  autoWidth: true,
-  autoHeight: true,
   padding: "10px",
   style: {
     fill: "#fff",
     stroke: "#51cf66",
     strokeWidth: 1
+  },
+  columnStyle: {
+    fill: "transparent",
+    stroke: "none"
   }
 });
 
@@ -173,21 +183,25 @@ const label1 = new Text({
   style: { fill: "#2f9e44" }
 });
 
-nestedHStack1.addElement(icon1);
-nestedHStack1.addElement(label1);
+nestedHStack1.columns[0].addElement(icon1);
+nestedHStack1.columns[1].addElement(label1);
 cell3Container.addElement(nestedHStack1);
 
-// Second nested HStack
-const nestedHStack2 = new HStack({
+// Second nested HStack (using ColumnsLayout)
+const nestedHStack2 = new ColumnsLayout({
+  count: 2,
+  width: 100,  // Approximate: 30 (icon) + 10 (spacing) + 60 (text)
+  height: 40,
   spacing: 10,
-  verticalAlign: "center",
-  autoWidth: true,
-  autoHeight: true,
   padding: "10px",
   style: {
     fill: "#fff",
     stroke: "#51cf66",
     strokeWidth: 1
+  },
+  columnStyle: {
+    fill: "transparent",
+    stroke: "none"
   }
 });
 
@@ -202,8 +216,8 @@ const label2 = new Text({
   style: { fill: "#2f9e44" }
 });
 
-nestedHStack2.addElement(icon2);
-nestedHStack2.addElement(label2);
+nestedHStack2.columns[0].addElement(icon2);
+nestedHStack2.columns[1].addElement(label2);
 cell3Container.addElement(nestedHStack2);
 
 // ============================================================================
