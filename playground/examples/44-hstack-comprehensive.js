@@ -98,6 +98,7 @@ const text1 = new Text({
   content: "Label:",
   fontSize: 16,
   fontWeight: "bold",
+  debug: true,
   style: { fill: "#f39c12" },
 });
 hstack4.addElement(text1);
@@ -114,8 +115,10 @@ hstack4.addElement(
 );
 
 const arrowText = new Text({
-  content: "→",
-  fontSize: 24,
+  content: "Arrow",
+  fontSize: 16,
+  fontWeight: "bold",
+  debug: true,
   style: { fill: "#f39c12" },
 });
 hstack4.addElement(arrowText);
@@ -313,6 +316,13 @@ grid.render(); // This will trigger arrangement
 
 // Now get the bounding boxes with updated positions
 const text1Bbox = text1.getBoundingBox();
+console.log("=== TEXT1 (Label:) DEBUG ===");
+console.log("text1.currentPosition:", text1.currentPosition);
+console.log("text1.getAbsolutePosition():", text1.getAbsolutePosition());
+console.log("text1Bbox.topLeft:", text1Bbox.topLeft);
+console.log("text1Bbox dimensions:", text1Bbox.width, "x", text1Bbox.height);
+console.log("text1.width x text1.height:", text1.width, "x", text1.height);
+
 const debugRect1 = new Rectangle({
   width: text1Bbox.width,
   height: text1Bbox.height,
@@ -326,12 +336,19 @@ const debugRect1 = new Rectangle({
 debugRect1.zIndex = 100;
 debugRect1.position({
   relativeFrom: debugRect1.topLeft,
-  relativeTo: { x: `${text1Bbox.topLeft.x}px`, y: `${text1Bbox.topLeft.y}px` },
+  relativeTo: { x: `${text1Bbox.topLeft.x}`, y: `${text1Bbox.topLeft.y}` },
   x: 0,
   y: 0,
 });
 
 const arrowTextBbox = arrowText.getBoundingBox();
+console.log("=== ARROWTEXT (Arrow) DEBUG ===");
+console.log("arrowText.currentPosition:", arrowText.currentPosition);
+console.log("arrowText.getAbsolutePosition():", arrowText.getAbsolutePosition());
+console.log("arrowTextBbox.topLeft:", arrowTextBbox.topLeft);
+console.log("arrowTextBbox dimensions:", arrowTextBbox.width, "x", arrowTextBbox.height);
+console.log("arrowText.width x arrowText.height:", arrowText.width, "x", arrowText.height);
+
 const debugRect2 = new Rectangle({
   width: arrowTextBbox.width,
   height: arrowTextBbox.height,
@@ -345,7 +362,7 @@ const debugRect2 = new Rectangle({
 debugRect2.zIndex = 100;
 debugRect2.position({
   relativeFrom: debugRect2.topLeft,
-  relativeTo: { x: `${arrowTextBbox.topLeft.x}px`, y: `${arrowTextBbox.topLeft.y}px` },
+  relativeTo: { x: `${arrowTextBbox.topLeft.x}`, y: `${arrowTextBbox.topLeft.y}` },
   x: 0,
   y: 0,
 });
