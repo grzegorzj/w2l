@@ -191,12 +191,12 @@ contentGuide.position({
   y: 0
 });
 
-// Add all elements
+// Add all elements - center first, then guides, then satellites on top
+artboard.addElement(center);
 artboard.addElement(marginGuide);
 artboard.addElement(borderGuide);
 artboard.addElement(paddingGuide);
 artboard.addElement(contentGuide);
-artboard.addElement(center);
 artboard.addElement(marginTopLeft);
 artboard.addElement(marginBottomRight);
 artboard.addElement(borderTopRight);

@@ -229,13 +229,14 @@ centerMarker.position({
 });
 
 // Add all elements to artboard
+// Add element first, then debug boxes and markers on top
+artboard.addElement(element);
 artboard.addElement(marginBoxDebug);
 artboard.addElement(borderBoxDebug);
 artboard.addElement(paddingBoxDebug);
 artboard.addElement(contentBoxDebug);
-artboard.addElement(element);
 
-// Add corner markers
+// Add corner markers on top
 artboard.addElement(marginTL);
 artboard.addElement(marginBR);
 artboard.addElement(borderTL);

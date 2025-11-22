@@ -117,9 +117,10 @@ vstack.addElement(rect2);
 vstack.addElement(rect3);
 
 // Add everything to artboard
+// Add VStack first, then debug boxes on top
+artboard.addElement(vstack);
 artboard.addElement(paddingBoxDebug);
 artboard.addElement(contentBoxDebug);
-artboard.addElement(vstack);
 
 return artboard.render();
 

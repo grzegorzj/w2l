@@ -98,12 +98,12 @@ topRightCircle.position({
   y: 0
 });
 
-// Add elements
-artboard.addElement(paddingBoxDebug);
-artboard.addElement(contentBoxDebug);
+// Add elements - circles first, then debug boxes on top
 artboard.addElement(centerCircle);
 artboard.addElement(topLeftCircle);
 artboard.addElement(topRightCircle);
+artboard.addElement(paddingBoxDebug);
+artboard.addElement(contentBoxDebug);
 
 return artboard.render();
 
