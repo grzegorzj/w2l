@@ -13,7 +13,7 @@ export abstract class NewShape extends NewElement implements Stylable {
   protected _style: Style = {};
 
   constructor(style?: Partial<Style>) {
-    super();
+    super(); // Call NewElement constructor for creation index
     if (style) {
       this._style = { ...style };
     }

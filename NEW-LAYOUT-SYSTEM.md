@@ -57,6 +57,7 @@ The layout system uses two types of strategies for positioning children:
   - `children`: Array of child elements
   - `_parent`: Reference to parent element
   - `_position`: Position relative to parent
+  - `zIndex`: Optional z-index for rendering order (higher = on top)
 - **Methods**:
   - `position(config)`: Set position (stores as relative to parent)
   - `addElement(element)`: Add a child element
@@ -527,6 +528,10 @@ return artboard.render();
 - ✅ Children positioned in content area (respects padding)
 - ✅ Strategy documented in code
 
+### Rendering
+- ✅ Z-index support (explicit z-index > creation order)
+- ✅ Elements sorted before rendering
+
 ### Build & Testing
 - ✅ Compiled and exported in main library
 - ✅ Playground examples demonstrating all features
@@ -565,4 +570,7 @@ Examples:
 - `/playground/examples/64-new-layout-positioning-boxes.js` - Positioning to different box layers
 - `/playground/examples/65-new-layout-vstack.js` - VStack layout with spacing
 - `/playground/examples/66-new-layout-vstack-debug.js` - VStack with box model visualization
+- `/playground/examples/67-new-layout-zindex.js` - Z-index layering demonstration
+- `/playground/examples/68-new-layout-nested-vstacks.js` - Nested VStacks (simple, 1 level)
+- `/playground/examples/69-new-layout-deep-nesting.js` - Deep nesting (3 levels, advanced)
 

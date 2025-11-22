@@ -55,6 +55,7 @@ export class NewArtboard extends NewRectangle {
   /**
    * Renders the artboard as an SVG element.
    * The SVG dimensions are the border box size (total size).
+   * Elements are sorted by z-index before rendering.
    */
   render(): string {
     const bgAttrs = styleToSVGAttributes(this._style);
@@ -62,7 +63,27 @@ export class NewArtboard extends NewRectangle {
       ? `  <rect width="${this.width}" height="${this.height}" ${bgAttrs}/>\n`
       : "";
 
-    const elementsHTML = this.children
+    // Sort children by z-index (explicit z-index > creation order)
+    const sortedChildren = [...this.children].sort((a, b) => {
+      const zIndexA = (a as any).zIndex;
+      const zIndexB = (b as any).zIndex;
+
+      // If both have explicit z-index, compare them
+      if (zIndexA !== undefined && zIndexB !== undefined) {
+        return zIndexA - zIndexB;
+      }
+
+      // If only one has z-index, it takes priority
+      if (zIndexA !== undefined) return zIndexA - 0;
+      if (zIndexB !== undefined) return 0 - zIndexB;
+
+      // Neither has z-index: use creation order
+      const indexA = (a as any)._creationIndex || 0;
+      const indexB = (b as any)._creationIndex || 0;
+      return indexA - indexB;
+    });
+
+    const elementsHTML = sortedChildren
       .map((element) => element.render())
       .join("\n  ");
 

@@ -180,6 +180,30 @@ export abstract class NewRectangle extends NewShape {
   }
 
   /**
+   * Helper for positioning children in local coordinate space.
+   * Converts a local offset (relative to this element) to an absolute position.
+   *
+   * Use this when positioning children to ensure correct coordinate space conversion.
+   *
+   * @param localX - X offset in this element's local space
+   * @param localY - Y offset in this element's local space
+   * @param boxReference - Which box to measure from (default: content)
+   * @returns Absolute position in world coordinates
+   */
+  protected localToAbsolute(
+    localX: number,
+    localY: number,
+    boxReference: BoxReference = "content"
+  ): Position {
+    const basePos = this.getAbsolutePosition();
+    const offset = this.getBoxOffset(boxReference);
+    return {
+      x: basePos.x + offset.x + localX,
+      y: basePos.y + offset.y + localY,
+    };
+  }
+
+  /**
    * Get the size (width and height) for a specific box reference.
    */
   getBoxSize(reference: BoxReference): { width: number; height: number } {

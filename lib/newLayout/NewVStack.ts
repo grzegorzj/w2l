@@ -70,31 +70,22 @@ export class NewVStack extends NewRectangle {
    * the target position. The child implements the actual positioning.
    */
   private positionChild(child: NewElement, offsetY: number): void {
-    // Determine child height based on its type
-    let childHeight = 0;
-    
-    if (typeof (child as any).height === 'number') {
-      // Rectangle-based elements
-      childHeight = (child as any).height;
-    } else if (typeof (child as any).radius === 'number') {
-      // Circle-based elements
-      childHeight = (child as any).radius * 2;
-    }
-    
     // Determine the positioning reference point on the child
-    // Use topLeft for rectangles, center for circles
-    const childReference = (child as any).topLeft 
-      ? (child as any).topLeft 
+    // For rectangles, use borderBox.topLeft (the actual top-left corner)
+    // For circles, use center
+    const childReference = (child as any).borderBox
+      ? (child as any).borderBox.topLeft
       : (child as any).center;
     
-    // Position child: parent tells child where to be
-    // This is the proactive strategy - parent dictates position
+    // Convert local coordinates (0, offsetY) to absolute world coordinates
+    // This correctly handles nesting by using the helper method
+    const targetPosition = this.localToAbsolute(0, offsetY, "content");
+    
+    // Position child at the calculated absolute position
+    // The child.position() method will convert this back to relative-to-parent
     child.position({
       relativeFrom: childReference,
-      relativeTo: {
-        x: this.contentBox.topLeft.x,
-        y: this.contentBox.topLeft.y + offsetY,
-      },
+      relativeTo: targetPosition,
       x: 0,
       y: 0,
     });

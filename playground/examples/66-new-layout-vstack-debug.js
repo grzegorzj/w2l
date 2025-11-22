@@ -52,6 +52,7 @@ const paddingBoxDebug = new NewRect({
     strokeDasharray: '5,5'
   }
 });
+paddingBoxDebug.zIndex = 100;
 
 paddingBoxDebug.position({
   relativeFrom: paddingBoxDebug.borderBox.topLeft,
@@ -71,6 +72,7 @@ const contentBoxDebug = new NewRect({
     strokeDasharray: '5,5'
   }
 });
+contentBoxDebug.zIndex = 100;
 
 contentBoxDebug.position({
   relativeFrom: contentBoxDebug.borderBox.topLeft,
@@ -117,10 +119,10 @@ vstack.addElement(rect2);
 vstack.addElement(rect3);
 
 // Add everything to artboard
-// Add VStack first, then debug boxes on top
-artboard.addElement(vstack);
+// Order doesn't matter - z-index controls rendering
 artboard.addElement(paddingBoxDebug);
 artboard.addElement(contentBoxDebug);
+artboard.addElement(vstack);
 
 return artboard.render();
 

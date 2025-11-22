@@ -27,6 +27,28 @@ export abstract class NewElement {
   protected _position: Position = { x: 0, y: 0 };
   protected _parent: NewElement | null = null;
   protected children: NewElement[] = [];
+  protected _zIndex?: number;
+  private static _creationCounter: number = 0;
+  protected _creationIndex: number;
+
+  constructor() {
+    this._creationIndex = NewElement._creationCounter++;
+  }
+
+  /**
+   * Gets the z-index of this element.
+   */
+  get zIndex(): number | undefined {
+    return this._zIndex;
+  }
+
+  /**
+   * Sets the z-index of this element.
+   * Higher values render on top.
+   */
+  set zIndex(value: number | undefined) {
+    this._zIndex = value;
+  }
 
   /**
    * Adds a child element to this element.
@@ -88,6 +110,31 @@ export abstract class NewElement {
       // No parent - absolute position equals relative position
       this._position = newAbsolute;
     }
+  }
+
+  /**
+   * Helper for positioning a child element.
+   * Correctly handles coordinate space conversion.
+   *
+   * @param child - The child element to position
+   * @param childReference - The reference point on the child (e.g., child.topLeft)
+   * @param parentReference - The absolute target position in world coordinates
+   * @param offsetX - Additional X offset
+   * @param offsetY - Additional Y offset
+   */
+  protected positionChildAt(
+    child: NewElement,
+    childReference: Position,
+    parentReference: Position,
+    offsetX: number = 0,
+    offsetY: number = 0
+  ): void {
+    child.position({
+      relativeFrom: childReference,
+      relativeTo: parentReference,
+      x: offsetX,
+      y: offsetY,
+    });
   }
 
   /**
