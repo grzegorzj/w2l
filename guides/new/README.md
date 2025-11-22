@@ -35,7 +35,7 @@ new NewRect({
 ## Layout Strategies
 
 **Proactive**: Parent tells children where to be  
-**Reactive**: Parent adjusts to children (not yet implemented)
+**Reactive**: Size adjusts to children (per-axis)
 
 ### VStack (Proactive)
 ```javascript
@@ -43,6 +43,7 @@ const vstack = new NewVStack({
   width: 400,
   height: 500,
   spacing: 20,
+  alignment: 'center',  // left, center, right
   boxModel: { padding: 30 }
 });
 
@@ -54,6 +55,33 @@ const nested = new NewVStack({ width: 300, height: 200, spacing: 10 });
 nested.addElement(item1);
 vstack.addElement(nested);  // Nested layout
 ```
+
+## Alignment
+
+Children align horizontally within VStack: `left`, `center`, `right`
+
+```javascript
+new NewVStack({
+  width: 400,
+  height: 'auto',
+  alignment: 'center'  // Centers all children
+})
+```
+
+## Reactive Sizing
+
+Dimensions can be `auto` (grows to fit children) or fixed number:
+
+```javascript
+new NewVStack({
+  width: 'auto',    // Width adjusts to widest child
+  height: 'auto',   // Height adjusts to total height of children
+  spacing: 10,
+  boxModel: { padding: 20 }
+})
+```
+
+Auto-sizing respects box model (includes padding/border in calculation).
 
 ## Hierarchy
 
@@ -78,6 +106,6 @@ element.zIndex = 10;  // Higher = on top
 ## See Also
 
 - `/lib/newLayout/` - Implementation
-- `/playground/examples/58-66-*.js` - Examples
+- `/playground/examples/58-71-*.js` - Examples
 - `/NEW-LAYOUT-SYSTEM.md` - Full documentation
 

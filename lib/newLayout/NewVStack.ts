@@ -11,10 +11,21 @@ import { type BoxModel } from "./BoxModel.js";
 import { type Style } from "../core/Stylable.js";
 import { NewElement } from "./NewElement.js";
 
+/**
+ * Horizontal alignment options for VStack children
+ */
+export type HorizontalAlignment = "left" | "center" | "right";
+
+/**
+ * Size mode: fixed or auto (reactive to children)
+ */
+export type SizeMode = number | "auto";
+
 export interface NewVStackConfig {
-  width: number;
-  height: number;
+  width: SizeMode;
+  height: SizeMode;
   spacing?: number;
+  alignment?: HorizontalAlignment;
   style?: Partial<Style>;
   boxModel?: BoxModel;
 }
@@ -26,13 +37,26 @@ export interface NewVStackConfig {
  * - Parent controls child positioning
  * - Children are positioned in the content area (respects padding)
  * - Children are stacked top-to-bottom with spacing between them
+ * - Supports horizontal alignment (left, center, right)
+ * - Supports reactive sizing (auto width/height based on children)
  */
 export class NewVStack extends NewRectangle {
   private spacing: number;
+  private alignment: HorizontalAlignment;
+  private _autoWidth: boolean;
+  private _autoHeight: boolean;
 
   constructor(config: NewVStackConfig) {
-    super(config.width, config.height, config.boxModel, config.style);
+    // Determine fixed vs auto sizing
+    const width = typeof config.width === "number" ? config.width : 0;
+    const height = typeof config.height === "number" ? config.height : 0;
+    
+    super(width, height, config.boxModel, config.style);
+    
     this.spacing = config.spacing ?? 0;
+    this.alignment = config.alignment ?? "left";
+    this._autoWidth = config.width === "auto";
+    this._autoHeight = config.height === "auto";
   }
 
   /**
@@ -44,22 +68,75 @@ export class NewVStack extends NewRectangle {
     let currentY = 0;
     
     for (const existingChild of this.children) {
-      let childHeight = 0;
-      
-      if (typeof (existingChild as any).height === 'number') {
-        childHeight = (existingChild as any).height;
-      } else if (typeof (existingChild as any).radius === 'number') {
-        childHeight = (existingChild as any).radius * 2;
-      }
-      
-      currentY += childHeight + this.spacing;
+      currentY += this.getChildHeight(existingChild) + this.spacing;
     }
     
     // Add to children array
     super.addElement(element);
     
+    // Update auto-sizing if needed
+    if (this._autoWidth || this._autoHeight) {
+      this.updateAutoSize();
+    }
+    
     // Position only the newly added child (proactive strategy)
     this.positionChild(element, currentY);
+  }
+
+  /**
+   * Get the height of a child element
+   */
+  private getChildHeight(child: NewElement): number {
+    if (typeof (child as any).height === 'number') {
+      return (child as any).height;
+    } else if (typeof (child as any).radius === 'number') {
+      return (child as any).radius * 2;
+    }
+    return 0;
+  }
+
+  /**
+   * Get the width of a child element
+   */
+  private getChildWidth(child: NewElement): number {
+    if (typeof (child as any).width === 'number') {
+      return (child as any).width;
+    } else if (typeof (child as any).radius === 'number') {
+      return (child as any).radius * 2;
+    }
+    return 0;
+  }
+
+  /**
+   * Update auto-sizing based on children
+   */
+  private updateAutoSize(): void {
+    if (this._autoWidth) {
+      // Calculate max child width + padding + border
+      let maxWidth = 0;
+      for (const child of this.children) {
+        maxWidth = Math.max(maxWidth, this.getChildWidth(child));
+      }
+      this._borderBoxWidth = 
+        maxWidth + 
+        this._boxModel.padding.left + this._boxModel.padding.right +
+        this._boxModel.border.left + this._boxModel.border.right;
+    }
+
+    if (this._autoHeight) {
+      // Calculate total height: sum of children + spacing + padding + border
+      let totalHeight = 0;
+      for (let i = 0; i < this.children.length; i++) {
+        totalHeight += this.getChildHeight(this.children[i]);
+        if (i < this.children.length - 1) {
+          totalHeight += this.spacing;
+        }
+      }
+      this._borderBoxHeight = 
+        totalHeight +
+        this._boxModel.padding.top + this._boxModel.padding.bottom +
+        this._boxModel.border.top + this._boxModel.border.bottom;
+    }
   }
 
   /**
@@ -70,16 +147,15 @@ export class NewVStack extends NewRectangle {
    * the target position. The child implements the actual positioning.
    */
   private positionChild(child: NewElement, offsetY: number): void {
-    // Determine the positioning reference point on the child
-    // For rectangles, use borderBox.topLeft (the actual top-left corner)
-    // For circles, use center
-    const childReference = (child as any).borderBox
-      ? (child as any).borderBox.topLeft
-      : (child as any).center;
+    // Get the alignment point on the child based on alignment setting
+    const childReference = this.getChildAlignmentPoint(child);
     
-    // Convert local coordinates (0, offsetY) to absolute world coordinates
+    // Calculate X offset based on alignment
+    const offsetX = this.getAlignmentOffsetX(child);
+    
+    // Convert local coordinates to absolute world coordinates
     // This correctly handles nesting by using the helper method
-    const targetPosition = this.localToAbsolute(0, offsetY, "content");
+    const targetPosition = this.localToAbsolute(offsetX, offsetY, "content");
     
     // Position child at the calculated absolute position
     // The child.position() method will convert this back to relative-to-parent
@@ -89,6 +165,44 @@ export class NewVStack extends NewRectangle {
       x: 0,
       y: 0,
     });
+  }
+
+  /**
+   * Get the alignment point on a child element based on current alignment setting
+   */
+  private getChildAlignmentPoint(child: NewElement): { x: number; y: number } {
+    if ((child as any).borderBox) {
+      // Rectangle-based element
+      const rect = child as any;
+      switch (this.alignment) {
+        case "left":
+          return rect.borderBox.topLeft;
+        case "center":
+          return rect.borderBox.centerTop;
+        case "right":
+          return rect.borderBox.topRight;
+      }
+    } else {
+      // Circle or other element - use center
+      return (child as any).center;
+    }
+  }
+
+  /**
+   * Calculate the X offset for alignment within the content area.
+   * This offset represents where the alignment point should be positioned.
+   */
+  private getAlignmentOffsetX(child: NewElement): number {
+    const availableWidth = this.contentWidth;
+
+    switch (this.alignment) {
+      case "left":
+        return 0; // Left edge of content area
+      case "center":
+        return availableWidth / 2; // Center of content area
+      case "right":
+        return availableWidth; // Right edge of content area
+    }
   }
 
   render(): string {

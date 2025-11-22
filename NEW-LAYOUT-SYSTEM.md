@@ -145,15 +145,21 @@ artboard.borderBox.centerRight // Border box center-right
 - **Extends**: `NewRectangle`
 - **Layout Strategy**: **PROACTIVE** - Parent tells children where to position themselves
 - **Properties**:
-  - `width`: Border box width
-  - `height`: Border box height
+  - `width`: Border box width (or `'auto'` for reactive width)
+  - `height`: Border box height (or `'auto'` for reactive height)
   - `spacing`: Space between children (in pixels)
+  - `alignment`: Horizontal alignment (`'left'`, `'center'`, `'right'`)
   - `boxModel`: Optional box model (padding, border, margin)
 - **Behavior**:
   - Children positioned vertically with spacing
   - Children positioned in **content area** (respects padding)
   - Children positioned immediately when added (proactive)
   - Parent controls all child positioning
+  - **Alignment**: Children can be aligned left, center, or right within the content area
+  - **Reactive Sizing**: Dimensions can be `'auto'` to grow/shrink based on children:
+    - `width: 'auto'`: Width adjusts to widest child (+ padding + border)
+    - `height: 'auto'`: Height adjusts to total children height + spacing (+ padding + border)
+  - Auto-sizing updates immediately when children are added
 
 ### NewArtboard
 - **Purpose**: Canvas for rendering elements
@@ -527,6 +533,11 @@ return artboard.render();
 - ✅ VStack positions children vertically with spacing
 - ✅ Children positioned in content area (respects padding)
 - ✅ Strategy documented in code
+- ✅ **Alignment system**: VStack supports horizontal alignment (left, center, right)
+- ✅ **Reactive sizing**: Dimensions can be `'auto'` to adjust to children
+  - Width can be auto (fits widest child)
+  - Height can be auto (fits total children height + spacing)
+  - Per-axis control (width fixed, height auto, or vice versa)
 
 ### Rendering
 - ✅ Z-index support (explicit z-index > creation order)
@@ -541,10 +552,12 @@ return artboard.render();
 
 Future enhancements:
 - More layout elements (HStack, Grid, ZStack, etc.)
-- Reactive strategy implementation (auto-sizing containers)
-- Auto-sizing behavior for layouts
 - More shapes (NewSquare, NewPolygon, NewEllipse, etc.)
-- Advanced layout features (alignment, distribution, etc.)
+- Text elements with proper layout sizing
+- Advanced layout features (distribution, flex-like behavior, etc.)
+- Constraints system (min/max width/height)
+- Vertical alignment for VStack (top, center, bottom)
+- Advanced positioning helpers
 
 ## Files
 
@@ -571,6 +584,8 @@ Examples:
 - `/playground/examples/65-new-layout-vstack.js` - VStack layout with spacing
 - `/playground/examples/66-new-layout-vstack-debug.js` - VStack with box model visualization
 - `/playground/examples/67-new-layout-zindex.js` - Z-index layering demonstration
-- `/playground/examples/68-new-layout-nested-vstacks.js` - Nested VStacks (simple, 1 level)
+- `/playground/examples/68-new-layout-nested-vstacks.js` - Nested VStacks with debug markers
 - `/playground/examples/69-new-layout-deep-nesting.js` - Deep nesting (3 levels, advanced)
+- `/playground/examples/70-new-layout-alignment.js` - **VStack alignment** (left, center, right)
+- `/playground/examples/71-new-layout-reactive-size.js` - **Reactive sizing** (auto width/height)
 
