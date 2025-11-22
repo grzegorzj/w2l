@@ -214,6 +214,107 @@ artboard.addElement(topLeft);
 return artboard.render();
 ```
 
+### Positioning to Different Box Layers
+
+```javascript
+import { NewArtboard, NewRect, NewCircle } from 'w2l';
+
+const artboard = new NewArtboard({
+  width: 800,
+  height: 600,
+  backgroundColor: '#ecf0f1'
+});
+
+// Element with full box model
+const element = new NewRect({
+  width: 200,
+  height: 150,
+  boxModel: {
+    margin: 40,
+    border: 8,
+    padding: 25
+  },
+  style: { fill: '#34495e' }
+});
+
+element.position({
+  relativeFrom: element.center,
+  relativeTo: artboard.center,
+  x: 0,
+  y: 0
+});
+
+// Position satellites at different box layers
+// Red circle at margin box corner
+const marginCorner = new NewCircle({
+  radius: 15,
+  style: { fill: '#e74c3c' }
+});
+marginCorner.position({
+  relativeFrom: marginCorner.center,
+  relativeTo: element.marginBox.topLeft,  // Explicit margin box
+  x: 0,
+  y: 0
+});
+
+// Orange circle at border box corner
+const borderCorner = new NewCircle({
+  radius: 15,
+  style: { fill: '#e67e22' }
+});
+borderCorner.position({
+  relativeFrom: borderCorner.center,
+  relativeTo: element.borderBox.topRight,  // Explicit border box
+  x: 0,
+  y: 0
+});
+
+// Yellow circle at padding box edge
+const paddingEdge = new NewCircle({
+  radius: 15,
+  style: { fill: '#f39c12' }
+});
+paddingEdge.position({
+  relativeFrom: paddingEdge.center,
+  relativeTo: element.paddingBox.centerTop,  // Padding box center-top
+  x: 0,
+  y: 0
+});
+
+// Green circle at content box edge
+const contentEdge = new NewCircle({
+  radius: 15,
+  style: { fill: '#2ecc71' }
+});
+contentEdge.position({
+  relativeFrom: contentEdge.center,
+  relativeTo: element.contentBox.centerLeft,  // Content box center-left
+  x: 0,
+  y: 0
+});
+
+// Purple circle at semantic center (same as content box center)
+const centerMark = new NewCircle({
+  radius: 20,
+  style: { fill: '#9b59b6' }
+});
+centerMark.position({
+  relativeFrom: centerMark.center,
+  relativeTo: element.center,  // Semantic = content box
+  x: 0,
+  y: 0
+});
+
+artboard.addElement(element);
+artboard.addElement(marginCorner);
+artboard.addElement(borderCorner);
+artboard.addElement(paddingEdge);
+artboard.addElement(contentEdge);
+artboard.addElement(centerMark);
+
+return artboard.render();
+```
+
 ### Children and Hierarchy
 
 ```javascript
@@ -338,4 +439,6 @@ Examples:
 - `/playground/examples/60-new-layout-box-model.js` - Box model demonstration
 - `/playground/examples/61-new-layout-children.js` - Children and hierarchy
 - `/playground/examples/62-new-layout-box-debug.js` - Box model debug with visualizations
+- `/playground/examples/63-new-layout-all-boxes.js` - All box layers visualized (margin, border, padding, content)
+- `/playground/examples/64-new-layout-positioning-boxes.js` - Positioning to different box layers
 
