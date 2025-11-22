@@ -1,19 +1,39 @@
 /**
- * Example: VStack with Reactive Sizing
+ * Example: VStack with Reactive Sizing + Debug
  * 
  * Demonstrates auto-sizing (reactive dimensions) in VStack.
  * - Left: Fixed width and height
  * - Center: Auto height (grows to fit children)
  * - Right: Auto width and height (grows to fit children in both dimensions)
+ * 
+ * Debug circles show border box corners of each rectangle.
  */
 
-import { NewArtboard, NewVStack, NewRect } from 'w2l';
+import { NewArtboard, NewVStack, NewRect, NewCircle } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 1200,
   height: 700,
   backgroundColor: '#ecf0f1'
 });
+
+// Helper to create debug circles
+function createDebugCircle(position, color, radius = 3) {
+  const circle = new NewCircle({
+    radius,
+    style: { fill: color, stroke: 'white', strokeWidth: 1 }
+  });
+  circle.position({
+    relativeFrom: circle.center,
+    relativeTo: position,
+    x: 0,
+    y: 0
+  });
+  return circle;
+}
+
+// Track all rectangles for debug markers
+const allRects = [];
 
 // Fixed size VStack
 const fixedStack = new NewVStack({
@@ -48,6 +68,7 @@ fixedStack.position({
     }
   });
   fixedStack.addElement(rect);
+  allRects.push(rect);
 });
 
 // Auto-height VStack
@@ -83,6 +104,7 @@ autoHeightStack.position({
     }
   });
   autoHeightStack.addElement(rect);
+  allRects.push(rect);
 });
 
 // Auto width and height VStack
@@ -118,11 +140,30 @@ autoStack.position({
     }
   });
   autoStack.addElement(rect);
+  allRects.push(rect);
 });
 
 artboard.addElement(fixedStack);
 artboard.addElement(autoHeightStack);
 artboard.addElement(autoStack);
+
+// Add debug circles to all rectangles
+const debugMarkers = [];
+allRects.forEach((rect) => {
+  // Add circles at the four corners of each rectangle's border box
+  const tl = createDebugCircle(rect.topLeft, '#e74c3c');
+  const tr = createDebugCircle(rect.topRight, '#e74c3c');
+  const bl = createDebugCircle(rect.bottomLeft, '#2ecc71');
+  const br = createDebugCircle(rect.bottomRight, '#2ecc71');
+  
+  debugMarkers.push(tl, tr, bl, br);
+});
+
+// Add debug markers with high z-index
+debugMarkers.forEach((marker, idx) => {
+  marker.zIndex = 1000 + idx;
+  artboard.addElement(marker);
+});
 
 return artboard.render();
 

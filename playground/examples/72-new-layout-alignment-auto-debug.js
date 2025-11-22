@@ -38,6 +38,7 @@ autoRightStack.position({
 // Add rectangles of varying widths
 const widths = [180, 120, 240, 160, 200];
 const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6'];
+const childRects = [];
 
 widths.forEach((width, idx) => {
   const rect = new NewRect({
@@ -50,6 +51,7 @@ widths.forEach((width, idx) => {
     }
   });
   autoRightStack.addElement(rect);
+  childRects.push(rect);
 });
 
 artboard.addElement(autoRightStack);
@@ -97,6 +99,17 @@ const debugMarkers = [
   contentCenterTop, contentCenterBottom,
   contentLeftCenter, contentRightCenter
 ];
+
+// Add debug circles to child rectangles (border box corners)
+childRects.forEach((rect) => {
+  // Top corners in red/orange, bottom corners in cyan/blue
+  const tl = createDebugCircle(rect.topLeft, '#ff6b6b', 4);
+  const tr = createDebugCircle(rect.topRight, '#ffa500', 4);
+  const bl = createDebugCircle(rect.bottomLeft, '#4ecdc4', 4);
+  const br = createDebugCircle(rect.bottomRight, '#45b7d1', 4);
+  
+  debugMarkers.push(tl, tr, bl, br);
+});
 
 debugMarkers.forEach((marker, idx) => {
   marker.zIndex = 1000 + idx;
