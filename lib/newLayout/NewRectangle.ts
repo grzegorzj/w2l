@@ -1,0 +1,273 @@
+/**
+ * New layout system - Rectangle class
+ */
+
+import { NewShape } from "./NewShape.js";
+import { type Position } from "./NewElement.js";
+import {
+  type BoxModel,
+  type ParsedBoxModel,
+  parseBoxModel,
+  type BoxReference,
+} from "./BoxModel.js";
+import { BoxAccessor } from "./BoxReference.js";
+import { Style } from "../core/Stylable.js";
+
+/**
+ * Base class for rectangular elements.
+ * Adds width, height, box model, and convenient position getters.
+ *
+ * Width and height represent the BORDER BOX size (total size).
+ * Content size is calculated by subtracting padding and border.
+ */
+export abstract class NewRectangle extends NewShape {
+  protected _borderBoxWidth: number;
+  protected _borderBoxHeight: number;
+  protected _boxModel: ParsedBoxModel;
+  private _borderBox: BoxAccessor;
+  private _paddingBox: BoxAccessor;
+  private _contentBox: BoxAccessor;
+  private _marginBox: BoxAccessor;
+
+  constructor(
+    width: number,
+    height: number,
+    boxModel?: BoxModel,
+    style?: Partial<Style>
+  ) {
+    super(style);
+    // Width and height are the border box dimensions (total size)
+    this._borderBoxWidth = width;
+    this._borderBoxHeight = height;
+    this._boxModel = parseBoxModel(boxModel);
+
+    // Create box accessors
+    const self = this;
+    this._borderBox = new BoxAccessor("border", () => ({
+      getPositionForBox: (ref) => self.getPositionForBox(ref),
+      getBoxSize: (ref) => self.getBoxSize(ref),
+    }));
+    this._paddingBox = new BoxAccessor("padding", () => ({
+      getPositionForBox: (ref) => self.getPositionForBox(ref),
+      getBoxSize: (ref) => self.getBoxSize(ref),
+    }));
+    this._contentBox = new BoxAccessor("content", () => ({
+      getPositionForBox: (ref) => self.getPositionForBox(ref),
+      getBoxSize: (ref) => self.getBoxSize(ref),
+    }));
+    this._marginBox = new BoxAccessor("margin", () => ({
+      getPositionForBox: (ref) => self.getPositionForBox(ref),
+      getBoxSize: (ref) => self.getBoxSize(ref),
+    }));
+  }
+
+  /**
+   * Gets the border box width (total width).
+   */
+  get width(): number {
+    return this._borderBoxWidth;
+  }
+
+  /**
+   * Gets the border box height (total height).
+   */
+  get height(): number {
+    return this._borderBoxHeight;
+  }
+
+  /**
+   * Gets the content width (width minus padding and border).
+   */
+  protected get contentWidth(): number {
+    return (
+      this._borderBoxWidth -
+      this._boxModel.padding.left -
+      this._boxModel.padding.right -
+      this._boxModel.border.left -
+      this._boxModel.border.right
+    );
+  }
+
+  /**
+   * Gets the content height (height minus padding and border).
+   */
+  protected get contentHeight(): number {
+    return (
+      this._borderBoxHeight -
+      this._boxModel.padding.top -
+      this._boxModel.padding.bottom -
+      this._boxModel.border.top -
+      this._boxModel.border.bottom
+    );
+  }
+
+  get boxModel(): ParsedBoxModel {
+    return this._boxModel;
+  }
+
+  /**
+   * Access border box positions
+   */
+  get borderBox(): BoxAccessor {
+    return this._borderBox;
+  }
+
+  /**
+   * Access padding box positions
+   */
+  get paddingBox(): BoxAccessor {
+    return this._paddingBox;
+  }
+
+  /**
+   * Access content box positions
+   */
+  get contentBox(): BoxAccessor {
+    return this._contentBox;
+  }
+
+  /**
+   * Access margin box positions
+   */
+  get marginBox(): BoxAccessor {
+    return this._marginBox;
+  }
+
+  /**
+   * Get the position offset for a specific box reference.
+   */
+  protected getBoxOffset(reference: BoxReference): Position {
+    let offsetX = 0;
+    let offsetY = 0;
+
+    switch (reference) {
+      case "margin":
+        // Margin box is the outermost
+        offsetX = -this._boxModel.margin.left;
+        offsetY = -this._boxModel.margin.top;
+        break;
+      case "border":
+        // Border box
+        offsetX = 0;
+        offsetY = 0;
+        break;
+      case "padding":
+        // Padding box (inside border)
+        offsetX = this._boxModel.border.left;
+        offsetY = this._boxModel.border.top;
+        break;
+      case "content":
+        // Content box (inside padding)
+        offsetX = this._boxModel.border.left + this._boxModel.padding.left;
+        offsetY = this._boxModel.border.top + this._boxModel.padding.top;
+        break;
+    }
+
+    return { x: offsetX, y: offsetY };
+  }
+
+  /**
+   * Get position for a specific box reference (default: content).
+   */
+  getPositionForBox(reference: BoxReference = "content"): Position {
+    const offset = this.getBoxOffset(reference);
+    return {
+      x: this._position.x + offset.x,
+      y: this._position.y + offset.y,
+    };
+  }
+
+  /**
+   * Get the size (width and height) for a specific box reference.
+   */
+  getBoxSize(reference: BoxReference): { width: number; height: number } {
+    switch (reference) {
+      case "content":
+        return {
+          width: this.contentWidth,
+          height: this.contentHeight,
+        };
+
+      case "padding":
+        return {
+          width:
+            this.contentWidth +
+            this._boxModel.padding.left +
+            this._boxModel.padding.right,
+          height:
+            this.contentHeight +
+            this._boxModel.padding.top +
+            this._boxModel.padding.bottom,
+        };
+
+      case "border":
+        return {
+          width: this._borderBoxWidth,
+          height: this._borderBoxHeight,
+        };
+
+      case "margin":
+        return {
+          width:
+            this._borderBoxWidth +
+            this._boxModel.margin.left +
+            this._boxModel.margin.right,
+          height:
+            this._borderBoxHeight +
+            this._boxModel.margin.top +
+            this._boxModel.margin.bottom,
+        };
+    }
+  }
+
+  /**
+   * Gets the top-left corner position (content box by default).
+   */
+  get topLeft(): Position {
+    return this.getPositionForBox("content");
+  }
+
+  /**
+   * Gets the top-right corner position (content box by default).
+   */
+  get topRight(): Position {
+    const pos = this.getPositionForBox("content");
+    return {
+      x: pos.x + this.contentWidth,
+      y: pos.y,
+    };
+  }
+
+  /**
+   * Gets the bottom-left corner position (content box by default).
+   */
+  get bottomLeft(): Position {
+    const pos = this.getPositionForBox("content");
+    return {
+      x: pos.x,
+      y: pos.y + this.contentHeight,
+    };
+  }
+
+  /**
+   * Gets the bottom-right corner position (content box by default).
+   */
+  get bottomRight(): Position {
+    const pos = this.getPositionForBox("content");
+    return {
+      x: pos.x + this.contentWidth,
+      y: pos.y + this.contentHeight,
+    };
+  }
+
+  /**
+   * Gets the center position (content box by default).
+   */
+  get center(): Position {
+    const pos = this.getPositionForBox("content");
+    return {
+      x: pos.x + this.contentWidth / 2,
+      y: pos.y + this.contentHeight / 2,
+    };
+  }
+}

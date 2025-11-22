@@ -195,3 +195,32 @@ export { Arrow } from "./components/index.js";
  * @category API Reference
  */
 export type { ArrowConfig, ArrowHeadStyle } from "./components/index.js";
+
+/**
+ * New layout system (experimental)
+ * @category API Reference
+ */
+export {
+  NewElement,
+  NewShape,
+  NewRectangle,
+  NewArtboard,
+  NewCircle,
+  NewRect,
+  BoxAccessor,
+} from "./newLayout/index.js";
+
+/**
+ * New layout system types
+ * @category API Reference
+ */
+export type {
+  Position,
+  PositionConfig,
+  NewArtboardConfig,
+  NewCircleConfig,
+  NewRectConfig,
+  BoxModel,
+  ParsedBoxModel,
+  BoxReference,
+} from "./newLayout/index.js";
