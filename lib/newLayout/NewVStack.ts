@@ -64,23 +64,42 @@ export class NewVStack extends NewRectangle {
    * This is the proactive strategy in action.
    */
   addElement(element: NewElement): void {
-    // Calculate Y position for this new child based on existing children
-    let currentY = 0;
-    
-    for (const existingChild of this.children) {
-      currentY += this.getChildHeight(existingChild) + this.spacing;
-    }
-    
-    // Add to children array
+    // Add to children array first
     super.addElement(element);
     
-    // Update auto-sizing if needed
-    if (this._autoWidth || this._autoHeight) {
+    // Update auto-sizing if needed (BEFORE positioning)
+    // This must happen before positioning so alignment calculations use correct dimensions
+    const hadAutoSize = this._autoWidth || this._autoHeight;
+    if (hadAutoSize) {
       this.updateAutoSize();
     }
     
-    // Position only the newly added child (proactive strategy)
-    this.positionChild(element, currentY);
+    // Position all children (or just new one if no auto-sizing)
+    // When auto-sizing changes dimensions, we must reposition ALL children
+    // because alignment depends on the container width
+    if (hadAutoSize) {
+      this.layoutAllChildren();
+    } else {
+      // No auto-sizing: just position the new child
+      let currentY = 0;
+      for (let i = 0; i < this.children.length - 1; i++) {
+        currentY += this.getChildHeight(this.children[i]) + this.spacing;
+      }
+      this.positionChild(element, currentY);
+    }
+  }
+
+  /**
+   * Layout all children from scratch.
+   * Used when auto-sizing changes dimensions and all children need repositioning.
+   */
+  private layoutAllChildren(): void {
+    let currentY = 0;
+    
+    for (const child of this.children) {
+      this.positionChild(child, currentY);
+      currentY += this.getChildHeight(child) + this.spacing;
+    }
   }
 
   /**

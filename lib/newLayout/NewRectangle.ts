@@ -247,53 +247,65 @@ export abstract class NewRectangle extends NewShape {
   }
 
   /**
-   * Gets the top-left corner position (content box by default).
+   * Gets the top-left corner position (border box - the visual boundary).
    */
   get topLeft(): Position {
-    return this.getPositionForBox("content");
+    return this.borderBox.topLeft;
   }
 
   /**
-   * Gets the top-right corner position (content box by default).
+   * Gets the top-right corner position (border box - the visual boundary).
    */
   get topRight(): Position {
-    const pos = this.getPositionForBox("content");
-    return {
-      x: pos.x + this.contentWidth,
-      y: pos.y,
-    };
+    return this.borderBox.topRight;
   }
 
   /**
-   * Gets the bottom-left corner position (content box by default).
+   * Gets the bottom-left corner position (border box - the visual boundary).
    */
   get bottomLeft(): Position {
-    const pos = this.getPositionForBox("content");
-    return {
-      x: pos.x,
-      y: pos.y + this.contentHeight,
-    };
+    return this.borderBox.bottomLeft;
   }
 
   /**
-   * Gets the bottom-right corner position (content box by default).
+   * Gets the bottom-right corner position (border box - the visual boundary).
    */
   get bottomRight(): Position {
-    const pos = this.getPositionForBox("content");
-    return {
-      x: pos.x + this.contentWidth,
-      y: pos.y + this.contentHeight,
-    };
+    return this.borderBox.bottomRight;
   }
 
   /**
-   * Gets the center position (content box by default).
+   * Gets the center position (border box - the visual boundary).
    */
   get center(): Position {
-    const pos = this.getPositionForBox("content");
-    return {
-      x: pos.x + this.contentWidth / 2,
-      y: pos.y + this.contentHeight / 2,
-    };
+    return this.borderBox.center;
+  }
+
+  /**
+   * Gets the center-left position (border box - the visual boundary).
+   */
+  get centerLeft(): Position {
+    return this.borderBox.centerLeft;
+  }
+
+  /**
+   * Gets the center-right position (border box - the visual boundary).
+   */
+  get centerRight(): Position {
+    return this.borderBox.centerRight;
+  }
+
+  /**
+   * Gets the center-top position (border box - the visual boundary).
+   */
+  get centerTop(): Position {
+    return this.borderBox.centerTop;
+  }
+
+  /**
+   * Gets the center-bottom position (border box - the visual boundary).
+   */
+  get centerBottom(): Position {
+    return this.borderBox.centerBottom;
   }
 }
