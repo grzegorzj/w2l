@@ -207,6 +207,7 @@ export {
   NewArtboard,
   NewCircle,
   NewRect,
+  NewVStack,
   BoxAccessor,
 } from "./newLayout/index.js";
 
@@ -220,6 +221,7 @@ export type {
   NewArtboardConfig,
   NewCircleConfig,
   NewRectConfig,
+  NewVStackConfig,
   BoxModel,
   ParsedBoxModel,
   BoxReference,

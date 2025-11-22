@@ -26,20 +26,21 @@ export class NewCircle extends NewShape {
     return this._radius;
   }
 
+  /**
+   * Gets the absolute center position of the circle.
+   */
   get center(): Position {
-    return {
-      x: this._position.x,
-      y: this._position.y,
-    };
+    return this.getAbsolutePosition();
   }
 
   render(): string {
+    const absolutePos = this.getAbsolutePosition();
     const attrs = styleToSVGAttributes(this._style);
     const childrenHTML = this.children
       .map((child) => child.render())
       .join("\n  ");
 
-    const circleTag = `<circle cx="${this._position.x}" cy="${this._position.y}" r="${this._radius}" ${attrs}/>`;
+    const circleTag = `<circle cx="${absolutePos.x}" cy="${absolutePos.y}" r="${this._radius}" ${attrs}/>`;
 
     if (childrenHTML) {
       return `<g>

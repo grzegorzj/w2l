@@ -2,6 +2,18 @@
 
 A clean, hierarchical rebuild of the layout engine starting from basic principles.
 
+## Position Model
+
+All elements use a **relative positioning model**:
+
+- **Storage**: Elements store their position **relative to their parent** (or world coordinates if no parent)
+- **Getters**: Position getters (`.topLeft`, `.center`, `.borderBox.center`, etc.) return **absolute** world positions
+- **Computation**: Absolute positions are computed by walking up the parent chain
+- **No flags**: No "absolutely positioned" flag needed - it's always relative storage with absolute getters
+- **Translation**: Future feature for visual movement without layout changes
+
+This matches CSS/HTML semantics where children are positioned relative to parents but render in world space.
+
 ## Architecture
 
 The new layout system follows a clean hierarchy:
@@ -11,22 +23,44 @@ NewElement (base)
   └── NewShape (stylable shapes)
         ├── NewCircle (circle shape)
         └── NewRectangle (rectangular base)
-              └── NewArtboard (canvas/artboard)
+              ├── NewArtboard (canvas/artboard)
+              └── NewVStack (vertical stack layout)
 ```
+
+## Layout Strategies
+
+The layout system uses two types of strategies for positioning children:
+
+### **Proactive Strategy** (Parent-Driven)
+- **Control**: Parent tells children where to position themselves
+- **Timing**: Children positioned immediately when added to parent
+- **Use case**: When parent knows the layout (VStack, HStack, Grid, etc.)
+- **Example**: `NewVStack` - parent calculates positions and tells children where to be
+
+### **Reactive Strategy** (Child-Driven)
+- **Control**: Parent recalculates after children are positioned/sized
+- **Timing**: Parent adjusts to fit children
+- **Use case**: When parent size depends on children (auto-sizing containers)
+- **Example**: Container that grows to fit its content
+
+**Rule**: An element can never be both proactive and reactive.
 
 ## Classes
 
 ### NewElement
 - **Purpose**: Base class for all elements
+- **Position Model**:
+  - `_position`: Always relative to parent (or world if no parent)
+  - Position getters (`.topLeft`, `.center`, etc.) return **absolute** (world) positions
+  - `getAbsolutePosition()`: Computes world position by walking up parent chain
 - **Properties**: 
   - `children`: Array of child elements
   - `_parent`: Reference to parent element
-  - `_position`: Internal position
-  - `_absolutePositioned`: Whether positioned absolutely or relative to parent
+  - `_position`: Position relative to parent
 - **Methods**:
-  - `position(config)`: Position relative to another point
+  - `position(config)`: Set position (stores as relative to parent)
   - `addElement(element)`: Add a child element
-  - `getAbsolutePosition()`: Get position accounting for parent hierarchy
+  - `getAbsolutePosition()`: Get world position
   - `render()`: Abstract method to render to SVG
 
 ### NewShape
@@ -104,6 +138,21 @@ artboard.borderBox.centerRight // Border box center-right
 - **Features**:
   - Can have children
   - Children rendered in a group with parent
+
+### NewVStack
+- **Purpose**: Vertical stack layout
+- **Extends**: `NewRectangle`
+- **Layout Strategy**: **PROACTIVE** - Parent tells children where to position themselves
+- **Properties**:
+  - `width`: Border box width
+  - `height`: Border box height
+  - `spacing`: Space between children (in pixels)
+  - `boxModel`: Optional box model (padding, border, margin)
+- **Behavior**:
+  - Children positioned vertically with spacing
+  - Children positioned in **content area** (respects padding)
+  - Children positioned immediately when added (proactive)
+  - Parent controls all child positioning
 
 ### NewArtboard
 - **Purpose**: Canvas for rendering elements
@@ -374,6 +423,70 @@ artboard.addElement(parent);
 return artboard.render();
 ```
 
+### VStack Layout (Proactive Strategy)
+
+```javascript
+import { NewArtboard, NewVStack, NewRect } from 'w2l';
+
+const artboard = new NewArtboard({
+  width: 800,
+  height: 600,
+  backgroundColor: '#f0f0f0'
+});
+
+// Create a vertical stack with spacing and padding
+const vstack = new NewVStack({
+  width: 400,
+  height: 500,
+  spacing: 20,  // 20px between children
+  boxModel: {
+    padding: 30  // 30px padding around content
+  },
+  style: {
+    fill: '#ecf0f1',
+    stroke: '#95a5a6',
+    strokeWidth: 2
+  }
+});
+
+// Position VStack at artboard center
+vstack.position({
+  relativeFrom: vstack.center,
+  relativeTo: artboard.center,
+  x: 0,
+  y: 0
+});
+
+// Add rectangles to VStack
+// PROACTIVE: They're positioned immediately when added
+const rect1 = new NewRect({
+  width: 340,  // Fits in content area (400 - 30*2)
+  height: 60,
+  style: { fill: '#3498db' }
+});
+
+const rect2 = new NewRect({
+  width: 340,
+  height: 80,
+  style: { fill: '#e74c3c' }
+});
+
+const rect3 = new NewRect({
+  width: 340,
+  height: 50,
+  style: { fill: '#2ecc71' }
+});
+
+// Children positioned automatically with spacing
+vstack.addElement(rect1);
+vstack.addElement(rect2);
+vstack.addElement(rect3);
+
+artboard.addElement(vstack);
+
+return artboard.render();
+```
+
 ## Current Status
 
 ✅ **Completed (Step 1 & 2)**:
@@ -384,10 +497,11 @@ return artboard.render();
 - ✅ All classes prefixed with "New" to avoid conflicts
 
 ### Positioning System
-- ✅ Relative positioning: `position({ relativeFrom, relativeTo, x, y })`
-- ✅ Elements positioned relative to parent by default (like HTML/CSS)
-- ✅ Explicit `.position()` call marks element as absolutely positioned
-- ✅ Position getters account for parent hierarchy
+- ✅ Relative positioning model: `position({ relativeFrom, relativeTo, x, y })`
+- ✅ Elements store position **relative to parent** (like HTML/CSS)
+- ✅ Position getters return **absolute** (world) positions
+- ✅ Position computation walks up parent chain automatically
+- ✅ Clean semantic model - no "absolute positioned" flag needed
 
 ### Box Model
 - ✅ Full box model support: margin, border, padding, content
@@ -404,7 +518,14 @@ return artboard.render();
 ### Elements
 - ✅ NewArtboard: Canvas with box model support
 - ✅ NewCircle: Circle shape with children support
-- ✅ Both properly render children
+- ✅ NewRect: Rectangle shape for drawing
+- ✅ NewVStack: Vertical stack layout (PROACTIVE strategy)
+
+### Layout System
+- ✅ Proactive strategy implemented (parent-driven positioning)
+- ✅ VStack positions children vertically with spacing
+- ✅ Children positioned in content area (respects padding)
+- ✅ Strategy documented in code
 
 ### Build & Testing
 - ✅ Compiled and exported in main library
@@ -414,11 +535,11 @@ return artboard.render();
 ## Next Steps
 
 Future enhancements:
-- Layout elements (VStack, HStack, etc.)
-- Auto-sizing behavior
-- More shapes (NewRectangle shape, NewSquare, NewPolygon, etc.)
-- Grid and flex-like layouts
-- Advanced box model features (different box reference modes in positioning)
+- More layout elements (HStack, Grid, ZStack, etc.)
+- Reactive strategy implementation (auto-sizing containers)
+- Auto-sizing behavior for layouts
+- More shapes (NewSquare, NewPolygon, NewEllipse, etc.)
+- Advanced layout features (alignment, distribution, etc.)
 
 ## Files
 
@@ -429,6 +550,7 @@ Core:
 - `/lib/newLayout/NewArtboard.ts` - Canvas with box model
 - `/lib/newLayout/NewCircle.ts` - Circle shape
 - `/lib/newLayout/NewRect.ts` - Rectangle shape
+- `/lib/newLayout/NewVStack.ts` - Vertical stack layout (PROACTIVE)
 - `/lib/newLayout/BoxModel.ts` - Box model types and utilities
 - `/lib/newLayout/BoxReference.ts` - Box accessor helper
 - `/lib/newLayout/index.ts` - Exports
@@ -441,4 +563,6 @@ Examples:
 - `/playground/examples/62-new-layout-box-debug.js` - Box model debug with visualizations
 - `/playground/examples/63-new-layout-all-boxes.js` - All box layers visualized (margin, border, padding, content)
 - `/playground/examples/64-new-layout-positioning-boxes.js` - Positioning to different box layers
+- `/playground/examples/65-new-layout-vstack.js` - VStack layout with spacing
+- `/playground/examples/66-new-layout-vstack-debug.js` - VStack with box model visualization
 

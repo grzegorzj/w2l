@@ -167,13 +167,15 @@ export abstract class NewRectangle extends NewShape {
   }
 
   /**
-   * Get position for a specific box reference (default: content).
+   * Get absolute position for a specific box reference (default: content).
+   * Returns world position, not relative to parent.
    */
   getPositionForBox(reference: BoxReference = "content"): Position {
+    const absolutePos = this.getAbsolutePosition();
     const offset = this.getBoxOffset(reference);
     return {
-      x: this._position.x + offset.x,
-      y: this._position.y + offset.y,
+      x: absolutePos.x + offset.x,
+      y: absolutePos.y + offset.y,
     };
   }
 
