@@ -6,10 +6,10 @@
  * Children are positioned along the main axis with spacing.
  */
 
-import { NewRectangle } from "./NewRectangle.js";
-import { type BoxModel } from "./BoxModel.js";
-import { type Style } from "../core/Stylable.js";
-import { NewElement } from "./NewElement.js";
+import { NewRectangle } from "../core/Rectangle.js";
+import { type BoxModel } from "../utils/BoxModel.js";
+import { type Style } from "../../core/Stylable.js";
+import { NewElement, type Position } from "../core/Element.js";
 
 /**
  * Container direction - how children are laid out
@@ -33,6 +33,7 @@ export interface NewContainerConfig {
   height: SizeMode;
   direction?: ContainerDirection;
   spacing?: number;
+  spread?: boolean;
   alignment?: CrossAxisAlignment;
   style?: Partial<Style>;
   boxModel?: BoxModel;
@@ -47,10 +48,12 @@ export interface NewContainerConfig {
  * - Children are laid out along the main axis with spacing between them
  * - Supports cross-axis alignment (start, center, end)
  * - Supports reactive sizing (auto width/height based on children)
+ * - Supports spread mode: evenly distribute children across available space (requires fixed dimension)
  * - Direction "none" allows manual positioning of children (used by Artboard)
  */
 export class NewContainer extends NewRectangle {
   private spacing: number;
+  private spread: boolean;
   private alignment: CrossAxisAlignment;
   private direction: ContainerDirection;
   private _autoWidth: boolean;
@@ -64,6 +67,7 @@ export class NewContainer extends NewRectangle {
     super(width, height, config.boxModel, config.style);
     
     this.spacing = config.spacing ?? 0;
+    this.spread = config.spread ?? false;
     this.alignment = config.alignment ?? "start";
     this.direction = config.direction ?? "none";
     this._autoWidth = config.width === "auto";
@@ -78,8 +82,20 @@ export class NewContainer extends NewRectangle {
     // Add to children array first
     super.addElement(element);
     
-    // If direction is "none", don't auto-layout (manual positioning only)
+    // If direction is "none", position child at content box top-left if not already positioned
+    // This ensures children respect padding by default
     if (this.direction === "none") {
+      // Check if the child has been explicitly positioned
+      if (!(element as any)._hasExplicitPosition) {
+        // Position at content box top-left
+        const contentTopLeft = this.localToAbsolute(0, 0, "content");
+        element.position({
+          relativeFrom: this.getChildDefaultReference(element),
+          relativeTo: contentTopLeft,
+          x: 0,
+          y: 0,
+        });
+      }
       return;
     }
     
@@ -90,13 +106,13 @@ export class NewContainer extends NewRectangle {
       this.updateAutoSize();
     }
     
-    // Position all children (or just new one if no auto-sizing)
-    // When auto-sizing changes dimensions, we must reposition ALL children
-    // because alignment depends on the container dimensions
-    if (hadAutoSize) {
+    // Position all children (or just new one if no auto-sizing and no spread)
+    // When auto-sizing changes dimensions OR spread is enabled, we must reposition ALL children
+    // because alignment/spacing depends on the container dimensions and all children
+    if (hadAutoSize || this.spread) {
       this.layoutAllChildren();
     } else {
-      // No auto-sizing: just position the new child
+      // No auto-sizing and no spread: just position the new child
       let currentOffset = 0;
       for (let i = 0; i < this.children.length - 1; i++) {
         currentOffset += this.getChildSize(this.children[i]) + this.spacing;
@@ -208,12 +224,62 @@ export class NewContainer extends NewRectangle {
    * Used when auto-sizing changes dimensions and all children need repositioning.
    */
   private layoutAllChildren(): void {
+    if (this.children.length === 0) return;
+
+    // Calculate spacing (either fixed or spread)
+    const effectiveSpacing = this.calculateEffectiveSpacing();
+    
     let currentOffset = 0;
     
     for (const child of this.children) {
       this.positionChild(child, currentOffset);
-      currentOffset += this.getChildSize(child) + this.spacing;
+      currentOffset += this.getChildSize(child) + effectiveSpacing;
     }
+  }
+
+  /**
+   * Calculate the effective spacing between children.
+   * In spread mode, distributes available space evenly.
+   * Otherwise, uses the configured spacing.
+   */
+  private calculateEffectiveSpacing(): number {
+    if (!this.spread || this.children.length <= 1) {
+      return this.spacing;
+    }
+
+    // Spread only works with fixed dimensions
+    if (this.direction === "vertical") {
+      if (this._autoHeight) return this.spacing; // Can't spread with auto height
+      
+      // Calculate total size of children
+      let totalChildSize = 0;
+      for (const child of this.children) {
+        totalChildSize += this.getChildHeight(child);
+      }
+      
+      // Available space = content height - total child size
+      const availableSpace = this.contentHeight - totalChildSize;
+      
+      // Distribute evenly between children (n-1 gaps for n children)
+      return Math.max(0, availableSpace / (this.children.length - 1));
+      
+    } else if (this.direction === "horizontal") {
+      if (this._autoWidth) return this.spacing; // Can't spread with auto width
+      
+      // Calculate total size of children
+      let totalChildSize = 0;
+      for (const child of this.children) {
+        totalChildSize += this.getChildWidth(child);
+      }
+      
+      // Available space = content width - total child size
+      const availableSpace = this.contentWidth - totalChildSize;
+      
+      // Distribute evenly between children (n-1 gaps for n children)
+      return Math.max(0, availableSpace / (this.children.length - 1));
+    }
+    
+    return this.spacing;
   }
 
   /**
@@ -249,6 +315,19 @@ export class NewContainer extends NewRectangle {
   }
 
   /**
+   * Get the default reference point for a child (for initial positioning).
+   * Returns topLeft for rectangles, center for circles.
+   */
+  private getChildDefaultReference(child: NewElement): Position {
+    if ((child as any).borderBox && (child as any).borderBox.topLeft) {
+      return (child as any).borderBox.topLeft;
+    } else if ((child as any).center) {
+      return (child as any).center;
+    }
+    return { x: 0, y: 0 };
+  }
+
+  /**
    * Get the alignment point on a child element based on current alignment setting
    */
   private getChildAlignmentPoint(child: NewElement): { x: number; y: number } {
@@ -277,9 +356,36 @@ export class NewContainer extends NewRectangle {
             return rect.borderBox.bottomLeft;
         }
       }
+    } else if ((child as any).center && (child as any).radius) {
+      // Circle - calculate alignment point based on direction and alignment
+      const circle = child as any;
+      const center = circle.center;
+      const radius = circle.radius;
+      
+      if (this.direction === "vertical") {
+        // Vertical stack: align horizontally, but use TOP of circle for main axis
+        switch (this.alignment) {
+          case "start":
+            return { x: center.x - radius, y: center.y - radius }; // Left edge, top
+          case "center":
+            return { x: center.x, y: center.y - radius }; // Center, top
+          case "end":
+            return { x: center.x + radius, y: center.y - radius }; // Right edge, top
+        }
+      } else {
+        // Horizontal stack: align vertically, but use LEFT of circle for main axis
+        switch (this.alignment) {
+          case "start":
+            return { x: center.x - radius, y: center.y - radius }; // Left, top edge
+          case "center":
+            return { x: center.x - radius, y: center.y }; // Left, center
+          case "end":
+            return { x: center.x - radius, y: center.y + radius }; // Left, bottom edge
+        }
+      }
     } else {
-      // Circle or other element - use center
-      return (child as any).center;
+      // Unknown element type - use center if available
+      return (child as any).center || { x: 0, y: 0 };
     }
   }
 

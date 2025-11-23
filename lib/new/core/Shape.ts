@@ -2,8 +2,8 @@
  * New layout system - Shape class
  */
 
-import { NewElement, type PositionConfig } from "./NewElement.js";
-import { Stylable, Style } from "../core/Stylable.js";
+import { NewElement, type PositionConfig } from "./Element.js";
+import { Stylable, Style } from "../../core/Stylable.js";
 
 /**
  * Base class for all visual shapes.
@@ -31,4 +31,3 @@ export abstract class NewShape extends NewElement implements Stylable {
     this._style = { ...this._style, ...style };
   }
 }
-

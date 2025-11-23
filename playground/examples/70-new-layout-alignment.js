@@ -5,7 +5,7 @@
  * Shows how elements of different sizes align within the container.
  */
 
-import { NewArtboard, NewVStack, NewRect } from 'w2l';
+import { NewArtboard, NewContainer, NewRect } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 1200,
@@ -15,9 +15,10 @@ const artboard = new NewArtboard({
 
 // Helper to create a VStack with specific alignment
 function createAlignedStack(alignment, xPos) {
-  const stack = new NewVStack({
+  const stack = new NewContainer({
     width: 350,
     height: 600,
+    direction: 'vertical',
     spacing: 15,
     alignment: alignment,
     boxModel: { padding: 20 },
@@ -56,9 +57,9 @@ function createAlignedStack(alignment, xPos) {
 }
 
 // Create three VStacks with different alignments
-const leftStack = createAlignedStack('left', 25);
+const leftStack = createAlignedStack('start', 25);
 const centerStack = createAlignedStack('center', 425);
-const rightStack = createAlignedStack('right', 825);
+const rightStack = createAlignedStack('end', 825);
 
 artboard.addElement(leftStack);
 artboard.addElement(centerStack);

@@ -9,7 +9,7 @@
  * Debug circles show border box corners of each rectangle.
  */
 
-import { NewArtboard, NewVStack, NewRect, NewCircle } from 'w2l';
+import { NewArtboard, NewContainer, NewRect, NewCircle } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 1200,
@@ -36,8 +36,9 @@ function createDebugCircle(position, color, radius = 3) {
 const allRects = [];
 
 // Fixed size VStack
-const fixedStack = new NewVStack({
+const fixedStack = new NewContainer({
   width: 300,
+  direction: 'vertical',
   height: 400,
   spacing: 10,
   alignment: 'center',
@@ -72,8 +73,9 @@ fixedStack.position({
 });
 
 // Auto-height VStack
-const autoHeightStack = new NewVStack({
+const autoHeightStack = new NewContainer({
   width: 300,
+  direction: 'vertical',
   height: 'auto',
   spacing: 10,
   alignment: 'center',
@@ -108,11 +110,12 @@ autoHeightStack.position({
 });
 
 // Auto width and height VStack
-const autoStack = new NewVStack({
+const autoStack = new NewContainer({
   width: 'auto',
+  direction: 'vertical',
   height: 'auto',
   spacing: 10,
-  alignment: 'left',
+  alignment: 'start',
   boxModel: { padding: 15 },
   style: {
     fill: '#e74c3c',

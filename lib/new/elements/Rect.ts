@@ -2,9 +2,9 @@
  * New layout system - Rect shape element
  */
 
-import { NewRectangle } from "./NewRectangle.js";
-import { styleToSVGAttributes, type Style } from "../core/Stylable.js";
-import { type BoxModel } from "./BoxModel.js";
+import { NewRectangle } from "../core/Rectangle.js";
+import { styleToSVGAttributes, type Style } from "../../core/Stylable.js";
+import { type BoxModel } from "../utils/BoxModel.js";
 
 export interface NewRectConfig {
   width: number;

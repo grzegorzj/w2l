@@ -5,7 +5,7 @@
  * Debug circles visualize the box model to catch any alignment bugs.
  */
 
-import { NewArtboard, NewVStack, NewRect, NewCircle } from 'w2l';
+import { NewArtboard, NewContainer, NewRect, NewCircle } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 1000,
@@ -14,11 +14,12 @@ const artboard = new NewArtboard({
 });
 
 // VStack with auto-sizing and right alignment
-const autoRightStack = new NewVStack({
+const autoRightStack = new NewContainer({
   width: 'auto',
+  direction: 'vertical',
   height: 'auto',
   spacing: 15,
-  alignment: 'right',
+  alignment: 'end',
   boxModel: { padding: 25, border: 3 },
   style: {
     fill: '#34495e',

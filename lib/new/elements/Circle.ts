@@ -2,9 +2,9 @@
  * New layout system - Circle class
  */
 
-import { NewShape } from "./NewShape.js";
-import { type Position } from "./NewElement.js";
-import { styleToSVGAttributes, type Style } from "../core/Stylable.js";
+import { NewShape } from "../core/Shape.js";
+import { type Position } from "../core/Element.js";
+import { styleToSVGAttributes, type Style } from "../../core/Stylable.js";
 
 export interface NewCircleConfig {
   radius: number;

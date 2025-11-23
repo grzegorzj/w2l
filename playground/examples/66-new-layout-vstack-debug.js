@@ -10,7 +10,7 @@
  * The VStack tells children where to position themselves.
  */
 
-import { NewArtboard, NewVStack, NewRect } from 'w2l';
+import { NewArtboard, NewContainer, NewRect } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 800,
@@ -18,10 +18,11 @@ const artboard = new NewArtboard({
   backgroundColor: '#f8f9fa'
 });
 
-// Create a VStack with visible padding
-const vstack = new NewVStack({
+// Create a vertical container with visible padding
+const vstack = new NewContainer({
   width: 400,
   height: 450,
+  direction: 'vertical',
   spacing: 15,
   boxModel: {
     padding: 40  // 40px padding on all sides

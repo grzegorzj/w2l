@@ -65,13 +65,13 @@ Let's create an example which illustrates positioning in regards to different bo
 
 # Prompt 4
 
-It works! It's time to introduce positioning multiple items as a child. We need to have a default strategy for what to do if an element has multiple children.
+It works! It's time to introduce positioning multiple items as a child. We need to have a default strategy for what to do if an element has children to position.
 
-This, in turn, introduces a hard concept: a parent is positioning children, which is closely tied to sizing. My idea for this is the following: parent only tells the children what is the _strategy_ of positioning it takes.
+This, in turn, introduces a hard concept: a parent is positioning children, which is closely tied to sizing. My idea for this is the following: parent tells the children what is the _strategy_ of positioning it takes, and children do the work of positioning themselves.
 
 There are two different types of strategies (and we should write a compact, general guide on this).
 
-- reactive strategies: parent needs recalculation after the children are rendered. For instance, we make the parent match the size of children.
+- reactive strategies: parent needs recalculation after the children are positioned and sized. For instance, we make the parent match the size of children.
 - proactive strategies: children need recalculation when parent renders them
 
 An element never can be both.
@@ -83,9 +83,85 @@ These strategies divide between:
 
 ---
 
-Alignment:
-
-- There should be hierarchy to how children are positioned
+Hierarchy:
 
 1. if the parent has a claim on how it wants to position children, it tells them by passing all relevant information for the children to alter their position
 2. the children actually implement the relative positioning - that's because triangle might want to behave slightly differently than a rectangle
+3. the children can overwrite the positioning preference of the parent, but never the type of it's strategy
+
+Implementation
+
+- Separate measure and layout phases.
+- We can move objects around with .translate (and it updates its external information about where it is, but doesn't affect the layouting measurements etc)
+
+First implementation example:
+
+- start with implementing vertical stack with spacing as a proactive strategy and create an example with a few rectangles. that's gonna be a proactive strategy. we should take note of this in the code somehow.
+- remember to respect box model - positioned children should be padded.
+- don't implement any other infrastructure just yet. let's first test this.
+
+# Feedback
+
+Something very strange is happening around the last element, that is shifted horizontally to the center of the VStack (its top left corner leaves a gap sized of the previous element above it, and is horizontally centered to the center of vstack, instead to the left padding). When comment out the last element, it again applies to the last element.
+
+# Prompt 5
+
+Let's add a zIndex system and document MAXIMALLY BRIEFLY in guides (subfolder /new) what we've achieved so far.
+
+# Feedback
+
+With nested VStacks, we ran into an interesting problem: the inner VStack is weirdly shifted, e.g. it does not align left edges with the rectangle above (that one is positioned correctly). I don't quite understand why - we don't set the position on it, and on top of it, it overlaps its top edge with the bottom edge of the topRect. looks like the VStack implements some of its positioning methods differently than a normal rectangle (Which.. isn't correct, as after all, VStack is just a rectangle, but with VStack positioning ability). Stacking two rectangles one above another works nicely.
+
+# Prompt 6
+
+This works. Let's now create, in the simple nesting example, some debugging circles that confirm our position-retrieval helpers return correct absolute positions.
+
+# Prompt 7
+
+Let's add alignment to our VStack - alignment to the bottom, right, left, center, etc. This effectively means that differently sized elements should "stick" to a certain line.
+
+The way I see this being implemented is that each child returns an alignment point based on the "where do align to", so for instance if we ask a rectangle to be aligned to the left, it returns it's leftCenter point.
+
+We enter another interesting territory right now: if we would like to align items _vertically_ in a VStack, we'd effectively need to know how much space they take altogether. That means we could instead just add a property that makes it's vertical size _reactive_, meaning once it lays out children, only then we know its size.
+
+Let's lay it out systematically:
+
+- if VStack is given a size, we stick to that size. items within it are just aligned to the top.
+- we can however make the VStack "auto adjust" to size of it's children (this shuold be on a per-axis basis and implemented on rectangle level). We can set its wight (or its width can be set by a parent), but its height may be reactive. This is a change in thinking from when I said "Element can't be both reactive and proactive" - a _dimension_ of element can't be.
+
+Let's impement it and give it some intuitive name, and create a relevant example. Size alignment should respect the boxModel.
+
+# Prompt 8
+
+There's a bug. If the first element is the widest, it correctly auto-aligns. If not, it actually aligns items to the right or center - hard to tell why
+
+// remember to respect box model in spacing - this doesnt happen now (looks like it does thougj)
+// remember to respect the positioning point in autosizing - TBD (e.g i positioned the center of my thing to the artboard, and im autoresizing it, what now?)
+
+# Prompt 9
+
+Let's create a new example/experiment: a VStack with static size that aligns things to the center, and another VStack inside that has dynamic size and a few rectangles inside.
+
+# Prompt 10
+
+Let's refactor our VStack object to just be a Stack object, and allow choosing the direction. (horizontal vs. vertical.)
+
+Let's then create an example that shows the simple horizontal direction, and another one, when we nest them
+
+# Feedback
+
+// we should refactor everything to be a VStack/HStack by default but first, let's make HStack
+
+# Prompt 11
+
+Brilliant! Things seem to work.
+
+I would like you to reproduce the structure of "layout/core/etc" in "new" folder (rename newLayout to new).
+
+# Prompt 12
+
+Let's add new ability to our Container - to spread items along its width/height. It should only work if there's a fixed width attached to it, otherwise, it should just fit-to-size. Let's create an according example and add debug circles to make sure the elements return correct positions after the spread, including nesting horizontally spread and vertically spread things. Remember following our reactive/proactive philoopshy. (this is proactive positioning)
+
+# Prompt 13
+
+One thing that is special about artboard is that it should capture - in its autosizing - everything that is positioned absolutely. Probably this means simply traversing the entire tree of parents/children, checking what has been positioned absolutely, and grabbing its coordinates - in case we want to reactively size the artboard.

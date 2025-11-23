@@ -208,9 +208,10 @@ export {
   NewCircle,
   NewRect,
   NewContainer,
-  NewVStack,
   BoxAccessor,
-} from "./newLayout/index.js";
+  Grid,
+  Columns,
+} from "./new/index.js";
 
 /**
  * New layout system types
@@ -223,12 +224,14 @@ export type {
   NewCircleConfig,
   NewRectConfig,
   NewContainerConfig,
-  NewVStackConfig,
   ContainerDirection,
   CrossAxisAlignment,
-  HorizontalAlignment,
   SizeMode,
   BoxModel,
   ParsedBoxModel,
   BoxReference,
-} from "./newLayout/index.js";
+  GridConfig,
+  GridCell,
+  ColumnsConfig,
+  ColumnContainer,
+} from "./new/index.js";

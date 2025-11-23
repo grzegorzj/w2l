@@ -30,6 +30,7 @@ export abstract class NewElement {
   protected _zIndex?: number;
   private static _creationCounter: number = 0;
   protected _creationIndex: number;
+  protected _hasExplicitPosition: boolean = false;
 
   constructor() {
     this._creationIndex = NewElement._creationCounter++;
@@ -55,6 +56,18 @@ export abstract class NewElement {
    * The child will be positioned relative to this element.
    */
   addElement(element: NewElement): void {
+    // If element had no parent but has a position, convert from absolute to relative
+    if (!element._parent && element._hasExplicitPosition) {
+      const elementAbsolutePos = { ...element._position }; // This was absolute
+      const thisAbsolutePos = this.getAbsolutePosition(); // Parent's absolute position
+      
+      // Convert to relative position
+      element._position = {
+        x: elementAbsolutePos.x - thisAbsolutePos.x,
+        y: elementAbsolutePos.y - thisAbsolutePos.y,
+      };
+    }
+    
     this.children.push(element);
     element._parent = this;
   }
@@ -110,6 +123,9 @@ export abstract class NewElement {
       // No parent - absolute position equals relative position
       this._position = newAbsolute;
     }
+
+    // Mark that this element has been explicitly positioned
+    this._hasExplicitPosition = true;
   }
 
   /**

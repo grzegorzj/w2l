@@ -9,7 +9,7 @@
  * Debug circles show border box corners to verify positioning.
  */
 
-import { NewArtboard, NewVStack, NewRect, NewCircle } from 'w2l';
+import { NewArtboard, NewContainer, NewRect, NewCircle } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 1000,
@@ -18,8 +18,9 @@ const artboard = new NewArtboard({
 });
 
 // Outer VStack - Fixed size with center alignment
-const outerVStack = new NewVStack({
+const outerVStack = new NewContainer({
   width: 600,
+  direction: 'vertical',
   height: 700,
   spacing: 20,
   alignment: 'center',  // Center-align children
@@ -50,11 +51,12 @@ const topRect = new NewRect({
 });
 
 // Inner VStack - Auto-sizing (reactive)
-const innerVStack = new NewVStack({
+const innerVStack = new NewContainer({
   width: 'auto',
+  direction: 'vertical',
   height: 'auto',
   spacing: 12,
-  alignment: 'left',
+  alignment: 'start',
   boxModel: { padding: 20, border: 2 },
   style: {
     fill: '#3498db',

@@ -2,16 +2,16 @@
  * New layout system - Rectangle class
  */
 
-import { NewShape } from "./NewShape.js";
-import { type Position } from "./NewElement.js";
+import { NewShape } from "./Shape.js";
+import { type Position } from "./Element.js";
 import {
   type BoxModel,
   type ParsedBoxModel,
   parseBoxModel,
   type BoxReference,
-} from "./BoxModel.js";
-import { BoxAccessor } from "./BoxReference.js";
-import { Style } from "../core/Stylable.js";
+} from "../utils/BoxModel.js";
+import { BoxAccessor } from "../utils/BoxReference.js";
+import { Style } from "../../core/Stylable.js";
 
 /**
  * Base class for rectangular elements.

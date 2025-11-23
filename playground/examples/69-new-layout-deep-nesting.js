@@ -6,7 +6,7 @@
  * through multiple levels of hierarchy.
  */
 
-import { NewArtboard, NewVStack, NewRect } from 'w2l';
+import { NewArtboard, NewContainer, NewRect } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 800,
@@ -15,9 +15,10 @@ const artboard = new NewArtboard({
 });
 
 // Level 1: Outermost VStack
-const level1 = new NewVStack({
+const level1 = new NewContainer({
   width: 700,
   height: 550,
+  direction: 'vertical',
   spacing: 20,
   boxModel: { padding: 30 },
   style: {
@@ -35,9 +36,10 @@ level1.position({
 });
 
 // Level 2: Middle VStack (nested in level1)
-const level2 = new NewVStack({
+const level2 = new NewContainer({
   width: 640,
   height: 220,
+  direction: 'vertical',
   spacing: 15,
   boxModel: { padding: 25 },
   style: {
@@ -48,9 +50,10 @@ const level2 = new NewVStack({
 });
 
 // Level 3: Innermost VStack (nested in level2)
-const level3 = new NewVStack({
+const level3 = new NewContainer({
   width: 590,
   height: 120,
+  direction: 'vertical',
   spacing: 10,
   boxModel: { padding: 15 },
   style: {

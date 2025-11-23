@@ -10,7 +10,7 @@
  * - Respects box model (children positioned in content area)
  */
 
-import { NewArtboard, NewVStack, NewRect } from 'w2l';
+import { NewArtboard, NewContainer, NewRect } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 800,
@@ -18,10 +18,11 @@ const artboard = new NewArtboard({
   backgroundColor: '#f0f0f0'
 });
 
-// Create a VStack with padding
-const vstack = new NewVStack({
+// Create a vertical container with padding
+const vstack = new NewContainer({
   width: 400,
   height: 500,
+  direction: 'vertical',
   spacing: 20,  // Space between children
   boxModel: {
     padding: 30  // Padding around content

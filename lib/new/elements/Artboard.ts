@@ -2,9 +2,9 @@
  * New layout system - Artboard class
  */
 
-import { NewContainer, type SizeMode } from "./NewContainer.js";
-import { type Style, styleToSVGAttributes } from "../core/Stylable.js";
-import { type BoxModel } from "./BoxModel.js";
+import { NewContainer, type SizeMode } from "../layout/Container.js";
+import { type Style, styleToSVGAttributes } from "../../core/Stylable.js";
+import { type BoxModel } from "../utils/BoxModel.js";
 
 export interface NewArtboardConfig {
   /**
@@ -81,35 +81,49 @@ export class NewArtboard extends NewContainer {
   }
 
   /**
-   * Update artboard size based on children bounds.
+   * Update artboard size based on all elements in the tree.
+   * Recursively traverses the entire element tree to find all positioned elements.
    */
   private updateArtboardBounds(): void {
     if (this.children.length === 0) return;
 
-    // Calculate the bounding box of all children
+    // Calculate the bounding box of ALL elements in the tree (recursive)
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
 
-    for (const child of this.children) {
-      // Get child bounds (approximate using border box if available)
-      if ((child as any).borderBox) {
-        const tl = (child as any).borderBox.topLeft;
-        const br = (child as any).borderBox.bottomRight;
+    // Recursive function to traverse the tree and collect bounds
+    const collectBounds = (element: any) => {
+      // Get bounds of this element
+      if (element.borderBox) {
+        const tl = element.borderBox.topLeft;
+        const br = element.borderBox.bottomRight;
         minX = Math.min(minX, tl.x);
         minY = Math.min(minY, tl.y);
         maxX = Math.max(maxX, br.x);
         maxY = Math.max(maxY, br.y);
-      } else if ((child as any).center && (child as any).radius) {
+      } else if (element.center && element.radius) {
         // Circle
-        const center = (child as any).center;
-        const radius = (child as any).radius;
+        const center = element.center;
+        const radius = element.radius;
         minX = Math.min(minX, center.x - radius);
         minY = Math.min(minY, center.y - radius);
         maxX = Math.max(maxX, center.x + radius);
         maxY = Math.max(maxY, center.y + radius);
       }
+
+      // Recursively collect bounds from children
+      if (element.children && Array.isArray(element.children)) {
+        for (const child of element.children) {
+          collectBounds(child);
+        }
+      }
+    };
+
+    // Start recursive traversal from all direct children
+    for (const child of this.children) {
+      collectBounds(child);
     }
 
     if (this._artboardAutoWidth && isFinite(minX) && isFinite(maxX)) {

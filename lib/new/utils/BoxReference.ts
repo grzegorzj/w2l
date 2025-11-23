@@ -1,10 +1,10 @@
 /**
  * New layout system - Box Reference Helper
- * 
+ *
  * Provides explicit access to different box model layers.
  */
 
-import { type Position } from "./NewElement.js";
+import { type Position } from "../core/Element.js";
 import { type BoxReference as BoxRefType } from "./BoxModel.js";
 
 /**
@@ -130,4 +130,3 @@ export class BoxAccessor {
     };
   }
 }
-

@@ -10,7 +10,7 @@
  * - Blue: Centers
  */
 
-import { NewArtboard, NewVStack, NewRect, NewCircle } from 'w2l';
+import { NewArtboard, NewContainer, NewRect, NewCircle } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 800,
@@ -19,9 +19,10 @@ const artboard = new NewArtboard({
 });
 
 // Outer VStack
-const outerVStack = new NewVStack({
+const outerVStack = new NewContainer({
   width: 600,
   height: 500,
+  direction: 'vertical',
   spacing: 20,
   boxModel: { padding: 30 },
   style: {
@@ -50,9 +51,10 @@ const topRect = new NewRect({
 });
 
 // Inner VStack (nested)
-const innerVStack = new NewVStack({
+const innerVStack = new NewContainer({
   width: 540,
   height: 200,
+  direction: 'vertical',
   spacing: 15,
   boxModel: { padding: 20 },
   style: {
