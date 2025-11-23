@@ -4,7 +4,7 @@
  */
 
 import { NewContainer, type SizeMode, type CrossAxisAlignment } from "./Container.js";
-import { type BoxModel } from "../utils/BoxModel.js";
+import { type BoxModel, parseBoxModel } from "../utils/BoxModel.js";
 import { type Style } from "../../core/Stylable.js";
 
 export interface GridConfig {
@@ -38,15 +38,23 @@ export class Grid {
     this.columns = config.columns;
     const gutter = config.gutter ?? 0;
 
-    // Calculate total grid dimensions
-    const totalWidth =
-      config.cellWidth === "auto"
-        ? "auto"
-        : (config.cellWidth as number) * config.columns + gutter * (config.columns - 1);
-    const totalHeight =
-      config.cellHeight === "auto"
-        ? "auto"
-        : (config.cellHeight as number) * config.rows + gutter * (config.rows - 1);
+    // Parse cell box model to account for padding/border
+    const parsedCellBoxModel = parseBoxModel(config.boxModel);
+    const cellHorizontalPadding = parsedCellBoxModel.padding.left + parsedCellBoxModel.padding.right + 
+                                   parsedCellBoxModel.border.left + parsedCellBoxModel.border.right;
+    const cellVerticalPadding = parsedCellBoxModel.padding.top + parsedCellBoxModel.padding.bottom +
+                                 parsedCellBoxModel.border.top + parsedCellBoxModel.border.bottom;
+
+    // Calculate cell border box dimensions (cellWidth/Height are content sizes, add padding)
+    const cellBorderBoxWidth = 
+      config.cellWidth === "auto" 
+        ? "auto" 
+        : (config.cellWidth as number) + cellHorizontalPadding;
+    
+    const cellBorderBoxHeight = 
+      config.cellHeight === "auto" 
+        ? "auto" 
+        : (config.cellHeight as number) + cellVerticalPadding;
 
     // Create main container (no style - just a layout wrapper)
     this.mainContainer = new NewContainer({
@@ -60,7 +68,7 @@ export class Grid {
     for (let row = 0; row < config.rows; row++) {
       const rowContainer = new NewContainer({
         width: "auto",  // Auto-size to fit cells
-        height: config.cellHeight,
+        height: cellBorderBoxHeight,
         direction: "horizontal",
         spacing: gutter,
       });
@@ -70,8 +78,8 @@ export class Grid {
       // Create cells in this row
       for (let col = 0; col < config.columns; col++) {
         const cell = new NewContainer({
-          width: config.cellWidth,
-          height: config.cellHeight,
+          width: cellBorderBoxWidth,
+          height: cellBorderBoxHeight,
           direction: "none",
           style: config.style,  // Apply style to cells
           boxModel: config.boxModel,  // Apply boxModel to cells

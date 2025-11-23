@@ -25,9 +25,19 @@ export {
   NewArtboard,
   NewCircle,
   NewRect,
+  NewSquare,
+  NewTriangle,
+  NewLine,
+  NewRegularPolygon,
   type NewArtboardConfig,
   type NewCircleConfig,
   type NewRectConfig,
+  type NewSquareConfig,
+  type NewTriangleConfig,
+  type TriangleType,
+  type TriangleOrientation,
+  type NewLineConfig,
+  type NewRegularPolygonConfig,
 } from "./elements/index.js";
 
 // Utils

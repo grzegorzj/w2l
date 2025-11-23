@@ -383,6 +383,35 @@ export class NewContainer extends NewRectangle {
             return { x: center.x - radius, y: center.y + radius }; // Left, bottom edge
         }
       }
+    } else if ((child as any).boundingBoxCenter && (child as any).boundingBoxTopLeft) {
+      // Triangle or polygon - use bounding box for alignment
+      const shape = child as any;
+      const bbCenter = shape.boundingBoxCenter;
+      const bbTopLeft = shape.boundingBoxTopLeft;
+      const bbWidth = shape.boundingWidth;
+      const bbHeight = shape.boundingHeight;
+      
+      if (this.direction === "vertical") {
+        // Vertical stack: align horizontally, use TOP of bounding box for main axis
+        switch (this.alignment) {
+          case "start":
+            return { x: bbTopLeft.x, y: bbTopLeft.y }; // Left edge, top
+          case "center":
+            return { x: bbCenter.x, y: bbTopLeft.y }; // Center, top
+          case "end":
+            return { x: bbTopLeft.x + bbWidth, y: bbTopLeft.y }; // Right edge, top
+        }
+      } else {
+        // Horizontal stack: align vertically, use LEFT of bounding box for main axis
+        switch (this.alignment) {
+          case "start":
+            return { x: bbTopLeft.x, y: bbTopLeft.y }; // Left, top edge
+          case "center":
+            return { x: bbTopLeft.x, y: bbCenter.y }; // Left, center
+          case "end":
+            return { x: bbTopLeft.x, y: bbTopLeft.y + bbHeight }; // Left, bottom edge
+        }
+      }
     } else {
       // Unknown element type - use center if available
       return (child as any).center || { x: 0, y: 0 };
