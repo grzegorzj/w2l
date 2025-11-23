@@ -1,16 +1,18 @@
 /**
  * Example: Nested Horizontal + Vertical Stacks
  * 
- * Demonstrates nesting of horizontal and vertical stacks.
+ * Demonstrates nesting of horizontal and vertical containers.
+ * 
+ * **FIX**: Position AFTER adding children (so auto-sizing completes first)
  * Structure:
- * - Outer VStack (vertical)
+ * - Outer VStack (AUTO-HEIGHT, center alignment, positioned after children added)
  *   - Header rect
- *   - HStack (horizontal) with multiple items
- *   - VStack (vertical) nested
+ *   - HStack (horizontal, auto-width) with multiple items
+ *   - VStack (vertical, auto-height) nested
  *   - Footer rect
  */
 
-import { NewArtboard, NewStack, NewRect, NewCircle } from 'w2l';
+import { NewArtboard, NewContainer, NewRect, NewCircle } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 1000,
@@ -33,8 +35,8 @@ function createDebugCircle(position, color, radius = 3) {
   return circle;
 }
 
-// Outer VStack - Main container
-const outerVStack = new NewStack({
+// Outer VStack - Main container with auto-sizing
+const outerVStack = new NewContainer({
   width: 800,
   height: 'auto',  // Auto-height
   direction: 'vertical',
@@ -48,12 +50,8 @@ const outerVStack = new NewStack({
   }
 });
 
-outerVStack.position({
-  relativeFrom: outerVStack.center,
-  relativeTo: artboard.center,
-  x: 0,
-  y: 0
-});
+// DON'T position it manually before adding children
+// The problem: if we position before auto-sizing, the position becomes stale
 
 // Header rect
 const header = new NewRect({
@@ -67,7 +65,7 @@ const header = new NewRect({
 });
 
 // Inner HStack - Horizontal layout
-const innerHStack = new NewStack({
+const innerHStack = new NewContainer({
   width: 'auto',  // Auto-width
   height: 120,
   direction: 'horizontal',
@@ -99,7 +97,7 @@ hStackWidths.forEach((width, idx) => {
 });
 
 // Inner VStack - Vertical layout
-const innerVStack = new NewStack({
+const innerVStack = new NewContainer({
   width: 500,
   height: 'auto',  // Auto-height
   direction: 'vertical',
@@ -141,21 +139,34 @@ const footer = new NewRect({
   }
 });
 
-// Build hierarchy
+// Build hierarchy - add children FIRST (so auto-sizing happens)
 outerVStack.addElement(header);
 outerVStack.addElement(innerHStack);
 outerVStack.addElement(innerVStack);
 outerVStack.addElement(footer);
 
+// NOW position after auto-sizing is complete
+outerVStack.position({
+  relativeFrom: outerVStack.center,
+  relativeTo: artboard.center,
+  x: 0,
+  y: 0
+});
+
+// Add to artboard
 artboard.addElement(outerVStack);
 
 // Debug markers
 const debugMarkers = [];
 
-// Outer VStack center line (where things align)
+// Artboard center (where outerVStack should be centered)
 debugMarkers.push(
-  createDebugCircle(outerVStack.contentBox.centerTop, '#f39c12', 6),
-  createDebugCircle(outerVStack.contentBox.centerBottom, '#f39c12', 6)
+  createDebugCircle(artboard.center, '#e74c3c', 8)
+);
+
+// Outer VStack center (should align with artboard center)
+debugMarkers.push(
+  createDebugCircle(outerVStack.center, '#f39c12', 6)
 );
 
 // Inner HStack border box

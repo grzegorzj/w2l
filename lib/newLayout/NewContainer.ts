@@ -1,8 +1,8 @@
 /**
- * New layout system - Stack (Horizontal or Vertical)
+ * New layout system - Container (Base for layout containers)
  * 
  * LAYOUT STRATEGY: PROACTIVE
- * The parent (Stack) tells children where to position themselves.
+ * The parent (Container) tells children where to position themselves.
  * Children are positioned along the main axis with spacing.
  */
 
@@ -12,14 +12,14 @@ import { type Style } from "../core/Stylable.js";
 import { NewElement } from "./NewElement.js";
 
 /**
- * Stack direction
+ * Container direction - how children are laid out
  */
-export type StackDirection = "horizontal" | "vertical";
+export type ContainerDirection = "horizontal" | "vertical" | "none";
 
 /**
  * Alignment on the cross-axis
- * - For vertical stacks: horizontal alignment (left, center, right)
- * - For horizontal stacks: vertical alignment (top, center, bottom)
+ * - For vertical containers: horizontal alignment (left, center, right)
+ * - For horizontal containers: vertical alignment (top, center, bottom)
  */
 export type CrossAxisAlignment = "start" | "center" | "end";
 
@@ -28,10 +28,10 @@ export type CrossAxisAlignment = "start" | "center" | "end";
  */
 export type SizeMode = number | "auto";
 
-export interface NewStackConfig {
+export interface NewContainerConfig {
   width: SizeMode;
   height: SizeMode;
-  direction?: StackDirection;
+  direction?: ContainerDirection;
   spacing?: number;
   alignment?: CrossAxisAlignment;
   style?: Partial<Style>;
@@ -39,23 +39,24 @@ export interface NewStackConfig {
 }
 
 /**
- * Stack layout that positions children along a main axis (horizontal or vertical).
+ * Container layout that positions children along a main axis (horizontal, vertical, or none).
  * 
  * Strategy: PROACTIVE
  * - Parent controls child positioning
  * - Children are positioned in the content area (respects padding)
- * - Children are stacked along the main axis with spacing between them
+ * - Children are laid out along the main axis with spacing between them
  * - Supports cross-axis alignment (start, center, end)
  * - Supports reactive sizing (auto width/height based on children)
+ * - Direction "none" allows manual positioning of children (used by Artboard)
  */
-export class NewStack extends NewRectangle {
+export class NewContainer extends NewRectangle {
   private spacing: number;
   private alignment: CrossAxisAlignment;
-  private direction: StackDirection;
+  private direction: ContainerDirection;
   private _autoWidth: boolean;
   private _autoHeight: boolean;
 
-  constructor(config: NewStackConfig) {
+  constructor(config: NewContainerConfig) {
     // Determine fixed vs auto sizing
     const width = typeof config.width === "number" ? config.width : 0;
     const height = typeof config.height === "number" ? config.height : 0;
@@ -64,7 +65,7 @@ export class NewStack extends NewRectangle {
     
     this.spacing = config.spacing ?? 0;
     this.alignment = config.alignment ?? "start";
-    this.direction = config.direction ?? "vertical";
+    this.direction = config.direction ?? "none";
     this._autoWidth = config.width === "auto";
     this._autoHeight = config.height === "auto";
   }
@@ -76,6 +77,11 @@ export class NewStack extends NewRectangle {
   addElement(element: NewElement): void {
     // Add to children array first
     super.addElement(element);
+    
+    // If direction is "none", don't auto-layout (manual positioning only)
+    if (this.direction === "none") {
+      return;
+    }
     
     // Update auto-sizing if needed (BEFORE positioning)
     // This must happen before positioning so alignment calculations use correct dimensions

@@ -1,15 +1,15 @@
 /**
  * New layout system - VStack (Vertical Stack)
  * 
- * LEGACY WRAPPER: This is now a thin wrapper around NewStack for backward compatibility.
- * For new code, use NewStack with direction: 'vertical' instead.
+ * LEGACY WRAPPER: This is now a thin wrapper around NewContainer for backward compatibility.
+ * For new code, use NewContainer with direction: 'vertical' instead.
  * 
  * LAYOUT STRATEGY: PROACTIVE
  * The parent (VStack) tells children where to position themselves.
  * Children are positioned vertically with spacing in between.
  */
 
-import { NewStack, type CrossAxisAlignment, type SizeMode } from "./NewStack.js";
+import { NewContainer, type CrossAxisAlignment, type SizeMode } from "./NewContainer.js";
 import { type BoxModel } from "./BoxModel.js";
 import { type Style } from "../core/Stylable.js";
 import { NewElement } from "./NewElement.js";
@@ -32,7 +32,7 @@ export interface NewVStackConfig {
 /**
  * Vertical stack layout that positions children vertically with spacing.
  * 
- * This is a backward-compatible wrapper around NewStack.
+ * This is a backward-compatible wrapper around NewContainer.
  * 
  * Strategy: PROACTIVE
  * - Parent controls child positioning
@@ -41,7 +41,7 @@ export interface NewVStackConfig {
  * - Supports horizontal alignment (left, center, right)
  * - Supports reactive sizing (auto width/height based on children)
  */
-export class NewVStack extends NewStack {
+export class NewVStack extends NewContainer {
   constructor(config: NewVStackConfig) {
     // Convert legacy alignment to new format
     const alignmentMap: Record<HorizontalAlignment, CrossAxisAlignment> = {

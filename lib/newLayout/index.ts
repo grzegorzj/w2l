@@ -8,7 +8,7 @@ export { NewRectangle } from "./NewRectangle.js";
 export { NewArtboard, type NewArtboardConfig } from "./NewArtboard.js";
 export { NewCircle, type NewCircleConfig } from "./NewCircle.js";
 export { NewRect, type NewRectConfig } from "./NewRect.js";
-export { NewStack, type NewStackConfig, type StackDirection, type CrossAxisAlignment, type SizeMode } from "./NewStack.js";
+export { NewContainer, type NewContainerConfig, type ContainerDirection, type CrossAxisAlignment, type SizeMode } from "./NewContainer.js";
 export { NewVStack, type NewVStackConfig, type HorizontalAlignment } from "./NewVStack.js";
 export { type BoxModel, type ParsedBoxModel, type BoxReference } from "./BoxModel.js";
 export { BoxAccessor } from "./BoxReference.js";

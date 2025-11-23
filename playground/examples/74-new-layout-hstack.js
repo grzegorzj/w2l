@@ -1,11 +1,11 @@
 /**
- * Example: Horizontal Stack (NewStack with direction: 'horizontal')
+ * Example: Horizontal Stack (NewContainer with direction: 'horizontal')
  * 
- * Demonstrates the new NewStack with horizontal direction.
+ * Demonstrates the new NewContainer with horizontal direction.
  * Shows left alignment (start), center alignment, and right alignment (end).
  */
 
-import { NewArtboard, NewStack, NewRect, NewCircle } from 'w2l';
+import { NewArtboard, NewContainer, NewRect, NewCircle } from 'w2l';
 
 const artboard = new NewArtboard({
   width: 1200,
@@ -29,7 +29,7 @@ function createDebugCircle(position, color, radius = 4) {
 }
 
 // Top HStack - Start alignment (top)
-const topStack = new NewStack({
+const topStack = new NewContainer({
   width: 1000,
   height: 150,
   direction: 'horizontal',
@@ -68,7 +68,7 @@ topHeights.forEach((height, idx) => {
 });
 
 // Center HStack - Center alignment (vertical center)
-const centerStack = new NewStack({
+const centerStack = new NewContainer({
   width: 1000,
   height: 150,
   direction: 'horizontal',
@@ -106,7 +106,7 @@ centerHeights.forEach((height, idx) => {
 });
 
 // Bottom HStack - End alignment (bottom)
-const bottomStack = new NewStack({
+const bottomStack = new NewContainer({
   width: 1000,
   height: 150,
   direction: 'horizontal',

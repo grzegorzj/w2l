@@ -2,7 +2,7 @@
  * New layout system - Artboard class
  */
 
-import { NewRectangle } from "./NewRectangle.js";
+import { NewContainer } from "./NewContainer.js";
 import { type Style, styleToSVGAttributes } from "../core/Stylable.js";
 import { type BoxModel } from "./BoxModel.js";
 
@@ -38,8 +38,11 @@ export interface NewArtboardConfig {
 /**
  * The Artboard is the canvas where all elements are rendered.
  * By default, creates an 800x600px SVG.
+ *
+ * Artboard extends NewContainer with direction "none", which means
+ * children must be positioned manually (no automatic layout).
  */
-export class NewArtboard extends NewRectangle {
+export class NewArtboard extends NewContainer {
   constructor(config: NewArtboardConfig = {}) {
     const width = config.width ?? 800;
     const height = config.height ?? 600;
@@ -49,16 +52,24 @@ export class NewArtboard extends NewRectangle {
       style.fill = config.backgroundColor;
     }
 
-    super(width, height, config.boxModel, style);
+    super({
+      width,
+      height,
+      direction: "none", // No automatic layout - manual positioning only
+      boxModel: config.boxModel,
+      style,
+    });
   }
 
   /**
    * Renders the artboard as an SVG element.
    * The SVG dimensions are the border box size (total size).
    * Elements are sorted by z-index before rendering.
+   *
+   * Overrides NewContainer's render to provide SVG wrapper.
    */
   render(): string {
-    const bgAttrs = styleToSVGAttributes(this._style);
+    const bgAttrs = styleToSVGAttributes(this.style);
     const bgRect = bgAttrs
       ? `  <rect width="${this.width}" height="${this.height}" ${bgAttrs}/>\n`
       : "";
