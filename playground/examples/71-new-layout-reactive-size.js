@@ -41,7 +41,8 @@ const fixedStack = new NewContainer({
   direction: 'vertical',
   height: 400,
   spacing: 10,
-  alignment: 'center',
+  horizontalAlignment: 'center',
+  verticalAlignment: 'top',
   boxModel: { padding: 15 },
   style: {
     fill: '#3498db',
@@ -78,7 +79,8 @@ const autoHeightStack = new NewContainer({
   direction: 'vertical',
   height: 'auto',
   spacing: 10,
-  alignment: 'center',
+  horizontalAlignment: 'center',
+  verticalAlignment: 'top',
   boxModel: { padding: 15 },
   style: {
     fill: '#2ecc71',
@@ -115,7 +117,8 @@ const autoStack = new NewContainer({
   direction: 'vertical',
   height: 'auto',
   spacing: 10,
-  alignment: 'start',
+  horizontalAlignment: 'left',
+  verticalAlignment: 'top',
   boxModel: { padding: 15 },
   style: {
     fill: '#e74c3c',

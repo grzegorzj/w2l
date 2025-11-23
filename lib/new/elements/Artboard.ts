@@ -70,79 +70,13 @@ export class NewArtboard extends NewContainer {
   }
 
   /**
-   * Override addElement to calculate bounds for auto-sizing.
+   * Override addElement to use reactive bounds normalization.
+   * This is handled by the parent Container's addElement which calls normalizeBounds.
    */
   addElement(element: any): void {
+    // Container's addElement will handle normalizeBounds for direction:"none"
+    // since Artboard has direction:"none" by default
     super.addElement(element);
-
-    if (this._artboardAutoWidth || this._artboardAutoHeight) {
-      this.updateArtboardBounds();
-    }
-  }
-
-  /**
-   * Update artboard size based on all elements in the tree.
-   * Recursively traverses the entire element tree to find all positioned elements.
-   */
-  private updateArtboardBounds(): void {
-    if (this.children.length === 0) return;
-
-    // Calculate the bounding box of ALL elements in the tree (recursive)
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    // Recursive function to traverse the tree and collect bounds
-    const collectBounds = (element: any) => {
-      // Get bounds of this element
-      if (element.borderBox) {
-        const tl = element.borderBox.topLeft;
-        const br = element.borderBox.bottomRight;
-        minX = Math.min(minX, tl.x);
-        minY = Math.min(minY, tl.y);
-        maxX = Math.max(maxX, br.x);
-        maxY = Math.max(maxY, br.y);
-      } else if (element.center && element.radius) {
-        // Circle
-        const center = element.center;
-        const radius = element.radius;
-        minX = Math.min(minX, center.x - radius);
-        minY = Math.min(minY, center.y - radius);
-        maxX = Math.max(maxX, center.x + radius);
-        maxY = Math.max(maxY, center.y + radius);
-      }
-
-      // Recursively collect bounds from children
-      if (element.children && Array.isArray(element.children)) {
-        for (const child of element.children) {
-          collectBounds(child);
-        }
-      }
-    };
-
-    // Start recursive traversal from all direct children
-    for (const child of this.children) {
-      collectBounds(child);
-    }
-
-    if (this._artboardAutoWidth && isFinite(minX) && isFinite(maxX)) {
-      this._borderBoxWidth =
-        Math.max(0, maxX - minX) +
-        this._boxModel.padding.left +
-        this._boxModel.padding.right +
-        this._boxModel.border.left +
-        this._boxModel.border.right;
-    }
-
-    if (this._artboardAutoHeight && isFinite(minY) && isFinite(maxY)) {
-      this._borderBoxHeight =
-        Math.max(0, maxY - minY) +
-        this._boxModel.padding.top +
-        this._boxModel.padding.bottom +
-        this._boxModel.border.top +
-        this._boxModel.border.bottom;
-    }
   }
 
   /**

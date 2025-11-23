@@ -3,7 +3,7 @@
  * Built on top of NewContainer
  */
 
-import { NewContainer, type SizeMode, type CrossAxisAlignment } from "./Container.js";
+import { NewContainer, type SizeMode, type HorizontalAlignment, type VerticalAlignment } from "./Container.js";
 import { type BoxModel, parseBoxModel } from "../utils/BoxModel.js";
 import { type Style } from "../../core/Stylable.js";
 
@@ -12,8 +12,8 @@ export interface ColumnsConfig {
   columnWidth: SizeMode;
   height?: SizeMode;
   gutter?: number;
-  alignment?: CrossAxisAlignment; // Vertical alignment of columns in the main horizontal container
-  columnAlignment?: CrossAxisAlignment; // Horizontal alignment of items within each column
+  verticalAlignment?: VerticalAlignment; // Vertical alignment of items within each column (top/center/bottom)
+  horizontalAlignment?: HorizontalAlignment; // Horizontal alignment of items within each column (left/center/right)
   columnSpacing?: number; // Vertical spacing between items within a column
   columnStyle?: Partial<Style>; // Style for individual column containers
   columnBoxModel?: BoxModel; // Box model for individual column containers
@@ -77,7 +77,7 @@ export class Columns {
       height: totalHeight,
       direction: "horizontal",
       spacing: gutter,
-      alignment: config.alignment, // Vertical alignment of columns
+      // No alignment needed for main container (columns always start at top)
       style: config.style,
       boxModel: config.boxModel,
     });
@@ -95,7 +95,8 @@ export class Columns {
         height: columnBorderBoxHeight,
         direction: "vertical",
         spacing: config.columnSpacing ?? 0,
-        alignment: config.columnAlignment ?? "center", // Horizontal alignment within column
+        horizontalAlignment: config.horizontalAlignment ?? "center", // Horizontal alignment of items
+        verticalAlignment: config.verticalAlignment ?? "top", // Vertical alignment of items
         style: config.columnStyle,
         boxModel: config.columnBoxModel,
       });

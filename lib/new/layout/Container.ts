@@ -17,11 +17,14 @@ import { NewElement, type Position } from "../core/Element.js";
 export type ContainerDirection = "horizontal" | "vertical" | "none";
 
 /**
- * Alignment on the cross-axis
- * - For vertical containers: horizontal alignment (left, center, right)
- * - For horizontal containers: vertical alignment (top, center, bottom)
+ * Horizontal alignment
  */
-export type CrossAxisAlignment = "start" | "center" | "end";
+export type HorizontalAlignment = "left" | "center" | "right";
+
+/**
+ * Vertical alignment
+ */
+export type VerticalAlignment = "top" | "center" | "bottom";
 
 /**
  * Size mode: fixed or auto (reactive to children)
@@ -34,7 +37,8 @@ export interface NewContainerConfig {
   direction?: ContainerDirection;
   spacing?: number;
   spread?: boolean;
-  alignment?: CrossAxisAlignment;
+  horizontalAlignment?: HorizontalAlignment;
+  verticalAlignment?: VerticalAlignment;
   style?: Partial<Style>;
   boxModel?: BoxModel;
 }
@@ -54,10 +58,12 @@ export interface NewContainerConfig {
 export class NewContainer extends NewRectangle {
   private spacing: number;
   private spread: boolean;
-  private alignment: CrossAxisAlignment;
+  private horizontalAlignment: HorizontalAlignment;
+  private verticalAlignment: VerticalAlignment;
   private direction: ContainerDirection;
   private _autoWidth: boolean;
   private _autoHeight: boolean;
+  private _needsBoundsNormalization: boolean = false;
 
   constructor(config: NewContainerConfig) {
     // Determine fixed vs auto sizing
@@ -68,7 +74,8 @@ export class NewContainer extends NewRectangle {
     
     this.spacing = config.spacing ?? 0;
     this.spread = config.spread ?? false;
-    this.alignment = config.alignment ?? "start";
+    this.horizontalAlignment = config.horizontalAlignment ?? "left";
+    this.verticalAlignment = config.verticalAlignment ?? "top";
     this.direction = config.direction ?? "none";
     this._autoWidth = config.width === "auto";
     this._autoHeight = config.height === "auto";
@@ -94,7 +101,13 @@ export class NewContainer extends NewRectangle {
           relativeTo: contentTopLeft,
           x: 0,
           y: 0,
+          boxReference: "contentBox",
         });
+      }
+      
+      // For direction "none" with auto-sizing, normalize bounds reactively
+      if (this._autoWidth || this._autoHeight) {
+        this.normalizeBounds();
       }
       return;
     }
@@ -106,13 +119,16 @@ export class NewContainer extends NewRectangle {
       this.updateAutoSize();
     }
     
-    // Position all children (or just new one if no auto-sizing and no spread)
-    // When auto-sizing changes dimensions OR spread is enabled, we must reposition ALL children
-    // because alignment/spacing depends on the container dimensions and all children
-    if (hadAutoSize || this.spread) {
+    // Position all children (or just new one if no auto-sizing, no spread, and start alignment)
+    // When auto-sizing changes dimensions OR spread is enabled OR main-axis alignment is not "start",
+    // we must reposition ALL children because alignment/spacing depends on the container dimensions and all children
+    const mainAlignment = this.direction === "vertical" ? this.verticalAlignment : this.horizontalAlignment;
+    const isStartAlignment = mainAlignment === (this.direction === "vertical" ? "top" : "left");
+    
+    if (hadAutoSize || this.spread || !isStartAlignment) {
       this.layoutAllChildren();
     } else {
-      // No auto-sizing and no spread: just position the new child
+      // No auto-sizing, no spread, start alignment: just position the new child
       let currentOffset = 0;
       for (let i = 0; i < this.children.length - 1; i++) {
         currentOffset += this.getChildSize(this.children[i]) + this.spacing;
@@ -160,10 +176,44 @@ export class NewContainer extends NewRectangle {
    * Update auto-sizing based on children
    */
   private updateAutoSize(): void {
-    if (this.direction === "vertical") {
+    // Get bounding box of all children to handle manually positioned elements
+    const childrenBounds = this.getChildrenBoundingBox(false); // Include all children
+    const contentBoxBounds = this.getChildrenBoundingBox(true); // Only contentBox-positioned children
+    
+    // Get our absolute position to calculate relative bounds
+    const ourPos = this.getAbsolutePosition();
+    
+    if (this.direction === "none") {
+      // No direction: use pure bounding box approach (like Artboard)
+      // Use contentBox-positioned children by default, fall back to all children
+      const bounds = contentBoxBounds || childrenBounds;
+      
+      if (bounds && this._autoWidth) {
+        this._borderBoxWidth = 
+          Math.max(0, bounds.maxX - bounds.minX) +
+          this._boxModel.padding.left + this._boxModel.padding.right +
+          this._boxModel.border.left + this._boxModel.border.right;
+      }
+      
+      if (bounds && this._autoHeight) {
+        this._borderBoxHeight = 
+          Math.max(0, bounds.maxY - bounds.minY) +
+          this._boxModel.padding.top + this._boxModel.padding.bottom +
+          this._boxModel.border.top + this._boxModel.border.bottom;
+      }
+    } else if (this.direction === "vertical") {
       // Vertical stack
       if (this._autoWidth) {
-        // Calculate max child width + padding + border
+        // For cross-axis (width), use bounding box if we have manually positioned children
+        if (childrenBounds && (childrenBounds.maxX - childrenBounds.minX > 0)) {
+          const contentLeft = ourPos.x + this._boxModel.border.left + this._boxModel.padding.left;
+          const relativeMaxX = childrenBounds.maxX - contentLeft;
+          this._borderBoxWidth = 
+            relativeMaxX +
+            this._boxModel.padding.left + this._boxModel.padding.right +
+            this._boxModel.border.left + this._boxModel.border.right;
+        } else {
+          // Fallback to max child width for stacked children
         let maxWidth = 0;
         for (const child of this.children) {
           maxWidth = Math.max(maxWidth, this.getChildWidth(child));
@@ -172,10 +222,11 @@ export class NewContainer extends NewRectangle {
           maxWidth + 
           this._boxModel.padding.left + this._boxModel.padding.right +
           this._boxModel.border.left + this._boxModel.border.right;
+        }
       }
 
       if (this._autoHeight) {
-        // Calculate total height: sum of children + spacing + padding + border
+        // For main-axis (height), prefer stacking calculation but consider positioned children
         let totalHeight = 0;
         for (let i = 0; i < this.children.length; i++) {
           totalHeight += this.getChildHeight(this.children[i]);
@@ -183,6 +234,14 @@ export class NewContainer extends NewRectangle {
             totalHeight += this.spacing;
           }
         }
+        
+        // Also check if manually positioned children extend beyond
+        if (childrenBounds && (childrenBounds.maxY - childrenBounds.minY > totalHeight)) {
+          const contentTop = ourPos.y + this._boxModel.border.top + this._boxModel.padding.top;
+          const relativeMaxY = childrenBounds.maxY - contentTop;
+          totalHeight = relativeMaxY;
+        }
+        
         this._borderBoxHeight = 
           totalHeight +
           this._boxModel.padding.top + this._boxModel.padding.bottom +
@@ -191,7 +250,7 @@ export class NewContainer extends NewRectangle {
     } else {
       // Horizontal stack
       if (this._autoWidth) {
-        // Calculate total width: sum of children + spacing + padding + border
+        // For main-axis (width), prefer stacking calculation but consider positioned children
         let totalWidth = 0;
         for (let i = 0; i < this.children.length; i++) {
           totalWidth += this.getChildWidth(this.children[i]);
@@ -199,6 +258,14 @@ export class NewContainer extends NewRectangle {
             totalWidth += this.spacing;
           }
         }
+        
+        // Also check if manually positioned children extend beyond
+        if (childrenBounds && (childrenBounds.maxX - childrenBounds.minX > totalWidth)) {
+          const contentLeft = ourPos.x + this._boxModel.border.left + this._boxModel.padding.left;
+          const relativeMaxX = childrenBounds.maxX - contentLeft;
+          totalWidth = relativeMaxX;
+        }
+        
         this._borderBoxWidth = 
           totalWidth +
           this._boxModel.padding.left + this._boxModel.padding.right +
@@ -206,7 +273,16 @@ export class NewContainer extends NewRectangle {
       }
 
       if (this._autoHeight) {
-        // Calculate max child height + padding + border
+        // For cross-axis (height), use bounding box if we have manually positioned children
+        if (childrenBounds && (childrenBounds.maxY - childrenBounds.minY > 0)) {
+          const contentTop = ourPos.y + this._boxModel.border.top + this._boxModel.padding.top;
+          const relativeMaxY = childrenBounds.maxY - contentTop;
+          this._borderBoxHeight = 
+            relativeMaxY +
+            this._boxModel.padding.top + this._boxModel.padding.bottom +
+            this._boxModel.border.top + this._boxModel.border.bottom;
+        } else {
+          // Fallback to max child height for stacked children
         let maxHeight = 0;
         for (const child of this.children) {
           maxHeight = Math.max(maxHeight, this.getChildHeight(child));
@@ -215,7 +291,110 @@ export class NewContainer extends NewRectangle {
           maxHeight +
           this._boxModel.padding.top + this._boxModel.padding.bottom +
           this._boxModel.border.top + this._boxModel.border.bottom;
+        }
       }
+    }
+  }
+
+  /**
+   * Calculate the initial offset for main-axis alignment.
+   * This determines where children start being positioned along the main axis.
+   */
+  private calculateMainAxisStartOffset(): number {
+    const mainAlignment = this.direction === "vertical" ? this.verticalAlignment : this.horizontalAlignment;
+    
+    if (mainAlignment === (this.direction === "vertical" ? "top" : "left") || this.spread) {
+      return 0;
+    }
+
+    // Calculate total size of all children plus spacing
+    let totalSize = 0;
+    for (let i = 0; i < this.children.length; i++) {
+      totalSize += this.getChildSize(this.children[i]);
+      if (i < this.children.length - 1) {
+        totalSize += this.spacing;
+      }
+    }
+
+    // Get available space along main axis
+    const availableSpace = this.direction === "vertical" ? this.contentHeight : this.contentWidth;
+
+    // Calculate remaining space
+    const remainingSpace = availableSpace - totalSize;
+
+    if (mainAlignment === "center") {
+      return Math.max(0, remainingSpace / 2);
+    } else if (mainAlignment === (this.direction === "vertical" ? "bottom" : "right")) {
+      return Math.max(0, remainingSpace);
+    }
+
+    return 0;
+  }
+
+  /**
+   * Normalize bounds for direction "none" containers with auto-sizing.
+   * This ensures that all children fit within the content box starting from (0,0).
+   * 
+   * Process:
+   * 1. Get bounding box of all children
+   * 2. Calculate required size to fit all children
+   * 3. If children extend into negative space, shift all children
+   * 4. Resize container to fit the normalized bounds
+   */
+  protected normalizeBounds(): void {
+    if (this.children.length === 0) return;
+    if (this.direction !== "none") return;
+    if (!this._autoWidth && !this._autoHeight) return;
+
+    // Get absolute position of our content box origin
+    const contentOrigin = this.localToAbsolute(0, 0, "content");
+    
+    // Get bounding box of all children in absolute coordinates
+    const bounds = this.getChildrenBoundingBox(false);
+    if (!bounds) return;
+
+    // Calculate how far children extend relative to our content box origin
+    const minXRelative = bounds.minX - contentOrigin.x;
+    const minYRelative = bounds.minY - contentOrigin.y;
+    const maxXRelative = bounds.maxX - contentOrigin.x;
+    const maxYRelative = bounds.maxY - contentOrigin.y;
+
+    // Determine if we need to shift children (if they extend into negative space)
+    const shiftX = Math.min(0, minXRelative);
+    const shiftY = Math.min(0, minYRelative);
+
+    // If we need to shift, adjust all children positions
+    if (shiftX < 0 || shiftY < 0) {
+      for (const child of this.children) {
+        // Get current position relative to us
+        const currentPos = (child as any)._position;
+        
+        // Shift the position
+        (child as any)._position = {
+          x: currentPos.x - shiftX,
+          y: currentPos.y - shiftY,
+        };
+      }
+    }
+
+    // Calculate the required content size to fit all children
+    // After shifting, bounds start at 0 or positive values
+    const requiredContentWidth = maxXRelative - minXRelative;
+    const requiredContentHeight = maxYRelative - minYRelative;
+
+    // Update container size
+    if (this._autoWidth) {
+      this._borderBoxWidth = 
+        requiredContentWidth +
+        this._boxModel.padding.left + this._boxModel.padding.right +
+        this._boxModel.border.left + this._boxModel.border.right;
+    }
+
+    if (this._autoHeight) {
+      this._borderBoxHeight = 
+        requiredContentHeight +
+        this._boxModel.padding.top + this._boxModel.padding.bottom +
+        this._boxModel.border.top + this._boxModel.border.bottom;
     }
   }
 
@@ -229,7 +408,8 @@ export class NewContainer extends NewRectangle {
     // Calculate spacing (either fixed or spread)
     const effectiveSpacing = this.calculateEffectiveSpacing();
     
-    let currentOffset = 0;
+    // Calculate initial offset based on main-axis alignment
+    let currentOffset = this.calculateMainAxisStartOffset();
     
     for (const child of this.children) {
       this.positionChild(child, currentOffset);
@@ -305,26 +485,40 @@ export class NewContainer extends NewRectangle {
     
     const targetPosition = this.localToAbsolute(offsetX, offsetY, "content");
     
+    // Safety check: ensure we have valid references
+    if (!childReference || childReference.x === undefined || childReference.y === undefined) {
+      console.error("[Container.positionChild] Invalid child reference:", childReference);
+      console.error("  Child type:", (child as any).constructor.name);
+      console.error("  Child has borderBox:", !!(child as any).borderBox);
+      console.error("  Child has center:", !!(child as any).center);
+      console.error("  Child has boundingBoxCenter:", !!(child as any).boundingBoxCenter);
+      throw new Error("Cannot position child: invalid reference point");
+    }
+    
     // Position child at the calculated absolute position
+    // Mark as contentBox-relative so container can track it for auto-sizing
     child.position({
       relativeFrom: childReference,
       relativeTo: targetPosition,
       x: 0,
       y: 0,
+      boxReference: "contentBox",
     });
   }
 
   /**
    * Get the default reference point for a child (for initial positioning).
-   * Returns topLeft for rectangles, center for circles.
+   * Returns topLeft for rectangles, center for circles and polygons.
    */
   private getChildDefaultReference(child: NewElement): Position {
     if ((child as any).borderBox && (child as any).borderBox.topLeft) {
       return (child as any).borderBox.topLeft;
     } else if ((child as any).center) {
+      // Use center for circles, triangles, and polygons
       return (child as any).center;
     }
-    return { x: 0, y: 0 };
+    // Fallback to absolute position
+    return (child as any).getAbsolutePosition?.() || { x: 0, y: 0 };
   }
 
   /**
@@ -336,24 +530,28 @@ export class NewContainer extends NewRectangle {
       const rect = child as any;
       
       if (this.direction === "vertical") {
-        // Vertical stack: align horizontally
-        switch (this.alignment) {
-          case "start":
+        // Vertical stack: align horizontally using horizontalAlignment
+        switch (this.horizontalAlignment) {
+          case "left":
             return rect.borderBox.topLeft;
           case "center":
             return rect.borderBox.centerTop;
-          case "end":
+          case "right":
             return rect.borderBox.topRight;
+          default:
+            return rect.borderBox.topLeft;
         }
       } else {
-        // Horizontal stack: align vertically
-        switch (this.alignment) {
-          case "start":
+        // Horizontal stack: align vertically using verticalAlignment
+        switch (this.verticalAlignment) {
+          case "top":
             return rect.borderBox.topLeft;
           case "center":
             return rect.borderBox.centerLeft;
-          case "end":
+          case "bottom":
             return rect.borderBox.bottomLeft;
+          default:
+            return rect.borderBox.topLeft;
         }
       }
     } else if ((child as any).center && (child as any).radius) {
@@ -362,25 +560,34 @@ export class NewContainer extends NewRectangle {
       const center = circle.center;
       const radius = circle.radius;
       
+      // Safety check
+      if (!center || radius === undefined) {
+        return circle.center || { x: 0, y: 0 };
+      }
+      
       if (this.direction === "vertical") {
         // Vertical stack: align horizontally, but use TOP of circle for main axis
-        switch (this.alignment) {
-          case "start":
+        switch (this.horizontalAlignment) {
+          case "left":
             return { x: center.x - radius, y: center.y - radius }; // Left edge, top
           case "center":
             return { x: center.x, y: center.y - radius }; // Center, top
-          case "end":
+          case "right":
             return { x: center.x + radius, y: center.y - radius }; // Right edge, top
+          default:
+            return { x: center.x - radius, y: center.y - radius };
         }
       } else {
         // Horizontal stack: align vertically, but use LEFT of circle for main axis
-        switch (this.alignment) {
-          case "start":
+        switch (this.verticalAlignment) {
+          case "top":
             return { x: center.x - radius, y: center.y - radius }; // Left, top edge
           case "center":
             return { x: center.x - radius, y: center.y }; // Left, center
-          case "end":
+          case "bottom":
             return { x: center.x - radius, y: center.y + radius }; // Left, bottom edge
+          default:
+            return { x: center.x - radius, y: center.y - radius };
         }
       }
     } else if ((child as any).boundingBoxCenter && (child as any).boundingBoxTopLeft) {
@@ -391,30 +598,43 @@ export class NewContainer extends NewRectangle {
       const bbWidth = shape.boundingWidth;
       const bbHeight = shape.boundingHeight;
       
+      // Safety check: ensure we have valid positions
+      if (!bbCenter || !bbTopLeft || bbWidth === undefined || bbHeight === undefined) {
+        // Fallback to center if bounding box is not available
+        return shape.center || { x: 0, y: 0 };
+      }
+      
       if (this.direction === "vertical") {
         // Vertical stack: align horizontally, use TOP of bounding box for main axis
-        switch (this.alignment) {
-          case "start":
+        switch (this.horizontalAlignment) {
+          case "left":
             return { x: bbTopLeft.x, y: bbTopLeft.y }; // Left edge, top
           case "center":
             return { x: bbCenter.x, y: bbTopLeft.y }; // Center, top
-          case "end":
+          case "right":
             return { x: bbTopLeft.x + bbWidth, y: bbTopLeft.y }; // Right edge, top
-        }
-      } else {
+          default:
+            return { x: bbTopLeft.x, y: bbTopLeft.y };
+      }
+    } else {
         // Horizontal stack: align vertically, use LEFT of bounding box for main axis
-        switch (this.alignment) {
-          case "start":
+        switch (this.verticalAlignment) {
+          case "top":
             return { x: bbTopLeft.x, y: bbTopLeft.y }; // Left, top edge
           case "center":
             return { x: bbTopLeft.x, y: bbCenter.y }; // Left, center
-          case "end":
+          case "bottom":
             return { x: bbTopLeft.x, y: bbTopLeft.y + bbHeight }; // Left, bottom edge
+          default:
+            return { x: bbTopLeft.x, y: bbTopLeft.y };
         }
       }
+    } else if ((child as any).center) {
+      // Element with center property (fallback)
+      return (child as any).center;
     } else {
-      // Unknown element type - use center if available
-      return (child as any).center || { x: 0, y: 0 };
+      // Ultimate fallback - use absolute position
+      return (child as any).getAbsolutePosition?.() || { x: 0, y: 0 };
     }
   }
 
@@ -426,23 +646,23 @@ export class NewContainer extends NewRectangle {
     if (this.direction === "vertical") {
       // Vertical stack: cross-axis is horizontal
       const availableWidth = this.contentWidth;
-      switch (this.alignment) {
-        case "start":
+      switch (this.horizontalAlignment) {
+        case "left":
           return 0; // Left edge of content area
         case "center":
           return availableWidth / 2; // Center of content area
-        case "end":
+        case "right":
           return availableWidth; // Right edge of content area
       }
     } else {
       // Horizontal stack: cross-axis is vertical
       const availableHeight = this.contentHeight;
-      switch (this.alignment) {
-        case "start":
+      switch (this.verticalAlignment) {
+        case "top":
           return 0; // Top edge of content area
         case "center":
           return availableHeight / 2; // Center of content area
-        case "end":
+        case "bottom":
           return availableHeight; // Bottom edge of content area
       }
     }

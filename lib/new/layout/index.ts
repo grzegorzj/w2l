@@ -6,7 +6,8 @@ export {
   NewContainer,
   type NewContainerConfig,
   type ContainerDirection,
-  type CrossAxisAlignment,
+  type HorizontalAlignment,
+  type VerticalAlignment,
   type SizeMode,
 } from "./Container.js";
 

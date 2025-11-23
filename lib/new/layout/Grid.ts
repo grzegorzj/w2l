@@ -3,7 +3,7 @@
  * Built on top of NewContainer
  */
 
-import { NewContainer, type SizeMode, type CrossAxisAlignment } from "./Container.js";
+import { NewContainer, type SizeMode, type HorizontalAlignment, type VerticalAlignment } from "./Container.js";
 import { type BoxModel, parseBoxModel } from "../utils/BoxModel.js";
 import { type Style } from "../../core/Stylable.js";
 
@@ -47,13 +47,13 @@ export class Grid {
 
     // Calculate cell border box dimensions (cellWidth/Height are content sizes, add padding)
     const cellBorderBoxWidth = 
-      config.cellWidth === "auto" 
-        ? "auto" 
+      config.cellWidth === "auto"
+        ? "auto"
         : (config.cellWidth as number) + cellHorizontalPadding;
     
     const cellBorderBoxHeight = 
-      config.cellHeight === "auto" 
-        ? "auto" 
+      config.cellHeight === "auto"
+        ? "auto"
         : (config.cellHeight as number) + cellVerticalPadding;
 
     // Create main container (no style - just a layout wrapper)

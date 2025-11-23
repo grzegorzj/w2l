@@ -308,4 +308,17 @@ export abstract class NewRectangle extends NewShape {
   get centerBottom(): Position {
     return this.borderBox.centerBottom;
   }
+
+  /**
+   * Get the bounding box of this rectangle in absolute coordinates.
+   */
+  getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      minX: absPos.x,
+      minY: absPos.y,
+      maxX: absPos.x + this._borderBoxWidth,
+      maxY: absPos.y + this._borderBoxHeight,
+    };
+  }
 }

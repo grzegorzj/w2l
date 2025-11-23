@@ -51,4 +51,17 @@ export class NewCircle extends NewShape {
 
     return circleTag;
   }
+
+  /**
+   * Get the bounding box of this circle in absolute coordinates.
+   */
+  getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } {
+    const absCenter = this.center;
+    return {
+      minX: absCenter.x - this._radius,
+      minY: absCenter.y - this._radius,
+      maxX: absCenter.x + this._radius,
+      maxY: absCenter.y + this._radius,
+    };
+  }
 }

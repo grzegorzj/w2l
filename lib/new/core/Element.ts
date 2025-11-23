@@ -7,11 +7,14 @@ export interface Position {
   y: number;
 }
 
+export type BoxReferenceType = "contentBox" | "borderBox" | "paddingBox" | "marginBox" | "none";
+
 export interface PositionConfig {
   relativeFrom: Position;
   relativeTo: Position;
   x: number;
   y: number;
+  boxReference?: BoxReferenceType; // Track what box was used for relativeTo
 }
 
 /**
@@ -31,6 +34,7 @@ export abstract class NewElement {
   private static _creationCounter: number = 0;
   protected _creationIndex: number;
   protected _hasExplicitPosition: boolean = false;
+  protected _positionBoxReference: BoxReferenceType = "none"; // Track what box reference was used
 
   constructor() {
     this._creationIndex = NewElement._creationCounter++;
@@ -124,6 +128,9 @@ export abstract class NewElement {
       this._position = newAbsolute;
     }
 
+    // Store box reference information
+    this._positionBoxReference = config.boxReference ?? "none";
+
     // Mark that this element has been explicitly positioned
     this._hasExplicitPosition = true;
   }
@@ -151,6 +158,64 @@ export abstract class NewElement {
       x: offsetX,
       y: offsetY,
     });
+  }
+
+  /**
+   * Get the bounding box of this element in absolute coordinates.
+   * Returns null if the element doesn't have a defined size.
+   */
+  getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } | null {
+    // This method should be overridden by subclasses that have a size
+    return null;
+  }
+
+  /**
+   * Get the bounding box of all children (recursively) in absolute coordinates.
+   * Only includes children that should contribute to parent's auto-sizing.
+   * 
+   * @param includeContentBoxOnly - If true, only include children positioned relative to contentBox
+   */
+  getChildrenBoundingBox(includeContentBoxOnly: boolean = false): { minX: number; minY: number; maxX: number; maxY: number } | null {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    let hasAnyChild = false;
+
+    const processChild = (child: NewElement) => {
+      // Skip if we only want contentBox-positioned children and this isn't one
+      if (includeContentBoxOnly && child._positionBoxReference !== "contentBox" && child._positionBoxReference !== "none") {
+        return;
+      }
+
+      const childBox = child.getBoundingBox();
+      if (childBox) {
+        minX = Math.min(minX, childBox.minX);
+        minY = Math.min(minY, childBox.minY);
+        maxX = Math.max(maxX, childBox.maxX);
+        maxY = Math.max(maxY, childBox.maxY);
+        hasAnyChild = true;
+      }
+
+      // Recursively process grandchildren
+      for (const grandchild of child.children) {
+        processChild(grandchild);
+      }
+    };
+
+    for (const child of this.children) {
+      processChild(child);
+    }
+
+    return hasAnyChild ? { minX, minY, maxX, maxY } : null;
+  }
+
+  /**
+   * Check if this element should be included in parent's auto-sizing.
+   * By default, elements positioned relative to contentBox are included.
+   */
+  shouldIncludeInParentAutoSize(): boolean {
+    return this._positionBoxReference === "contentBox" || this._positionBoxReference === "none";
   }
 
   /**
