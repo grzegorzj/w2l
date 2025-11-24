@@ -282,6 +282,65 @@ export abstract class NewRectangle extends NewShape {
   }
 
   /**
+   * Override to provide the center point for rotation.
+   * Rectangles rotate around their center (border box center).
+   */
+  protected getRotationCenter(): { x: number; y: number } {
+    const c = this.center;
+    return { x: c.x, y: c.y };
+  }
+
+  /**
+   * Get the transformed corners after rotation.
+   * Returns the four corners in order: topLeft, topRight, bottomRight, bottomLeft
+   */
+  getTransformedCorners(): { x: number; y: number }[] {
+    if (this._rotation === 0) {
+      // No rotation - return regular corners
+      return [
+        this.topLeft,
+        this.topRight,
+        this.bottomRight,
+        this.bottomLeft,
+      ];
+    }
+
+    // Get center point for rotation
+    const center = this.center;
+    const cx = center.x;
+    const cy = center.y;
+
+    // Get original corners
+    const corners = [
+      this.topLeft,
+      this.topRight,
+      this.bottomRight,
+      this.bottomLeft,
+    ];
+
+    // Rotate each corner around the center
+    const rotationRad = (this._rotation * Math.PI) / 180;
+    const cos = Math.cos(rotationRad);
+    const sin = Math.sin(rotationRad);
+
+    return corners.map(corner => {
+      // Translate to origin
+      const x = corner.x - cx;
+      const y = corner.y - cy;
+
+      // Rotate
+      const rotatedX = x * cos - y * sin;
+      const rotatedY = x * sin + y * cos;
+
+      // Translate back
+      return {
+        x: rotatedX + cx,
+        y: rotatedY + cy,
+      };
+    });
+  }
+
+  /**
    * Gets the center-left position (border box - the visual boundary).
    */
   get centerLeft(): Position {

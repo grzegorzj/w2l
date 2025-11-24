@@ -21,14 +21,14 @@ export interface NewRegularPolygonConfig {
 export class NewRegularPolygon extends NewShape {
   private sides: number;
   private radius: number;
-  private rotation: number;
+  private initialRotation: number; // Initial rotation for vertex positioning
   private vertices: Position[];
 
   constructor(config: NewRegularPolygonConfig) {
     super(config.style);
     this.sides = config.sides;
     this.radius = config.radius;
-    this.rotation = config.rotation ?? 0;
+    this.initialRotation = config.rotation ?? 0;
     
     this.vertices = this.calculateVertices();
   }
@@ -36,7 +36,7 @@ export class NewRegularPolygon extends NewShape {
   private calculateVertices(): Position[] {
     const vertices: Position[] = [];
     const angleStep = (2 * Math.PI) / this.sides;
-    const rotationRad = (this.rotation * Math.PI) / 180;
+    const rotationRad = (this.initialRotation * Math.PI) / 180;
 
     for (let i = 0; i < this.sides; i++) {
       const angle = i * angleStep + rotationRad;
@@ -139,8 +139,9 @@ export class NewRegularPolygon extends NewShape {
     const verts = this.absoluteVertices;
     const points = verts.map(v => `${v.x},${v.y}`).join(" ");
     const attrs = styleToSVGAttributes(this._style);
+    const transform = this.getTransformAttribute();
     
-    return `<polygon points="${points}" ${attrs}/>`;
+    return `<polygon points="${points}" ${attrs} ${transform}/>`;
   }
 
   /**
@@ -154,6 +155,46 @@ export class NewRegularPolygon extends NewShape {
       maxX: bbTopLeft.x + this.boundingWidth,
       maxY: bbTopLeft.y + this.boundingHeight,
     };
+  }
+
+  /**
+   * Get the transformed corners (vertices) after rotation.
+   * Returns all vertices after applying rotation.
+   */
+  getTransformedCorners(): { x: number; y: number }[] {
+    if (this._rotation === 0) {
+      // No rotation - return regular vertices
+      return this.absoluteVertices;
+    }
+
+    // Get center point for rotation
+    const center = this.center;
+    const cx = center.x;
+    const cy = center.y;
+
+    // Get original vertices
+    const vertices = this.absoluteVertices;
+
+    // Rotate each vertex around the center
+    const rotationRad = (this._rotation * Math.PI) / 180;
+    const cos = Math.cos(rotationRad);
+    const sin = Math.sin(rotationRad);
+
+    return vertices.map(vertex => {
+      // Translate to origin
+      const x = vertex.x - cx;
+      const y = vertex.y - cy;
+
+      // Rotate
+      const rotatedX = x * cos - y * sin;
+      const rotatedY = x * sin + y * cos;
+
+      // Translate back
+      return {
+        x: rotatedX + cx,
+        y: rotatedY + cy,
+      };
+    });
   }
 }
 

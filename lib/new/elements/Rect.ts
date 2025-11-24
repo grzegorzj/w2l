@@ -25,12 +25,13 @@ export class NewRect extends NewRectangle {
     const attrs = styleToSVGAttributes(this._style);
     const pos = this.getPositionForBox("border");
     const size = this.getBoxSize("border");
+    const transform = this.getTransformAttribute();
     
     const childrenHTML = this.children
       .map((child) => child.render())
       .join("\n  ");
     
-    const rectTag = `<rect x="${pos.x}" y="${pos.y}" width="${size.width}" height="${size.height}" ${attrs}/>`;
+    const rectTag = `<rect x="${pos.x}" y="${pos.y}" width="${size.width}" height="${size.height}" ${attrs} ${transform}/>`;
     
     if (childrenHTML) {
       return `<g>

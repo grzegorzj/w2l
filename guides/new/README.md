@@ -103,9 +103,54 @@ Rendering order: explicit z-index > creation order
 element.zIndex = 10;  // Higher = on top
 ```
 
+## Geometric Transforms
+
+All shapes support geometric transforms that modify actual positions (not just visual).
+
+### Rotation
+
+```javascript
+shape.rotate(45);  // Rotate 45 degrees around center
+console.log(shape.rotation);  // Get current rotation
+```
+
+### Translation
+
+```javascript
+// Move along a direction vector
+shape.translate({ x: 1, y: 0 }, 50);  // Move 50 units right
+shape.translate({ x: 1, y: 1 }, 30);  // Move 30 units diagonally
+
+// Direction vector is automatically normalized
+shape.translate({ x: 3, y: 4 }, 100);  // Moves 100 units in direction (3,4)
+```
+
+### Query Transformed Corners
+
+After transforms, you can query actual corner/vertex positions:
+
+```javascript
+const corners = rect.getTransformedCorners();
+// Returns [topLeft, topRight, bottomRight, bottomLeft] after rotation
+
+const vertices = triangle.getTransformedCorners();
+// Returns [v1, v2, v3] after rotation
+
+// Use for debugging or additional positioning
+corners.forEach(corner => {
+  const marker = new NewCircle({ radius: 3 });
+  marker.position({
+    relativeFrom: marker.center,
+    relativeTo: corner,
+    x: 0, y: 0
+  });
+});
+```
+
 ## See Also
 
-- `/lib/newLayout/` - Implementation
-- `/playground/examples/58-71-*.js` - Examples
+- `/lib/new/` - Implementation
+- `/playground/examples/shapes/` - Shape examples with transforms
+- `/playground/examples/58-79*.js` - Layout examples
 - `/NEW-LAYOUT-SYSTEM.md` - Full documentation
 

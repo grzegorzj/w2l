@@ -20,6 +20,13 @@ export interface NewTriangleConfig {
   style?: Partial<Style>;
 }
 
+export interface TriangleSide {
+  length: number;
+  center: Position;
+  angle: number; // Angle in degrees
+  outwardNormal: Position; // Unit vector
+}
+
 /**
  * Triangle shape with automatic vertex calculation
  */
@@ -188,12 +195,54 @@ export class NewTriangle extends NewShape {
     ];
   }
 
+  /**
+   * Get the three sides of the triangle with their geometric properties.
+   * Each side includes length, center, angle, and outward normal.
+   */
+  get sides(): [TriangleSide, TriangleSide, TriangleSide] {
+    const verts = this.absoluteVertices;
+    
+    const createSide = (start: Position, end: Position): TriangleSide => {
+      // Calculate length
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      
+      // Calculate center
+      const center = {
+        x: (start.x + end.x) / 2,
+        y: (start.y + end.y) / 2,
+      };
+      
+      // Calculate angle in degrees (from horizontal axis)
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      
+      // Calculate outward normal (perpendicular, 90° clockwise rotation)
+      // For counter-clockwise winding, outward is to the right of the edge
+      // 90° clockwise rotation: (dx, dy) -> (-dy, dx)
+      const outwardNormal = {
+        x: -dy / length,
+        y: dx / length,
+      };
+      
+      return { length, center, angle, outwardNormal };
+    };
+    
+    // Create sides in counter-clockwise order: v0→v1, v1→v2, v2→v0
+    return [
+      createSide(verts[0], verts[1]),
+      createSide(verts[1], verts[2]),
+      createSide(verts[2], verts[0]),
+    ];
+  }
+
   render(): string {
     const verts = this.absoluteVertices;
     const points = verts.map(v => `${v.x},${v.y}`).join(" ");
     const attrs = styleToSVGAttributes(this._style);
+    const transform = this.getTransformAttribute();
     
-    return `<polygon points="${points}" ${attrs}/>`;
+    return `<polygon points="${points}" ${attrs} ${transform}/>`;
   }
 
   /**
@@ -207,6 +256,46 @@ export class NewTriangle extends NewShape {
       maxX: bbTopLeft.x + this._boundingWidth,
       maxY: bbTopLeft.y + this._boundingHeight,
     };
+  }
+
+  /**
+   * Get the transformed corners (vertices) after rotation.
+   * Returns the three vertices after applying rotation.
+   */
+  getTransformedCorners(): { x: number; y: number }[] {
+    if (this._rotation === 0) {
+      // No rotation - return regular vertices
+      return this.absoluteVertices;
+    }
+
+    // Get center point for rotation
+    const center = this.center;
+    const cx = center.x;
+    const cy = center.y;
+
+    // Get original vertices
+    const vertices = this.absoluteVertices;
+
+    // Rotate each vertex around the center
+    const rotationRad = (this._rotation * Math.PI) / 180;
+    const cos = Math.cos(rotationRad);
+    const sin = Math.sin(rotationRad);
+
+    return vertices.map(vertex => {
+      // Translate to origin
+      const x = vertex.x - cx;
+      const y = vertex.y - cy;
+
+      // Rotate
+      const rotatedX = x * cos - y * sin;
+      const rotatedY = x * sin + y * cos;
+
+      // Translate back
+      return {
+        x: rotatedX + cx,
+        y: rotatedY + cy,
+      };
+    });
   }
 }
 

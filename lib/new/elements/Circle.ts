@@ -36,11 +36,12 @@ export class NewCircle extends NewShape {
   render(): string {
     const absolutePos = this.getAbsolutePosition();
     const attrs = styleToSVGAttributes(this._style);
+    const transform = this.getTransformAttribute();
     const childrenHTML = this.children
       .map((child) => child.render())
       .join("\n  ");
 
-    const circleTag = `<circle cx="${absolutePos.x}" cy="${absolutePos.y}" r="${this._radius}" ${attrs}/>`;
+    const circleTag = `<circle cx="${absolutePos.x}" cy="${absolutePos.y}" r="${this._radius}" ${attrs} ${transform}/>`;
 
     if (childrenHTML) {
       return `<g>
@@ -63,5 +64,47 @@ export class NewCircle extends NewShape {
       maxX: absCenter.x + this._radius,
       maxY: absCenter.y + this._radius,
     };
+  }
+
+  /**
+   * Get the transformed corners (cardinal points) after rotation.
+   * For a circle, returns 4 points: top, right, bottom, left
+   */
+  getTransformedCorners(): { x: number; y: number }[] {
+    const c = this.center;
+    const r = this._radius;
+
+    // Cardinal points before rotation
+    const points = [
+      { x: c.x, y: c.y - r },      // Top
+      { x: c.x + r, y: c.y },      // Right
+      { x: c.x, y: c.y + r },      // Bottom
+      { x: c.x - r, y: c.y },      // Left
+    ];
+
+    if (this._rotation === 0) {
+      return points;
+    }
+
+    // Rotate each point around the center
+    const rotationRad = (this._rotation * Math.PI) / 180;
+    const cos = Math.cos(rotationRad);
+    const sin = Math.sin(rotationRad);
+
+    return points.map(point => {
+      // Translate to origin
+      const x = point.x - c.x;
+      const y = point.y - c.y;
+
+      // Rotate
+      const rotatedX = x * cos - y * sin;
+      const rotatedY = x * sin + y * cos;
+
+      // Translate back
+      return {
+        x: rotatedX + c.x,
+        y: rotatedY + c.y,
+      };
+    });
   }
 }
