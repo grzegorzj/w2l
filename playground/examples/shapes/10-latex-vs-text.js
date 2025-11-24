@@ -223,8 +223,59 @@ text1.position({
 
 artboard.addElement(text1);
 
+// Debug: Draw rectangle around entire text element (RED)
+const textDebugRect1 = new NewRect({
+  width: text1.textWidth,
+  height: text1.textHeight,
+  style: {
+    fill: "none",
+    stroke: "red",
+    strokeWidth: 1,
+    opacity: 0.7,
+  },
+});
+textDebugRect1.position({
+  relativeFrom: textDebugRect1.topLeft,
+  relativeTo: text1.topLeft,
+  x: 0,
+  y: 0,
+});
+artboard.addElement(textDebugRect1);
+
+// Debug: Draw rectangles around entire LaTeX segments (BLUE dashed)
+const latexSegments1 = text1.getLatexSegmentBBoxes();
+console.log("\n=== TEXT 1: Einstein's equation ===");
+console.log("Text position:", text1.topLeft);
+console.log("LaTeX segments:", latexSegments1);
+
+latexSegments1.forEach((segment) => {
+  const latexDebugRect = new NewRect({
+    width: segment.width,
+    height: segment.height,
+    style: {
+      fill: "none",
+      stroke: "blue",
+      strokeWidth: 1,
+      strokeDasharray: "3,3",
+      opacity: 0.7,
+    },
+  });
+  latexDebugRect.position({
+    relativeFrom: latexDebugRect.topLeft,
+    relativeTo: artboard.topLeft,
+    x: segment.x,
+    y: segment.y,
+  });
+  artboard.addElement(latexDebugRect);
+});
+
 const elem2 = text1.getElementById("mass-energy-2");
 if (elem2) {
+  console.log("\nAnnotated element 'mass-energy-2':");
+  console.log("  bbox:", elem2.bbox);
+  console.log("  topLeft:", elem2.topLeft);
+  console.log("  Relative to text:", { x: elem2.topLeft.x - text1.topLeft.x, y: elem2.topLeft.y - text1.topLeft.y });
+  
   const highlight2 = new NewRect({
     width: elem2.bbox.width,
     height: elem2.bbox.height,
@@ -265,9 +316,62 @@ text2.position({
 
 artboard.addElement(text2);
 
+// Debug: Draw rectangle around entire text element (RED)
+const textDebugRect2 = new NewRect({
+  width: text2.textWidth,
+  height: text2.textHeight,
+  style: {
+    fill: "none",
+    stroke: "red",
+    strokeWidth: 1,
+    opacity: 0.7,
+  },
+});
+textDebugRect2.position({
+  relativeFrom: textDebugRect2.topLeft,
+  relativeTo: text2.topLeft,
+  x: 0,
+  y: 0,
+});
+artboard.addElement(textDebugRect2);
+
+// Debug: Draw rectangles around entire LaTeX segments (BLUE dashed)
+const latexSegments2 = text2.getLatexSegmentBBoxes();
+console.log("\n=== TEXT 2: Pythagorean theorem ===");
+console.log("Text position:", text2.topLeft);
+console.log("LaTeX segments:", latexSegments2);
+
+latexSegments2.forEach((segment) => {
+  const latexDebugRect = new NewRect({
+    width: segment.width,
+    height: segment.height,
+    style: {
+      fill: "none",
+      stroke: "blue",
+      strokeWidth: 1,
+      strokeDasharray: "3,3",
+      opacity: 0.7,
+    },
+  });
+  latexDebugRect.position({
+    relativeFrom: latexDebugRect.topLeft,
+    relativeTo: artboard.topLeft,
+    x: segment.x,
+    y: segment.y,
+  });
+  artboard.addElement(latexDebugRect);
+});
+
 const vars3 = text2.getElementsByClass("variable2");
 
+console.log("\nAnnotated elements with class 'variable2':");
 vars3.forEach((v, idx) => {
+  console.log(`  [${idx}]:`, {
+    bbox: v.bbox,
+    topLeft: v.topLeft,
+    relativeToText: { x: v.topLeft.x - text2.topLeft.x, y: v.topLeft.y - text2.topLeft.y }
+  });
+  
   const highlight = new NewRect({
     width: v.bbox.width,
     height: v.bbox.height,

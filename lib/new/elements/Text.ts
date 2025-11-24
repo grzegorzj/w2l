@@ -178,6 +178,7 @@ export class NewText extends NewShape {
   private _fontSize: number;
   private _lineHeight: number;
   private _segments: TextSegment[];
+  private _renderedLatexSegments: Map<number, string> = new Map(); // Store pre-rendered LaTeX by segment index
   
   /**
    * Cached measured dimensions from browser.
@@ -189,6 +190,26 @@ export class NewText extends NewShape {
     totalWidth: number;
     totalHeight: number;
   };
+
+  /**
+   * Get bounding boxes for all LaTeX segments (full segments, not annotated parts).
+   * Returns absolute coordinates.
+   */
+  getLatexSegmentBBoxes(): Array<{ x: number; y: number; width: number; height: number; segmentIndex: number }> {
+    this.ensureMeasured();
+    if (!this._measuredDimensions) return [];
+    
+    const absPos = this.getAbsolutePosition();
+    return this._measuredDimensions.parts
+      .filter(part => part.type === 'latex')
+      .map(part => ({
+        x: absPos.x + part.x,
+        y: absPos.y + part.y,
+        width: part.width,
+        height: part.height,
+        segmentIndex: part.segmentIndex
+      }));
+  }
 
   /**
    * Creates a new NewText instance.
@@ -275,6 +296,59 @@ export class NewText extends NewShape {
   }
 
   /**
+   * Pre-renders LaTeX segments and stores them.
+   * COPIED FROM NewLatex approach - ensures consistency.
+   * @internal
+   */
+  private prerenderLatexSegments(): void {
+    if (typeof window === 'undefined' || !(window as any).MathJax) {
+      return;
+    }
+
+    const MathJax = (window as any).MathJax;
+    if (!MathJax.tex2svg) {
+      return;
+    }
+
+    this._segments.forEach((segment) => {
+      if (segment.type === 'latex' && !this._renderedLatexSegments.has(segment.index)) {
+        try {
+          const node = MathJax.tex2svg(segment.content, {
+            display: true, // Always use display mode for consistency with NewLatex
+            em: this._fontSize,
+            ex: this._fontSize * MATHJAX_EX_TO_EM_RATIO,
+            containerWidth: MATHJAX_CONTAINER_WIDTH_MULTIPLIER * this._fontSize,
+          });
+
+          const svg = node.querySelector('svg');
+          if (svg) {
+            // SAME scaling as NewLatex
+            svg.removeAttribute('width');
+            svg.removeAttribute('height');
+
+            const viewBox = svg.getAttribute('viewBox');
+            if (viewBox) {
+              const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+              const scale = this._fontSize / MATHJAX_UNITS_PER_EM;
+              svg.setAttribute('width', `${vbWidth * scale}px`);
+              svg.setAttribute('height', `${vbHeight * scale}px`);
+            }
+
+            this._renderedLatexSegments.set(segment.index, svg.outerHTML);
+          } else {
+            this._renderedLatexSegments.set(segment.index, node.outerHTML);
+          }
+        } catch (error) {
+          this._renderedLatexSegments.set(
+            segment.index,
+            `<text fill="red">LaTeX Error: ${segment.content}</text>`
+          );
+        }
+      }
+    });
+  }
+
+  /**
    * Perform measurement of mixed text dimensions.
    * Called automatically when dimensions are needed.
    * 
@@ -284,6 +358,9 @@ export class NewText extends NewShape {
     if (this._measuredDimensions) {
       return;
     }
+
+    // Pre-render LaTeX segments first (like NewLatex does)
+    this.prerenderLatexSegments();
     
     if (typeof document === 'undefined') {
       return;
@@ -320,42 +397,10 @@ export class NewText extends NewShape {
           span.textContent = segment.content;
           span.style.whiteSpace = 'pre';
         } else {
-          // Render LaTeX with MathJax
-          if (typeof window !== 'undefined' && (window as any).MathJax) {
-            const MathJax = (window as any).MathJax;
-            try {
-              if (MathJax.tex2svg) {
-                const node = MathJax.tex2svg(segment.content, {
-                  display: segment.displayMode || false,
-                  em: this._fontSize,
-                  ex: this._fontSize * MATHJAX_EX_TO_EM_RATIO,
-                  containerWidth: MATHJAX_CONTAINER_WIDTH_MULTIPLIER * this._fontSize
-                });
-                const svg = node.querySelector('svg');
-                if (svg) {
-                  // Remove ex-based width/height, replace with pixels
-                  svg.removeAttribute('width');
-                  svg.removeAttribute('height');
-                  
-                  const viewBox = svg.getAttribute('viewBox');
-                  if (viewBox) {
-                    const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
-                    const scale = this._fontSize / MATHJAX_UNITS_PER_EM;
-                    svg.setAttribute('width', `${vbWidth * scale}px`);
-                    svg.setAttribute('height', `${vbHeight * scale}px`);
-                  }
-                  
-                  span.innerHTML = svg.outerHTML;
-                } else {
-                  span.innerHTML = node.outerHTML;
-                }
-              } else {
-                span.textContent = `$${segment.content}$`;
-              }
-            } catch (error) {
-              span.textContent = `[LaTeX Error: ${segment.content}]`;
-              span.style.color = 'red';
-            }
+          // Use pre-rendered LaTeX (SAME approach as NewLatex)
+          const renderedSvg = this._renderedLatexSegments.get(segment.index);
+          if (renderedSvg) {
+            span.innerHTML = renderedSvg;
           } else {
             span.textContent = `$${segment.content}$`;
           }
@@ -692,38 +737,34 @@ export class NewText extends NewShape {
       container.style.visibility = 'hidden';
       container.style.fontSize = `${this._fontSize}px`;
       container.style.fontFamily = this.config.fontFamily || 'sans-serif';
+      container.style.fontWeight = String(this.config.fontWeight || 'normal');
+      container.style.lineHeight = String(this._lineHeight);
       container.style.display = 'inline-flex';
       container.style.alignItems = 'baseline';
+      container.style.flexWrap = 'nowrap';
+      container.style.margin = '0';
+      container.style.padding = '0';
       // Ensure no zoom or transforms affect measurements
       container.style.transform = 'none';
       container.style.zoom = '1';
       container.style.pointerEvents = 'none';
       
-      // Render each segment
+      // Render each segment using PRE-RENDERED LaTeX WITH SAME STYLING AS RENDER
       this._segments.forEach((segment) => {
         const span = document.createElement('span');
+        span.style.margin = '0';
+        span.style.padding = '0';
+        span.style.display = 'inline-block';
+        
         if (segment.type === 'text') {
+          span.style.whiteSpace = 'pre';
           span.textContent = segment.content;
         } else {
-          if (typeof window !== 'undefined' && (window as any).MathJax) {
-            const MathJax = (window as any).MathJax;
-            try {
-              if (MathJax.tex2svg) {
-                const node = MathJax.tex2svg(segment.content, {
-                  display: segment.displayMode || false,
-                  em: this._fontSize,
-                  ex: this._fontSize * MATHJAX_EX_TO_EM_RATIO,
-                  containerWidth: MATHJAX_CONTAINER_WIDTH_MULTIPLIER * this._fontSize
-                });
-                const svg = node.querySelector('svg');
-                if (svg) {
-                  // COPIED EXACTLY FROM OLD API - NO scaling in measurement
-                  span.innerHTML = svg.outerHTML;
-                }
-              }
-            } catch (error) {
-              // Ignore
-            }
+          span.style.verticalAlign = 'middle';
+          // Use pre-rendered LaTeX (SAME approach as NewLatex)
+          const renderedSvg = this._renderedLatexSegments.get(segment.index);
+          if (renderedSvg) {
+            span.innerHTML = renderedSvg;
           }
         }
         container.appendChild(span);
@@ -795,38 +836,34 @@ export class NewText extends NewShape {
       container.style.visibility = 'hidden';
       container.style.fontSize = `${this._fontSize}px`;
       container.style.fontFamily = this.config.fontFamily || 'sans-serif';
+      container.style.fontWeight = String(this.config.fontWeight || 'normal');
+      container.style.lineHeight = String(this._lineHeight);
       container.style.display = 'inline-flex';
       container.style.alignItems = 'baseline';
+      container.style.flexWrap = 'nowrap';
+      container.style.margin = '0';
+      container.style.padding = '0';
       // Ensure no zoom or transforms affect measurements
       container.style.transform = 'none';
       container.style.zoom = '1';
       container.style.pointerEvents = 'none';
       
-      // Render each segment
+      // Render each segment using PRE-RENDERED LaTeX WITH SAME STYLING AS RENDER
       this._segments.forEach((segment) => {
         const span = document.createElement('span');
+        span.style.margin = '0';
+        span.style.padding = '0';
+        span.style.display = 'inline-block';
+        
         if (segment.type === 'text') {
+          span.style.whiteSpace = 'pre';
           span.textContent = segment.content;
         } else {
-          if (typeof window !== 'undefined' && (window as any).MathJax) {
-            const MathJax = (window as any).MathJax;
-            try {
-              if (MathJax.tex2svg) {
-                const node = MathJax.tex2svg(segment.content, {
-                  display: segment.displayMode || false,
-                  em: this._fontSize,
-                  ex: this._fontSize * MATHJAX_EX_TO_EM_RATIO,
-                  containerWidth: MATHJAX_CONTAINER_WIDTH_MULTIPLIER * this._fontSize
-                });
-                const svg = node.querySelector('svg');
-                if (svg) {
-                  // COPIED EXACTLY FROM OLD API - NO scaling in measurement
-                  span.innerHTML = svg.outerHTML;
-                }
-              }
-            } catch (error) {
-              // Ignore
-            }
+          span.style.verticalAlign = 'middle';
+          // Use pre-rendered LaTeX (SAME approach as NewLatex)
+          const renderedSvg = this._renderedLatexSegments.get(segment.index);
+          if (renderedSvg) {
+            span.innerHTML = renderedSvg;
           }
         }
         container.appendChild(span);
@@ -880,50 +917,20 @@ export class NewText extends NewShape {
     const style = { ...defaultStyle, ...this._style };
     const color = style.fill || "#000000";
 
-    // Pre-render all segments
+    // Ensure LaTeX is pre-rendered and measured
     this.ensureMeasured();
 
-    // Build HTML content with pre-rendered LaTeX
+    // Build HTML content using PRE-RENDERED LaTeX (SAME as NewLatex approach)
     let htmlContent = '<div style="display: inline-flex; align-items: baseline; flex-wrap: nowrap; margin: 0; padding: 0;">';
     
     this._segments.forEach((segment) => {
       if (segment.type === 'text') {
         htmlContent += `<span style="white-space: pre; margin: 0; padding: 0; display: inline-block;">${this.escapeHtml(segment.content)}</span>`;
       } else {
-        // LaTeX segment
-        if (typeof window !== 'undefined' && (window as any).MathJax) {
-          const MathJax = (window as any).MathJax;
-          try {
-            if (MathJax.tex2svg) {
-              const node = MathJax.tex2svg(segment.content, {
-                display: segment.displayMode || false,
-                em: this._fontSize,
-                ex: this._fontSize * MATHJAX_EX_TO_EM_RATIO,
-                containerWidth: MATHJAX_CONTAINER_WIDTH_MULTIPLIER * this._fontSize
-              });
-              const svg = node.querySelector('svg');
-              if (svg) {
-                svg.removeAttribute('width');
-                svg.removeAttribute('height');
-                
-                const viewBox = svg.getAttribute('viewBox');
-                if (viewBox) {
-                  const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
-                  const scale = this._fontSize / MATHJAX_UNITS_PER_EM;
-                  svg.setAttribute('width', `${vbWidth * scale}px`);
-                  svg.setAttribute('height', `${vbHeight * scale}px`);
-                }
-                
-                htmlContent += `<span style="margin: 0; padding: 0; display: inline-block; vertical-align: middle;">${svg.outerHTML}</span>`;
-              } else {
-                htmlContent += `<span style="margin: 0; padding: 0; display: inline-block;">${node.outerHTML}</span>`;
-              }
-            } else {
-              htmlContent += `<span style="margin: 0; padding: 0; display: inline-block;">$${this.escapeHtml(segment.content)}$</span>`;
-            }
-          } catch (error) {
-            htmlContent += `<span style="color: red; margin: 0; padding: 0; display: inline-block;">[LaTeX Error: ${this.escapeHtml(segment.content)}]</span>`;
-          }
+        // Use pre-rendered LaTeX (SAME approach as NewLatex for consistency)
+        const renderedSvg = this._renderedLatexSegments.get(segment.index);
+        if (renderedSvg) {
+          htmlContent += `<span style="margin: 0; padding: 0; display: inline-block; vertical-align: middle;">${renderedSvg}</span>`;
         } else {
           htmlContent += `<span style="margin: 0; padding: 0; display: inline-block;">$${this.escapeHtml(segment.content)}$</span>`;
         }
@@ -932,10 +939,8 @@ export class NewText extends NewShape {
     
     htmlContent += '</div>';
 
-    const svg = `<foreignObject x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}" ${transformStr}>
-      <div xmlns="http://www.w3.org/1999/xhtml" style="font-size: ${this._fontSize}px; font-family: ${this.config.fontFamily || 'sans-serif'}; font-weight: ${this.config.fontWeight || 'normal'}; color: ${color}; display: inline-block; margin: 0; padding: 0; line-height: 1;">
-        ${htmlContent}
-      </div>
+    const svg = `<foreignObject x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}" ${transformStr} overflow="visible">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font-size: ${this._fontSize}px; font-family: ${this.config.fontFamily || 'sans-serif'}; font-weight: ${this.config.fontWeight || 'normal'}; color: ${color}; margin: 0; padding: 0; line-height: ${this._lineHeight}; overflow: visible;">${htmlContent}</div>
     </foreignObject>`;
 
     let debugRect = '';
