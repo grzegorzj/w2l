@@ -84,17 +84,22 @@ const container = new NewContainer({
   boxModel: { padding: 20 }
 });
 
-// CSS-like: children position themselves relative to (0,0)
-// Container sizes from origin to max child extent
-// Normalizes bounds: shifts children if they extend into negative space
+// Two-phase approach: Position all children first, then finalize
+// Phase 1: Children position themselves (container stays 0x0)
 rect.position({ 
   relativeTo: container.contentBox.center,  // Can position relative to center
   x: 0,
   y: 0
 });
-container.addElement(rect);  // Container grows to contain rect
-// If rect (100x80) is centered at (0,0), it extends from (-50,-40) to (50,40)
-// Container shifts rect to (50,40) and sizes content to 100x80
+container.addElement(rect);  // Container stays at 0x0
+
+// Add more elements...
+container.addElement(anotherElement);
+
+// Phase 2: Finalize layout (calculate size, normalize to positive coords)
+container.finalizeFreeformLayout();  // NOW container sizes to fit all children
+
+// This two-phase approach avoids the chicken-egg problem of incremental sizing
 ```
 
 | Mode | Auto-position? | How it sizes? | Normalization | Use case |

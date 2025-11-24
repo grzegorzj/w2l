@@ -108,8 +108,6 @@ sides.forEach((side, index) => {
 });
 
 // NOW add debug circles at the corners (after all squares are positioned)
-// Note: Most circles will be correctly positioned (~10/12). A few may be slightly
-// off if they trigger additional normalization by extending into negative space.
 squares.forEach((square, index) => {
   const corners = square.getCorners();
   corners.forEach((corner) => {
@@ -134,8 +132,12 @@ squares.forEach((square, index) => {
   });
 });
 
+// FINALIZE the freeform layout (calculate size and normalize children)
+// This must be called after all children are added but before positioning the container
+container.finalizeFreeformLayout();
+
 // Now position the container at the center of the artboard
-// (after it has auto-sized to its content)
+// (after it has been finalized)
 container.position({
   relativeFrom: container.center,
   relativeTo: artboard.contentBox.center,

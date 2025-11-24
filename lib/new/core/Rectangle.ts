@@ -372,6 +372,20 @@ export abstract class NewRectangle extends NewShape {
    * Get the bounding box of this rectangle in absolute coordinates.
    */
   getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } {
+    // If rotated, calculate bbox from actual corners
+    if (this._rotation !== 0) {
+      const corners = this.getCorners();
+      const xs = corners.map(c => c.x);
+      const ys = corners.map(c => c.y);
+      return {
+        minX: Math.min(...xs),
+        minY: Math.min(...ys),
+        maxX: Math.max(...xs),
+        maxY: Math.max(...ys),
+      };
+    }
+    
+    // Not rotated - simple bbox
     const absPos = this.getAbsolutePosition();
     return {
       minX: absPos.x,

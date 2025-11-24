@@ -103,46 +103,11 @@ export class NewContainer extends NewRectangle {
     // Add to children array first
     super.addElement(element);
     
-    // FREEFORM MODE: Pure reactive sizing with bounds normalization
-    // Children position themselves, parent grows AND normalizes to fit
+    // FREEFORM MODE: Defer layout until finalize() is called
+    // Children position themselves freely, container stays at 0x0
+    // This avoids the chicken-egg problem of incremental normalization
     if (this.direction === "freeform") {
-      if (this._autoWidth || this._autoHeight) {
-        // Only normalize if the new element extends into negative space
-        // This prevents unnecessary shifts when adding elements in positive space
-        const childBounds = element.getBoundingBox();
-        const contentOrigin = this.localToAbsolute(0, 0, "content");
-        
-        if (childBounds) {
-          const minXRelative = childBounds.minX - contentOrigin.x;
-          const minYRelative = childBounds.minY - contentOrigin.y;
-          
-          // Only normalize if THIS child extends into negative space
-          if (minXRelative < 0 || minYRelative < 0) {
-            this.normalizeFreeformBounds();
-          } else {
-            // Just update size without normalizing
-            const bounds = this.getChildrenBoundingBox(false);
-            if (bounds) {
-              const maxXRelative = bounds.maxX - contentOrigin.x;
-              const maxYRelative = bounds.maxY - contentOrigin.y;
-              
-              if (this._autoWidth) {
-                this._borderBoxWidth = 
-                  Math.max(0, maxXRelative) +
-                  this._boxModel.padding.left + this._boxModel.padding.right +
-                  this._boxModel.border.left + this._boxModel.border.right;
-              }
-              
-              if (this._autoHeight) {
-                this._borderBoxHeight = 
-                  Math.max(0, maxYRelative) +
-                  this._boxModel.padding.top + this._boxModel.padding.bottom +
-                  this._boxModel.border.top + this._boxModel.border.bottom;
-              }
-            }
-          }
-        }
-      }
+      // Do nothing here - layout happens in finalizeFreeformLayout()
       return;
     }
     
@@ -477,45 +442,116 @@ export class NewContainer extends NewRectangle {
   }
 
   /**
-   * Normalize bounds for direction "freeform" containers with auto-sizing.
-   * Similar to normalizeBounds(), but for freeform mode.
+   * Finalize freeform layout after all children have been added.
+   * This is a two-phase approach:
+   * Phase 1: Children position themselves (assuming container is 0x0)
+   * Phase 2: Calculate bbox, size container, normalize children to positive coords
    * 
-   * This ensures children can be positioned anywhere (including negative coords),
-   * and the container will grow to contain them, shifting all children if needed.
+   * This avoids the chicken-egg problem of incremental normalization.
    * 
-   * Process:
-   * 1. Get bounding box of all children
-   * 2. If children extend into negative space, shift all children
-   * 3. Resize container to fit from (0,0) to max extent
+   * Call this after adding all children but before positioning the container.
+   */
+  public finalizeFreeformLayout(): void {
+    if (this.direction !== "freeform") return;
+    if (!this._autoWidth && !this._autoHeight) return;
+    if (this.children.length === 0) return;
+
+    // Get bounding box of all children in their current positions
+    const bounds = this.getChildrenBoundingBox(false);
+    if (!bounds) return;
+
+    // Our current position (border box origin)
+    const borderBoxOrigin = this.getAbsolutePosition();
+    
+    // Calculate how far children extend relative to our border box
+    const minXRelative = bounds.minX - borderBoxOrigin.x;
+    const minYRelative = bounds.minY - borderBoxOrigin.y;
+    const maxXRelative = bounds.maxX - borderBoxOrigin.x;
+    const maxYRelative = bounds.maxY - borderBoxOrigin.y;
+
+    // Calculate content box offset (for sizing)
+    const contentBoxOffsetX = this._boxModel.padding.left + this._boxModel.border.left;
+    const contentBoxOffsetY = this._boxModel.padding.top + this._boxModel.border.top;
+
+    // Determine shift needed to make all children relative to content box at (0,0)
+    const shiftX = Math.min(0, minXRelative - contentBoxOffsetX);
+    const shiftY = Math.min(0, minYRelative - contentBoxOffsetY);
+
+    // Shift all children if needed
+    if (shiftX < 0 || shiftY < 0) {
+      for (const child of this.children) {
+        const currentPos = (child as any)._position;
+        (child as any)._position = {
+          x: currentPos.x - shiftX,
+          y: currentPos.y - shiftY,
+        };
+      }
+    }
+
+    // Calculate required content size (from 0,0 to max extent)
+    const requiredContentWidth = maxXRelative - Math.min(0, minXRelative - contentBoxOffsetX);
+    const requiredContentHeight = maxYRelative - Math.min(0, minYRelative - contentBoxOffsetY);
+
+    // Update container size
+    if (this._autoWidth) {
+      this._borderBoxWidth = 
+        requiredContentWidth +
+        this._boxModel.padding.left + this._boxModel.padding.right +
+        this._boxModel.border.left + this._boxModel.border.right;
+    }
+
+    if (this._autoHeight) {
+      this._borderBoxHeight = 
+        requiredContentHeight +
+        this._boxModel.padding.top + this._boxModel.padding.bottom +
+        this._boxModel.border.top + this._boxModel.border.bottom;
+    }
+  }
+
+  /**
+   * Legacy method - kept for compatibility with "none" mode.
+   * For freeform mode, use finalizeFreeformLayout() instead.
    */
   private normalizeFreeformBounds(): void {
     if (this.children.length === 0) return;
     if (!this._autoWidth && !this._autoHeight) return;
 
-    // Get absolute position of our content box origin
+    // Get our border box origin (children's _position is relative to this)
+    const borderBoxOrigin = this.getAbsolutePosition();
+    
+    // Get absolute position of our content box origin (for sizing calculations)
     const contentOrigin = this.localToAbsolute(0, 0, "content");
     
     // Get bounding box of all children in absolute coordinates
     const bounds = this.getChildrenBoundingBox(false);
     if (!bounds) return;
 
-    // Calculate how far children extend relative to our content box origin
+    // Calculate how far children extend relative to our BORDER BOX (for shifting)
+    // This must match the coordinate system of child._position
+    const minXRelativeToBorder = bounds.minX - borderBoxOrigin.x;
+    const minYRelativeToBorder = bounds.minY - borderBoxOrigin.y;
+    
+    // Calculate bounds relative to CONTENT BOX (for sizing)
     const minXRelative = bounds.minX - contentOrigin.x;
     const minYRelative = bounds.minY - contentOrigin.y;
     const maxXRelative = bounds.maxX - contentOrigin.x;
     const maxYRelative = bounds.maxY - contentOrigin.y;
 
-    // Determine if we need to shift children (if they extend into negative space)
-    const shiftX = Math.min(0, minXRelative);
-    const shiftY = Math.min(0, minYRelative);
+    // Determine if we need to shift children (if they extend into negative space relative to content box)
+    // Use border-box-relative values for shifting (matches child._position coordinate system)
+    const contentBoxOffsetX = contentOrigin.x - borderBoxOrigin.x;
+    const contentBoxOffsetY = contentOrigin.y - borderBoxOrigin.y;
+    
+    const shiftX = Math.min(0, minXRelativeToBorder - contentBoxOffsetX);
+    const shiftY = Math.min(0, minYRelativeToBorder - contentBoxOffsetY);
 
     // If we need to shift, adjust all children positions
     if (shiftX < 0 || shiftY < 0) {
       for (const child of this.children) {
-        // Get current position relative to us
+        // Get current position relative to our border box
         const currentPos = (child as any)._position;
         
-        // Shift the position to make all coords positive
+        // Shift the position to make all coords positive (relative to content box)
         (child as any)._position = {
           x: currentPos.x - shiftX,
           y: currentPos.y - shiftY,
