@@ -78,6 +78,7 @@ export class NewContainer extends NewRectangle {
   private _autoWidth: boolean;
   private _autoHeight: boolean;
   private _needsBoundsNormalization: boolean = false;
+  private _isUpdatingAutoSize: boolean = false;  // Guard against recursion
 
   constructor(config: NewContainerConfig) {
     // Determine fixed vs auto sizing
@@ -139,6 +140,7 @@ export class NewContainer extends NewRectangle {
     const hadAutoSize = this._autoWidth || this._autoHeight;
     if (hadAutoSize) {
       this.updateAutoSize();
+      this.notifyParentOfSizeChange();
     }
     
     // Position all children (or just new one if no auto-sizing, no spread, and start alignment)
@@ -195,9 +197,28 @@ export class NewContainer extends NewRectangle {
   }
 
   /**
+   * Notify parent container that our size has changed (for cascading auto-size)
+   */
+  private notifyParentOfSizeChange(): void {
+    if (this._isUpdatingAutoSize) return;  // Prevent recursion
+    
+    if (this._parent && (this._parent as any).updateAutoSize) {
+      const parentContainer = this._parent as NewContainer;
+      if ((parentContainer as any)._autoWidth || (parentContainer as any)._autoHeight) {
+        // Parent is auto-sizing - notify it to recalculate
+        (parentContainer as any).updateAutoSize();
+        (parentContainer as any).notifyParentOfSizeChange();
+      }
+    }
+  }
+
+  /**
    * Update auto-sizing based on children
    */
   private updateAutoSize(): void {
+    if (this._isUpdatingAutoSize) return;  // Prevent recursion
+    this._isUpdatingAutoSize = true;
+    
     // Get bounding box of all children to handle manually positioned elements
     const childrenBounds = this.getChildrenBoundingBox(false); // Include all children
     const contentBoxBounds = this.getChildrenBoundingBox(true); // Only contentBox-positioned children
@@ -334,6 +355,8 @@ export class NewContainer extends NewRectangle {
         }
       }
     }
+    
+    this._isUpdatingAutoSize = false;  // Reset guard
   }
 
   /**
