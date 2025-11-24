@@ -103,11 +103,11 @@ export abstract class NewShape extends NewElement implements Stylable {
   }
 
   /**
-   * Get the transformed corners of the shape (after rotation).
-   * This allows querying actual corner positions after transforms.
-   * Subclasses should override this to provide accurate corner positions.
+   * Get the corners/vertices of the shape.
+   * For shapes without discrete corners (e.g., circles), returns key points.
+   * Subclasses should override this to provide accurate corner/vertex positions.
    */
-  getTransformedCorners(): { x: number; y: number }[] {
+  getCorners(): { x: number; y: number }[] {
     // Default implementation - subclasses should override
     return [];
   }

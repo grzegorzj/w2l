@@ -39,15 +39,14 @@ export interface NewArtboardConfig {
  * The Artboard is the canvas where all elements are rendered.
  * By default, creates an 800x600px SVG.
  *
- * Artboard extends NewContainer with direction "none", which means
- * children must be positioned manually (no automatic layout).
- *
- * Can use 'auto' for width/height to fit children bounds.
+ * Artboard extends NewContainer with direction "none", which means:
+ * - Children must be positioned manually (no automatic layout)
+ * - Can use 'auto' for width/height to fit children bounds
+ * - Bounds are normalized (children shifted to positive coordinates)
+ * 
+ * All layout logic is handled by the parent NewContainer class.
  */
 export class NewArtboard extends NewContainer {
-  private _artboardAutoWidth: boolean;
-  private _artboardAutoHeight: boolean;
-
   constructor(config: NewArtboardConfig = {}) {
     const width = config.width ?? 800;
     const height = config.height ?? 600;
@@ -60,23 +59,10 @@ export class NewArtboard extends NewContainer {
     super({
       width,
       height,
-      direction: "none", // No automatic layout - manual positioning only
+      direction: "none", // Artboard uses "none" mode from Container
       boxModel: config.boxModel,
       style,
     });
-
-    this._artboardAutoWidth = config.width === "auto";
-    this._artboardAutoHeight = config.height === "auto";
-  }
-
-  /**
-   * Override addElement to use reactive bounds normalization.
-   * This is handled by the parent Container's addElement which calls normalizeBounds.
-   */
-  addElement(element: any): void {
-    // Container's addElement will handle normalizeBounds for direction:"none"
-    // since Artboard has direction:"none" by default
-    super.addElement(element);
   }
 
   /**

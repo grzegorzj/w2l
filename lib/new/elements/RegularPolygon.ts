@@ -161,7 +161,7 @@ export class NewRegularPolygon extends NewShape {
    * Get the transformed corners (vertices) after rotation.
    * Returns all vertices after applying rotation.
    */
-  getTransformedCorners(): { x: number; y: number }[] {
+  getCorners(): { x: number; y: number }[] {
     if (this._rotation === 0) {
       // No rotation - return regular vertices
       return this.absoluteVertices;

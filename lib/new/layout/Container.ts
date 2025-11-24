@@ -13,8 +13,12 @@ import { NewElement, type Position } from "../core/Element.js";
 
 /**
  * Container direction - how children are laid out
+ * - "horizontal": Stack children left-to-right
+ * - "vertical": Stack children top-to-bottom
+ * - "none": Position children at content top-left by default, normalize bounds (used by Artboard)
+ * - "freeform": CSS-like - children position themselves, parent sizes from (0,0) to max child extent
  */
-export type ContainerDirection = "horizontal" | "vertical" | "none";
+export type ContainerDirection = "horizontal" | "vertical" | "none" | "freeform";
 
 /**
  * Horizontal alignment
@@ -44,16 +48,26 @@ export interface NewContainerConfig {
 }
 
 /**
- * Container layout that positions children along a main axis (horizontal, vertical, or none).
+ * Container layout that positions children along a main axis (horizontal, vertical, none, or freeform).
  * 
- * Strategy: PROACTIVE
- * - Parent controls child positioning
- * - Children are positioned in the content area (respects padding)
- * - Children are laid out along the main axis with spacing between them
- * - Supports cross-axis alignment (start, center, end)
+ * LAYOUT MODES:
+ * - "horizontal"/"vertical": PROACTIVE - parent controls child positioning along axis
+ * - "none": SEMI-REACTIVE - auto-positions at content top-left, normalizes bounds (Artboard)
+ * - "freeform": CSS-LIKE REACTIVE - children position themselves, parent sizes and normalizes
+ * 
+ * FREEFORM MODE (CSS Analogy):
+ * - Like CSS: parent has `position: relative`, children have `position: absolute`
+ * - Children positioned anywhere (including negative coords relative to content origin)
+ * - Container sizes from (0,0) to maximum child extent
+ * - If children extend into negative space, container shifts all children to positive coords
+ * - Example: child centered at (0,0) with size 100x80 → extends to (-50,-40) to (50,40)
+ *   → container shifts child to (50,40) and sizes content to 100x80
+ * 
+ * Features:
+ * - Children positioned in content area (respects padding)
+ * - Supports cross-axis alignment (horizontal/vertical stacks only)
  * - Supports reactive sizing (auto width/height based on children)
- * - Supports spread mode: evenly distribute children across available space (requires fixed dimension)
- * - Direction "none" allows manual positioning of children (used by Artboard)
+ * - Supports spread mode: evenly distribute children (horizontal/vertical only)
  */
 export class NewContainer extends NewRectangle {
   private spacing: number;
@@ -89,8 +103,51 @@ export class NewContainer extends NewRectangle {
     // Add to children array first
     super.addElement(element);
     
-    // If direction is "none", position child at content box top-left if not already positioned
-    // This ensures children respect padding by default
+    // FREEFORM MODE: Pure reactive sizing with bounds normalization
+    // Children position themselves, parent grows AND normalizes to fit
+    if (this.direction === "freeform") {
+      if (this._autoWidth || this._autoHeight) {
+        // Only normalize if the new element extends into negative space
+        // This prevents unnecessary shifts when adding elements in positive space
+        const childBounds = element.getBoundingBox();
+        const contentOrigin = this.localToAbsolute(0, 0, "content");
+        
+        if (childBounds) {
+          const minXRelative = childBounds.minX - contentOrigin.x;
+          const minYRelative = childBounds.minY - contentOrigin.y;
+          
+          // Only normalize if THIS child extends into negative space
+          if (minXRelative < 0 || minYRelative < 0) {
+            this.normalizeFreeformBounds();
+          } else {
+            // Just update size without normalizing
+            const bounds = this.getChildrenBoundingBox(false);
+            if (bounds) {
+              const maxXRelative = bounds.maxX - contentOrigin.x;
+              const maxYRelative = bounds.maxY - contentOrigin.y;
+              
+              if (this._autoWidth) {
+                this._borderBoxWidth = 
+                  Math.max(0, maxXRelative) +
+                  this._boxModel.padding.left + this._boxModel.padding.right +
+                  this._boxModel.border.left + this._boxModel.border.right;
+              }
+              
+              if (this._autoHeight) {
+                this._borderBoxHeight = 
+                  Math.max(0, maxYRelative) +
+                  this._boxModel.padding.top + this._boxModel.padding.bottom +
+                  this._boxModel.border.top + this._boxModel.border.bottom;
+              }
+            }
+          }
+        }
+      }
+      return;
+    }
+    
+    // NONE MODE (Artboard): Position children at content top-left by default, normalize bounds
+    // This ensures children respect padding and stay within positive coordinates
     if (this.direction === "none") {
       // Check if the child has been explicitly positioned
       if (!(element as any)._hasExplicitPosition) {
@@ -183,24 +240,42 @@ export class NewContainer extends NewRectangle {
     // Get our absolute position to calculate relative bounds
     const ourPos = this.getAbsolutePosition();
     
-    if (this.direction === "none") {
-      // No direction: use pure bounding box approach (like Artboard)
-      // Use contentBox-positioned children by default, fall back to all children
-      const bounds = contentBoxBounds || childrenBounds;
+    if (this.direction === "freeform") {
+      // Freeform: CSS-like behavior
+      // - Children positioned relative to content box at (0,0)
+      // - Container sizes from (0,0) to max child extent
+      // - Like CSS: position: relative (parent) + position: absolute (children)
+      const bounds = childrenBounds;
       
-      if (bounds && this._autoWidth) {
-        this._borderBoxWidth = 
-          Math.max(0, bounds.maxX - bounds.minX) +
-          this._boxModel.padding.left + this._boxModel.padding.right +
-          this._boxModel.border.left + this._boxModel.border.right;
+      if (bounds && (this._autoWidth || this._autoHeight)) {
+        // Get content box origin in absolute coordinates
+        const contentOrigin = this.localToAbsolute(0, 0, "content");
+        
+        // Calculate how far children extend relative to content box origin
+        // This is the distance from (0,0) to the furthest child edge
+        const maxXRelative = bounds.maxX - contentOrigin.x;
+        const maxYRelative = bounds.maxY - contentOrigin.y;
+        
+        // Size from content origin (0,0) to max extent
+        // This matches CSS behavior: container contains children from its origin
+        if (this._autoWidth) {
+          this._borderBoxWidth = 
+            Math.max(0, maxXRelative) +
+            this._boxModel.padding.left + this._boxModel.padding.right +
+            this._boxModel.border.left + this._boxModel.border.right;
+        }
+        
+        if (this._autoHeight) {
+          this._borderBoxHeight = 
+            Math.max(0, maxYRelative) +
+            this._boxModel.padding.top + this._boxModel.padding.bottom +
+            this._boxModel.border.top + this._boxModel.border.bottom;
+        }
       }
-      
-      if (bounds && this._autoHeight) {
-        this._borderBoxHeight = 
-          Math.max(0, bounds.maxY - bounds.minY) +
-          this._boxModel.padding.top + this._boxModel.padding.bottom +
-          this._boxModel.border.top + this._boxModel.border.bottom;
-      }
+    } else if (this.direction === "none") {
+      // None (Artboard mode): sizing handled by normalizeBounds()
+      // This ensures CSS-like sizing from (0,0) to max extent with proper normalization
+      // Do nothing here - normalizeBounds() will handle the sizing
     } else if (this.direction === "vertical") {
       // Vertical stack
       if (this._autoWidth) {
@@ -332,8 +407,10 @@ export class NewContainer extends NewRectangle {
   }
 
   /**
-   * Normalize bounds for direction "none" containers with auto-sizing.
+   * Normalize bounds for direction "none" containers with auto-sizing (Artboard mode).
    * This ensures that all children fit within the content box starting from (0,0).
+   * 
+   * Note: This is NOT used for "freeform" mode, which allows negative coordinates.
    * 
    * Process:
    * 1. Get bounding box of all children
@@ -378,9 +455,78 @@ export class NewContainer extends NewRectangle {
     }
 
     // Calculate the required content size to fit all children
-    // After shifting, bounds start at 0 or positive values
-    const requiredContentWidth = maxXRelative - minXRelative;
-    const requiredContentHeight = maxYRelative - minYRelative;
+    // Size from content origin (0,0) to max extent (CSS-like)
+    // After shifting (if needed), this ensures children fit from (0,0)
+    const requiredContentWidth = maxXRelative - Math.min(0, minXRelative);
+    const requiredContentHeight = maxYRelative - Math.min(0, minYRelative);
+
+    // Update container size
+    if (this._autoWidth) {
+      this._borderBoxWidth = 
+        requiredContentWidth +
+        this._boxModel.padding.left + this._boxModel.padding.right +
+        this._boxModel.border.left + this._boxModel.border.right;
+    }
+
+    if (this._autoHeight) {
+      this._borderBoxHeight = 
+        requiredContentHeight +
+        this._boxModel.padding.top + this._boxModel.padding.bottom +
+        this._boxModel.border.top + this._boxModel.border.bottom;
+    }
+  }
+
+  /**
+   * Normalize bounds for direction "freeform" containers with auto-sizing.
+   * Similar to normalizeBounds(), but for freeform mode.
+   * 
+   * This ensures children can be positioned anywhere (including negative coords),
+   * and the container will grow to contain them, shifting all children if needed.
+   * 
+   * Process:
+   * 1. Get bounding box of all children
+   * 2. If children extend into negative space, shift all children
+   * 3. Resize container to fit from (0,0) to max extent
+   */
+  private normalizeFreeformBounds(): void {
+    if (this.children.length === 0) return;
+    if (!this._autoWidth && !this._autoHeight) return;
+
+    // Get absolute position of our content box origin
+    const contentOrigin = this.localToAbsolute(0, 0, "content");
+    
+    // Get bounding box of all children in absolute coordinates
+    const bounds = this.getChildrenBoundingBox(false);
+    if (!bounds) return;
+
+    // Calculate how far children extend relative to our content box origin
+    const minXRelative = bounds.minX - contentOrigin.x;
+    const minYRelative = bounds.minY - contentOrigin.y;
+    const maxXRelative = bounds.maxX - contentOrigin.x;
+    const maxYRelative = bounds.maxY - contentOrigin.y;
+
+    // Determine if we need to shift children (if they extend into negative space)
+    const shiftX = Math.min(0, minXRelative);
+    const shiftY = Math.min(0, minYRelative);
+
+    // If we need to shift, adjust all children positions
+    if (shiftX < 0 || shiftY < 0) {
+      for (const child of this.children) {
+        // Get current position relative to us
+        const currentPos = (child as any)._position;
+        
+        // Shift the position to make all coords positive
+        (child as any)._position = {
+          x: currentPos.x - shiftX,
+          y: currentPos.y - shiftY,
+        };
+      }
+    }
+
+    // Calculate the required content size to fit all children
+    // Size from content origin (0,0) to max extent (after shifting)
+    const requiredContentWidth = maxXRelative - Math.min(0, minXRelative);
+    const requiredContentHeight = maxYRelative - Math.min(0, minYRelative);
 
     // Update container size
     if (this._autoWidth) {

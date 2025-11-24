@@ -20,7 +20,7 @@ const headerColumns = new Columns({
   columnWidth: 360,
   height: 150,
   gutter: 20,
-  alignment: "center",
+  horizontalAlignment: "center",
   style: {
     fill: "#34495e",
     stroke: "#1abc9c",
@@ -68,7 +68,7 @@ const mainColumns = new Columns({
   columnWidth: 560,
   height: 650,
   gutter: 20,
-  alignment: "start",
+  horizontalAlignment: "start",
   style: {
     fill: "#34495e",
     stroke: "#95a5a6",
@@ -162,7 +162,7 @@ const rightStack = new NewContainer({
   height: "auto",
   direction: "vertical",
   spacing: 20,
-  alignment: "center",
+  horizontalAlignment: "center",
 });
 
 mainColumns.getColumn(1).addElement(rightStack);
@@ -173,7 +173,7 @@ const nestedColumns = new Columns({
   columnWidth: 240,
   height: 180,
   gutter: 15,
-  alignment: "center",
+  horizontalAlignment: "center",
   style: {
     fill: "#8e44ad",
     stroke: "#9b59b6",
@@ -191,7 +191,7 @@ for (let i = 0; i < 2; i++) {
     height: "auto",
     direction: "vertical",
     spacing: 10,
-    alignment: "center",
+    horizontalAlignment: "center",
   });
   
   for (let j = 0; j < 2; j++) {
@@ -256,7 +256,7 @@ const spreadContainer = new NewContainer({
   height: 120,
   direction: "horizontal",
   spread: true,
-  alignment: "center",
+  horizontalAlignment: "center",
   style: {
     fill: "#27ae60",
     stroke: "#2ecc71",

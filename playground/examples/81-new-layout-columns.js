@@ -20,7 +20,7 @@ const columns = new Columns({
   columnWidth: 200,
   height: 600,
   gutter: 30,
-  alignment: "start",
+  horizontalAlignment: "start",
   style: {
     fill: "#bdc3c7",
     stroke: "#95a5a6",
@@ -45,7 +45,7 @@ const col1Stack = new NewContainer({
   height: "auto",
   direction: "vertical",
   spacing: 15,
-  alignment: "center",
+  horizontalAlignment: "center",
 });
 
 for (let i = 0; i < 3; i++) {
@@ -69,7 +69,7 @@ const col2Stack = new NewContainer({
   height: "auto",
   direction: "vertical",
   spacing: 20,
-  alignment: "center",
+  horizontalAlignment: "center",
 });
 
 for (let i = 0; i < 4; i++) {
@@ -127,7 +127,7 @@ const col4Stack = new NewContainer({
   direction: "vertical",
   spacing: 10,
   spread: true,
-  alignment: "center",
+  horizontalAlignment: "center",
   boxModel: { padding: 10 },
   style: {
     fill: "#34495e",

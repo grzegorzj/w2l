@@ -294,7 +294,7 @@ export abstract class NewRectangle extends NewShape {
    * Get the transformed corners after rotation.
    * Returns the four corners in order: topLeft, topRight, bottomRight, bottomLeft
    */
-  getTransformedCorners(): { x: number; y: number }[] {
+  getCorners(): { x: number; y: number }[] {
     if (this._rotation === 0) {
       // No rotation - return regular corners
       return [

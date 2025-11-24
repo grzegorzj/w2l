@@ -2,6 +2,12 @@
 
 Clean rebuild of layout engine with proper architecture.
 
+**Key Architectural Improvements:**
+- `NewArtboard` extends `NewContainer` (unified container abstraction)
+- All auto-sizing logic handled by `NewContainer` (no duplicate code)
+- CSS-like sizing: containers grow from (0,0) to max child extent
+- Bounds normalization: `direction: "none"` shifts children to positive coordinates
+
 ## Position Model
 
 **Storage**: Position relative to parent  
@@ -34,27 +40,69 @@ new NewRect({
 
 ## Layout Strategies
 
-**Proactive**: Parent tells children where to be  
-**Reactive**: Size adjusts to children (per-axis)
+Containers support different layout modes via the `direction` property:
 
-### VStack (Proactive)
+### Proactive Layouts (Parent Controls Positioning)
+
+**Horizontal/Vertical Stacks**:
 ```javascript
-const vstack = new NewVStack({
+const vstack = new NewContainer({
   width: 400,
   height: 500,
+  direction: "vertical",
   spacing: 20,
-  alignment: 'center',  // left, center, right
+  horizontalAlignment: 'center',  // left, center, right
   boxModel: { padding: 30 }
 });
 
 vstack.addElement(rect1);  // Positioned immediately
 vstack.addElement(rect2);  // Stacked below rect1
-
-// Nesting: VStacks can contain other VStacks
-const nested = new NewVStack({ width: 300, height: 200, spacing: 10 });
-nested.addElement(item1);
-vstack.addElement(nested);  // Nested layout
 ```
+
+### Reactive Layouts (Parent Sizes to Children)
+
+**Artboard Mode** (`direction: "none"`):
+```javascript
+const artboard = new NewArtboard({  // Extends Container with direction: "none"
+  width: "auto",
+  height: "auto",
+  boxModel: { padding: 20 }
+});
+
+// Children positioned at content top-left by default (if not explicitly positioned)
+// Auto-sizes from (0,0) to max child extent (CSS-like)
+// Normalizes bounds: shifts children if they're in negative space
+artboard.addElement(rect);
+```
+
+**Freeform Mode** (`direction: "freeform"`):
+```javascript
+const container = new NewContainer({
+  width: "auto",
+  height: "auto",
+  direction: "freeform",
+  boxModel: { padding: 20 }
+});
+
+// CSS-like: children position themselves relative to (0,0)
+// Container sizes from origin to max child extent
+// Normalizes bounds: shifts children if they extend into negative space
+rect.position({ 
+  relativeTo: container.contentBox.center,  // Can position relative to center
+  x: 0,
+  y: 0
+});
+container.addElement(rect);  // Container grows to contain rect
+// If rect (100x80) is centered at (0,0), it extends from (-50,-40) to (50,40)
+// Container shifts rect to (50,40) and sizes content to 100x80
+```
+
+| Mode | Auto-position? | How it sizes? | Normalization | Use case |
+|------|----------------|---------------|---------------|----------|
+| `"horizontal"` | ✅ Yes | Stacked children | N/A | Horizontal stack |
+| `"vertical"` | ✅ Yes | Stacked children | N/A | Vertical stack |
+| `"none"` | ✅ If not positioned | From (0,0) to max extent | ✅ Shifts to positive coords | Artboard (bounded canvas) |
+| `"freeform"` | ❌ No | From (0,0) to max extent | ✅ Shifts to positive coords | CSS-like reactive container |
 
 ## Alignment
 
@@ -125,16 +173,16 @@ shape.translate({ x: 1, y: 1 }, 30);  // Move 30 units diagonally
 shape.translate({ x: 3, y: 4 }, 100);  // Moves 100 units in direction (3,4)
 ```
 
-### Query Transformed Corners
+### Query Corners
 
-After transforms, you can query actual corner/vertex positions:
+Get actual corner/vertex positions (already includes any transforms):
 
 ```javascript
-const corners = rect.getTransformedCorners();
-// Returns [topLeft, topRight, bottomRight, bottomLeft] after rotation
+const corners = rect.getCorners();
+// Returns [topLeft, topRight, bottomRight, bottomLeft]
 
-const vertices = triangle.getTransformedCorners();
-// Returns [v1, v2, v3] after rotation
+const vertices = triangle.getCorners();
+// Returns [v1, v2, v3]
 
 // Use for debugging or additional positioning
 corners.forEach(corner => {

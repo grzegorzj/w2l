@@ -30,4 +30,46 @@ columns is literally just a wrapper on the conatiner which works perfectly well,
 
 // TODO shouldn't be possible to set both column width and width to auto, it will explode in the future.
 
-// TODO artboard should be able to resize to the absolutely positioned elements.
+// TODO artboard should be able to resize to the absolutely positioned elements with 'auto'.
+
+# Prompt 3
+
+The autoresize of our artboard isnt reliable just yet. it affects positioning of other items, plus it
+only works in the arboard element in a very hacky way as we call .render(). Let's get rid of this, and think through reactive sizing.
+
+We earlier decided about some layouting principles:
+
+# Prompt 2
+
+- things are by default positioned relatively (like in HTML/CSS) to their parent
+- there's box model - border, margin, padding, content
+- by default using .position should position in relation to content part of box model, but it should be possible to choose between the 4 modes
+
+THere is also mention of hierarchy in our prior docs;
+
+There are two different types of strategies.
+
+- reactive strategies: parent needs recalculation after the children are positioned and sized. For instance, we make the parent match the size of children.
+- proactive strategies: children need recalculation when parent renders them
+
+An element never can be both in a specific dimension (e.g. reactive and proactive height at the same time).
+
+These strategies divide between:
+
+- sizing
+- positioning
+
+Hierarchy:
+
+1. if the parent has a claim on how it wants to position children, it tells them by passing all relevant information for the children to alter their position
+2. the children actually implement the relative positioning - that's because triangle might want to behave slightly differently than a rectangle
+3. the children can overwrite the positioning preference of the parent, but never the type of it's strategy
+
+So far we did not have a lot of reactive sizing. Container can be sized reactively if it has elements that are autoarranged by itself, but there's no logic of adding elements to it and the Container adopting itself to them.
+
+I propose a simple flow:
+
+- we have been using ".addElement" syntax that deferred the decision/information of who is whose child. I suggest we change this to a parent-at-initialization strategy. This conceptually simplifies the whole thing. Let's write a short guide on that and rewrite the existing examples in `/playground/examples/new`
+- we can change the position and sizing attrubutes of elements to setters, and setters would let know any parent that has any reactive sizing that it's about the time to change its size. It would then size itself in such way that the final computation of where the elements are about to get positioned aren't out of bounds.
+
+Before we do that, I would like you to break down for me again how does our container's vertical/horizontal alignment work, as it works perfectly well and I don't want this to interfere with it - we're in brainstorming mode.

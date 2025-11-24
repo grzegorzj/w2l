@@ -262,7 +262,7 @@ export class NewTriangle extends NewShape {
    * Get the transformed corners (vertices) after rotation.
    * Returns the three vertices after applying rotation.
    */
-  getTransformedCorners(): { x: number; y: number }[] {
+  getCorners(): { x: number; y: number }[] {
     if (this._rotation === 0) {
       // No rotation - return regular vertices
       return this.absoluteVertices;

@@ -34,7 +34,7 @@ const topStack = new NewContainer({
   height: 150,
   direction: 'horizontal',
   spacing: 15,
-  alignment: 'start',  // Align to top
+  horizontalAlignment: 'start',  // Align to top
   boxModel: { padding: 20, border: 2 },
   style: {
     fill: '#3498db',
@@ -73,7 +73,7 @@ const centerStack = new NewContainer({
   height: 150,
   direction: 'horizontal',
   spacing: 15,
-  alignment: 'center',  // Align to vertical center
+  horizontalAlignment: 'center',  // Align to vertical center
   boxModel: { padding: 20, border: 2 },
   style: {
     fill: '#2ecc71',
@@ -111,7 +111,7 @@ const bottomStack = new NewContainer({
   height: 150,
   direction: 'horizontal',
   spacing: 15,
-  alignment: 'end',  // Align to bottom
+  horizontalAlignment: 'end',  // Align to bottom
   boxModel: { padding: 20, border: 2 },
   style: {
     fill: '#e74c3c',

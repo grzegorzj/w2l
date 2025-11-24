@@ -27,7 +27,7 @@ const defaultContainer = new NewContainer({
   height: 140,
   direction: "vertical",
   spacing: 10,
-  alignment: "center",
+  horizontalAlignment: "center",
   boxModel: { padding: 15, border: 2 },
   style: {
     fill: "#9b59b6",

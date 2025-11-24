@@ -4,7 +4,7 @@
  * Shows how to use geometric transforms:
  * - rotate(degrees): Rotate shape around its center
  * - translate(direction, distance): Move shape along a vector
- * - getTransformedCorners(): Query actual corner positions after transforms
+ * - getCorners(): Query actual corner/vertex positions
  */
 
 import { NewArtboard, NewRect, NewCircle, NewTriangle } from "w2l";
@@ -39,8 +39,8 @@ rect1.rotate(30); // Rotate 30 degrees
 
 artboard.addElement(rect1);
 
-// Add debug circles at transformed corners
-rect1.getTransformedCorners().forEach((corner, index) => {
+// Add debug circles at corners (after adding to artboard)
+rect1.getCorners().forEach((corner, index) => {
   const circle = new NewCircle({
     radius: 4,
     style: {
@@ -88,7 +88,7 @@ rect2.translate({ x: 1, y: -1 }, 60);
 artboard.addElement(rect2);
 
 // Add debug circles
-rect2.getTransformedCorners().forEach((corner, index) => {
+rect2.getCorners().forEach((corner, index) => {
   const circle = new NewCircle({
     radius: 4,
     style: {
@@ -136,7 +136,7 @@ triangle.translate({ x: 2, y: 1 }, 40);
 artboard.addElement(triangle);
 
 // Add debug circles at triangle vertices
-triangle.getTransformedCorners().forEach((corner, index) => {
+triangle.getCorners().forEach((corner, index) => {
   const circle = new NewCircle({
     radius: 5,
     style: {
@@ -184,7 +184,7 @@ rect3.translate({ x: -1, y: 0 }, 20); // Move left
 artboard.addElement(rect3);
 
 // Add debug circles
-rect3.getTransformedCorners().forEach((corner, index) => {
+rect3.getCorners().forEach((corner, index) => {
   const circle = new NewCircle({
     radius: 4,
     style: {
@@ -208,19 +208,19 @@ rect3.getTransformedCorners().forEach((corner, index) => {
 console.log("=== TRANSFORM EXAMPLES ===");
 console.log("Rect1 (rotated 30°):");
 console.log("  Center:", rect1.center);
-console.log("  Corners:", rect1.getTransformedCorners());
+console.log("  Corners:", rect1.getCorners());
 
 console.log("\nRect2 (rotated 45° + translated):");
 console.log("  Center:", rect2.center);
-console.log("  Corners:", rect2.getTransformedCorners());
+console.log("  Corners:", rect2.getCorners());
 
 console.log("\nTriangle (rotated 60° + translated):");
 console.log("  Center:", triangle.center);
-console.log("  Vertices:", triangle.getTransformedCorners());
+console.log("  Vertices:", triangle.getCorners());
 
 console.log("\nRect3 (multiple translations):");
 console.log("  Center:", rect3.center);
-console.log("  Corners:", rect3.getTransformedCorners());
+console.log("  Corners:", rect3.getCorners());
 
 artboard.render();
 

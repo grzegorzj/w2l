@@ -41,7 +41,7 @@ const outerVStack = new NewContainer({
   height: "auto", // Auto-height
   direction: "vertical",
   spacing: 20,
-  alignment: "center",
+  horizontalAlignment: "center",
   boxModel: { padding: 30, border: 3 },
   style: {
     fill: "#34495e",
@@ -70,7 +70,7 @@ const innerHStack = new NewContainer({
   height: 120,
   direction: "horizontal",
   spacing: 15,
-  alignment: "center", // Center vertically
+  horizontalAlignment: "center", // Center vertically
   boxModel: { padding: 15, border: 2 },
   style: {
     fill: "#3498db",
@@ -102,7 +102,7 @@ const innerVStack = new NewContainer({
   height: "auto", // Auto-height
   direction: "vertical",
   spacing: 12,
-  alignment: "start", // Align left
+  horizontalAlignment: "start", // Align left
   boxModel: { padding: 15, border: 2 },
   style: {
     fill: "#2ecc71",

@@ -126,7 +126,7 @@ export class NewLine extends NewShape {
     };
   }
 
-  getTransformedCorners(): { x: number; y: number }[] {
+  getCorners(): { x: number; y: number }[] {
     // For a line, return start and end points
     return [this._start, this._end];
   }

@@ -70,7 +70,7 @@ export class NewCircle extends NewShape {
    * Get the transformed corners (cardinal points) after rotation.
    * For a circle, returns 4 points: top, right, bottom, left
    */
-  getTransformedCorners(): { x: number; y: number }[] {
+  getCorners(): { x: number; y: number }[] {
     const c = this.center;
     const r = this._radius;
 

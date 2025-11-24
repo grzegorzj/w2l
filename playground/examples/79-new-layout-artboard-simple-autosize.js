@@ -27,7 +27,7 @@ const container = new NewContainer({
   height: 300,
   direction: "vertical",
   spacing: 15,
-  alignment: "center",
+  horizontalAlignment: "center",
   boxModel: { padding: 20, border: 3 },
   style: {
     fill: "#3498db",
