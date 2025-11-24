@@ -27,3 +27,9 @@ export type { Style, Stylable } from "./Stylable.js";
 export { styleToSVGAttributes } from "./Stylable.js";
 
 export { parseUnit, isValidUnit, formatUnit } from "./units.js";
+
+export { 
+  MATHJAX_EX_TO_EM_RATIO, 
+  MATHJAX_CONTAINER_WIDTH_MULTIPLIER,
+  MATHJAX_UNITS_PER_EM
+} from "./mathjax-constants.js";

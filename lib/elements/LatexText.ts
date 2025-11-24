@@ -12,6 +12,11 @@ import type { Point } from "../core/Artboard.js";
 import { parseUnit } from "../core/units.js";
 import type { Style } from "../core/Stylable.js";
 import { styleToSVGAttributes } from "../core/Stylable.js";
+import { 
+  MATHJAX_EX_TO_EM_RATIO, 
+  MATHJAX_CONTAINER_WIDTH_MULTIPLIER,
+  MATHJAX_UNITS_PER_EM
+} from "../core/mathjax-constants.js";
 
 /**
  * Bounding box for a LaTeX element part.
@@ -228,8 +233,8 @@ export class LatexText extends Shape {
       const node = MathJax.tex2svg(this.config.content, {
         display: displayMode,
         em: this._fontSize,        // Set em size to our font size in pixels
-        ex: this._fontSize * 0.5,  // ex is typically half of em
-        containerWidth: 80 * this._fontSize  // Large container width for proper layout
+        ex: this._fontSize * MATHJAX_EX_TO_EM_RATIO,
+        containerWidth: MATHJAX_CONTAINER_WIDTH_MULTIPLIER * this._fontSize
       });
       
       // Extract the SVG element and convert to string
@@ -245,7 +250,7 @@ export class LatexText extends Shape {
         if (viewBox) {
           const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
           // MathJax uses 1000 units per em
-          const scale = this._fontSize / 1000;
+          const scale = this._fontSize / MATHJAX_UNITS_PER_EM;
           svg.setAttribute('width', `${vbWidth * scale}px`);
           svg.setAttribute('height', `${vbHeight * scale}px`);
         }
@@ -312,7 +317,7 @@ export class LatexText extends Shape {
           const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
           
           // MathJax uses 1000 units per em
-          const scale = this._fontSize / 1000;
+          const scale = this._fontSize / MATHJAX_UNITS_PER_EM;
           viewBoxCalculatedSize = {
             width: vbWidth * scale,
             height: vbHeight * scale
@@ -380,7 +385,7 @@ export class LatexText extends Shape {
           const viewBox = svgElement.getAttribute('viewBox');
           if (viewBox) {
             const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
-            const scale = this._fontSize / 1000;
+            const scale = this._fontSize / MATHJAX_UNITS_PER_EM;
             viewBoxInfo = `${vbWidth} x ${vbHeight} (scaled: ${vbWidth * scale} x ${vbHeight * scale})`;
             calculationMethod = 'viewBox with scale';
           } else {
@@ -398,8 +403,8 @@ export class LatexText extends Shape {
           svgUnits: svgUnits,
           fontSize: this._fontSize,
           emSize: this._fontSize,
-          exSize: this._fontSize * 0.5,
-          scale: this._fontSize / 1000,
+          exSize: this._fontSize * MATHJAX_EX_TO_EM_RATIO,
+          scale: this._fontSize / MATHJAX_UNITS_PER_EM,
           displayMode: this.config.displayMode,
           svgFound: !!svgElement,
           partsFound: this._measuredDimensions.parts.size,

@@ -30,6 +30,8 @@ export {
   NewTriangle,
   NewLine,
   NewRegularPolygon,
+  NewText,
+  NewLatex,
   type NewArtboardConfig,
   type NewCircleConfig,
   type NewRectConfig,
@@ -39,6 +41,10 @@ export {
   type TriangleOrientation,
   type NewLineConfig,
   type NewRegularPolygonConfig,
+  type NewTextConfig,
+  type NewLatexConfig,
+  type NewAnnotatedTextElement,
+  type NewAnnotatedLatexElement,
 } from "./elements/index.js";
 
 // Utils

@@ -1,24 +1,19 @@
 /**
- * MixedText module - Text with embedded LaTeX formulas.
+ * NewText - Text with optional embedded LaTeX formulas for the new layout system.
  *
- * Allows mixing regular text and LaTeX formulas in a single element,
- * with the same measurement capabilities for both text and formula parts.
- *
- * @module elements
+ * Supports plain text and mixed text with LaTeX formulas using $ and $$ delimiters.
+ * Provides measurement capabilities and annotation support for highlighting.
  */
 
-import { Shape } from "../core/Shape.js";
-import type { Point } from "../core/Artboard.js";
-import { parseUnit } from "../core/units.js";
-import type { Style } from "../core/Stylable.js";
-import { styleToSVGAttributes } from "../core/Stylable.js";
-import type { WordBoundingBox } from "./Text.js";
-import type { LatexPartBoundingBox } from "./LatexText.js";
+import { NewShape } from "../core/Shape.js";
+import type { Style } from "../../core/Stylable.js";
+import { styleToSVGAttributes } from "../../core/Stylable.js";
+import { parseUnit } from "../../core/units.js";
 import { 
   MATHJAX_EX_TO_EM_RATIO, 
   MATHJAX_CONTAINER_WIDTH_MULTIPLIER,
   MATHJAX_UNITS_PER_EM
-} from "../core/mathjax-constants.js";
+} from "../../core/mathjax-constants.js";
 
 /**
  * Represents a segment of mixed text content.
@@ -43,27 +38,10 @@ export interface MixedTextPartBoundingBox {
 }
 
 /**
- * Result of a pattern match in mixed text.
- */
-export interface MixedTextMatch {
-  /** The matched text/latex content */
-  match: string;
-  /** Bounding box of the segment containing this match */
-  bbox: MixedTextPartBoundingBox;
-  /** Index of the segment containing this match */
-  segmentIndex: number;
-  /** Type of segment: text or latex */
-  type: "text" | "latex";
-  /** Character offset within the segment */
-  charOffset: number;
-}
-
-/**
- * Represents an annotated element within a MixedText formula.
+ * Represents an annotated element within a NewText formula.
  * Annotated using \cssId{id}{content} or \class{class}{content} commands in LaTeX segments.
- * Provides the same positioning API as other elements.
  */
-export interface AnnotatedMixedElement {
+export interface NewAnnotatedTextElement {
   /** ID or class name of the annotation */
   identifier: string;
   /** Type of annotation: 'id' or 'class' */
@@ -73,41 +51,41 @@ export interface AnnotatedMixedElement {
   /** The SVG element itself */
   element: SVGElement;
   
-  // Reference points for positioning (same as Bounded elements)
+  // Reference points for positioning (absolute world coordinates)
   /** Center point of the element */
-  readonly center: Point;
+  readonly center: { x: number; y: number };
   /** Top-left corner */
-  readonly topLeft: Point;
+  readonly topLeft: { x: number; y: number };
   /** Top-center point */
-  readonly topCenter: Point;
+  readonly topCenter: { x: number; y: number };
   /** Top-right corner */
-  readonly topRight: Point;
+  readonly topRight: { x: number; y: number };
   /** Left-center point */
-  readonly leftCenter: Point;
+  readonly leftCenter: { x: number; y: number };
   /** Right-center point */
-  readonly rightCenter: Point;
+  readonly rightCenter: { x: number; y: number };
   /** Bottom-left corner */
-  readonly bottomLeft: Point;
+  readonly bottomLeft: { x: number; y: number };
   /** Bottom-center point */
-  readonly bottomCenter: Point;
+  readonly bottomCenter: { x: number; y: number };
   /** Bottom-right corner */
-  readonly bottomRight: Point;
+  readonly bottomRight: { x: number; y: number };
   
   // Convenient aliases
   /** Alias for topCenter */
-  readonly top: Point;
+  readonly top: { x: number; y: number };
   /** Alias for bottomCenter */
-  readonly bottom: Point;
+  readonly bottom: { x: number; y: number };
   /** Alias for leftCenter */
-  readonly left: Point;
+  readonly left: { x: number; y: number };
   /** Alias for rightCenter */
-  readonly right: Point;
+  readonly right: { x: number; y: number };
 }
 
 /**
- * Configuration for creating a MixedText element.
+ * Configuration for creating a NewText element.
  */
-export interface MixedTextConfig {
+export interface NewTextConfig {
   /**
    * The content with embedded LaTeX formulas.
    * Use $...$ for inline LaTeX and $$...$$ for display mode LaTeX.
@@ -146,64 +124,64 @@ export interface MixedTextConfig {
   lineHeight?: number;
 
   /**
-   * Optional name for debugging and SVG comments.
-   */
-  name?: string;
-
-  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
    */
   style?: Partial<Style>;
 
   /**
    * Enable debug mode to visualize bounding box.
-   * Draws a red border around the measured dimensions.
    * @defaultValue false
    */
   debug?: boolean;
 }
 
 /**
- * Mixed text with embedded LaTeX formulas.
+ * Text with optional embedded LaTeX formulas.
  *
- * The MixedText class allows you to seamlessly mix regular text with
- * mathematical notation, providing measurement capabilities for both.
+ * The NewText class allows you to render plain text or seamlessly mix regular text with
+ * mathematical notation, providing measurement capabilities and annotation
+ * support for highlighting specific parts of formulas.
+ *
+ * @example
+ * Create plain text
+ * ```typescript
+ * const text = new NewText({
+ *   content: "Hello, World!",
+ *   fontSize: 18
+ * });
+ * ```
  *
  * @example
  * Create text with inline formula
  * ```typescript
- * const text = new MixedText({
+ * const text = new NewText({
  *   content: "The equation $E = mc^2$ is famous.",
- *   fontSize: "18px"
+ *   fontSize: 18
  * });
  * ```
  *
  * @example
- * Create text with display mode formula
+ * Create text with annotated formula
  * ```typescript
- * const text = new MixedText({
- *   content: "Quadratic formula: $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$",
- *   fontSize: "20px",
- *   fontFamily: "Georgia"
+ * const text = new NewText({
+ *   content: "Equation: $E = \\cssId{power}{mc^2}$",
+ *   fontSize: 20
  * });
+ * const power = text.getElementById('power');
+ * if (power) {
+ *   // Use power.topLeft, power.center, etc. for highlighting
+ * }
  * ```
  */
-export class MixedText extends Shape {
-  private config: MixedTextConfig;
+export class NewText extends NewShape {
+  private config: NewTextConfig;
   private _fontSize: number;
   private _lineHeight: number;
   private _segments: TextSegment[];
   
   /**
-   * Function to get the measurement container from the parent artboard.
-   * Set by artboard when element is added.
-   * @internal
-   */
-  private _measurementContainerGetter?: () => SVGElement;
-  
-  /**
    * Cached measured dimensions from browser.
-   * Populated lazily when positions are queried.
+   * Populated lazily when measurement is needed.
    * @internal
    */
   private _measuredDimensions?: {
@@ -213,16 +191,21 @@ export class MixedText extends Shape {
   };
 
   /**
-   * Creates a new MixedText instance.
+   * Creates a new NewText instance.
    *
-   * @param config - Configuration for the mixed text element
+   * @param config - Configuration for the text element
    */
-  constructor(config: MixedTextConfig) {
-    super(config.name);
+  constructor(config: NewTextConfig) {
+    super();
     this.config = config;
-    this._fontSize = parseUnit(config.fontSize || "16px");
+    this._fontSize = typeof config.fontSize === 'number' ? config.fontSize : parseUnit(config.fontSize || "16px");
     this._lineHeight = config.lineHeight || 1.2;
     this._segments = this.parseContent();
+    
+    // Apply style if provided
+    if (config.style) {
+      this._style = { ...config.style };
+    }
   }
 
   /**
@@ -234,7 +217,6 @@ export class MixedText extends Shape {
   private parseContent(): TextSegment[] {
     const content = this.config.content || "";
     const segments: TextSegment[] = [];
-    let currentIndex = 0;
     let segmentIndex = 0;
 
     // Regex to match $$...$$ (display) or $...$ (inline)
@@ -293,33 +275,17 @@ export class MixedText extends Shape {
   }
 
   /**
-   * Sets the measurement container getter.
-   * Called by Artboard when this element is added.
-   * 
-   * @param getter - Function that returns the measurement SVG container
-   * @internal
-   */
-  setMeasurementContainer(getter: () => SVGElement): void {
-    this._measurementContainerGetter = getter;
-  }
-
-  /**
-   * Ensures this mixed text has been measured with actual browser metrics.
-   * 
-   * @internal
-   */
-  /**
    * Perform measurement of mixed text dimensions.
-   * Overrides Element.performMeasurement().
+   * Called automatically when dimensions are needed.
    * 
    * @internal
    */
-  protected performMeasurement(): void {
+  private ensureMeasured(): void {
     if (this._measuredDimensions) {
       return;
     }
     
-    if (!this._measurementContainerGetter || typeof document === 'undefined') {
+    if (typeof document === 'undefined') {
       return;
     }
     
@@ -336,8 +302,6 @@ export class MixedText extends Shape {
       container.style.flexWrap = 'nowrap';
       container.style.margin = '0';
       container.style.padding = '0';
-      
-      // MathJax SVG doesn't need style overrides like KaTeX
       
       document.body.appendChild(container);
 
@@ -363,11 +327,10 @@ export class MixedText extends Shape {
               if (MathJax.tex2svg) {
                 const node = MathJax.tex2svg(segment.content, {
                   display: segment.displayMode || false,
-                  em: this._fontSize,        // Set em size in pixels
+                  em: this._fontSize,
                   ex: this._fontSize * MATHJAX_EX_TO_EM_RATIO,
                   containerWidth: MATHJAX_CONTAINER_WIDTH_MULTIPLIER * this._fontSize
                 });
-                // Get the SVG and fix its dimensions
                 const svg = node.querySelector('svg');
                 if (svg) {
                   // Remove ex-based width/height, replace with pixels
@@ -401,17 +364,16 @@ export class MixedText extends Shape {
         container.appendChild(span);
       });
 
-      // Measure the container first to get baseline
+      // Measure the container
       const containerBbox = container.getBoundingClientRect();
 
-      // Measure each segment - for LaTeX segments, measure the SVG inside
+      // Measure each segment
       const spans = container.querySelectorAll('[data-segment-index]');
       spans.forEach((span) => {
         const segmentType = span.getAttribute('data-segment-type') as 'text' | 'latex';
         let bbox;
         
         if (segmentType === 'latex') {
-          // For LaTeX, measure the SVG element directly
           const svg = span.querySelector('svg');
           if (svg) {
             bbox = svg.getBoundingClientRect();
@@ -419,7 +381,6 @@ export class MixedText extends Shape {
             bbox = (span as HTMLElement).getBoundingClientRect();
           }
         } else {
-          // For text, measure the span
           bbox = (span as HTMLElement).getBoundingClientRect();
         }
         
@@ -443,39 +404,24 @@ export class MixedText extends Shape {
 
       document.body.removeChild(container);
     } catch (error) {
-      console.warn('MixedText measurement failed:', error);
+      // Silent fail
     }
   }
 
   /**
-   * Ensures this mixed text has been measured with actual browser metrics.
-   * Backward compatibility wrapper - calls measure().
-   * 
-   * @internal
-   * @deprecated Use measure() instead
-   */
-  private ensureMeasured(): void {
-    this.measure();
-  }
-
-  /**
    * Gets the width of the mixed text.
-   * 
-   * @returns The width in pixels
    */
   get textWidth(): number {
     this.ensureMeasured();
-    return this._measuredDimensions?.totalWidth || 200; // fallback
+    return this._measuredDimensions?.totalWidth || 200;
   }
 
   /**
    * Gets the height of the mixed text.
-   * 
-   * @returns The height in pixels
    */
   get textHeight(): number {
     this.ensureMeasured();
-    return this._measuredDimensions?.totalHeight || this._fontSize * this._lineHeight; // fallback
+    return this._measuredDimensions?.totalHeight || this._fontSize * this._lineHeight;
   }
 
   /**
@@ -493,197 +439,134 @@ export class MixedText extends Shape {
   }
 
   /**
-   * Gets the geometric center of the mixed text.
-   *
-   * @returns The center point
+   * Gets the bounding box of this element.
    */
-  get center(): Point {
-    return this.toAbsolutePoint(this.textWidth / 2, this.textHeight / 2);
+  getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      minX: absPos.x,
+      minY: absPos.y,
+      maxX: absPos.x + this.textWidth,
+      maxY: absPos.y + this.textHeight,
+    };
+  }
+
+  /**
+   * Gets the rotation center (center of the text).
+   */
+  protected getRotationCenter(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth / 2,
+      y: absPos.y + this.textHeight / 2,
+    };
+  }
+
+  /**
+   * Gets the corners of the text box.
+   */
+  getCorners(): { x: number; y: number }[] {
+    const absPos = this.getAbsolutePosition();
+    return [
+      { x: absPos.x, y: absPos.y }, // topLeft
+      { x: absPos.x + this.textWidth, y: absPos.y }, // topRight
+      { x: absPos.x + this.textWidth, y: absPos.y + this.textHeight }, // bottomRight
+      { x: absPos.x, y: absPos.y + this.textHeight }, // bottomLeft
+    ];
   }
 
   /**
    * Standard reference points for positioning.
    */
-  get topLeft(): Point {
-    return this.toAbsolutePoint(0, 0);
+  get center(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth / 2,
+      y: absPos.y + this.textHeight / 2,
+    };
   }
 
-  get topCenter(): Point {
-    return this.toAbsolutePoint(this.textWidth / 2, 0);
+  get topLeft(): { x: number; y: number } {
+    return this.getAbsolutePosition();
   }
 
-  get topRight(): Point {
-    return this.toAbsolutePoint(this.textWidth, 0);
+  get topCenter(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth / 2,
+      y: absPos.y,
+    };
   }
 
-  get leftCenter(): Point {
-    return this.toAbsolutePoint(0, this.textHeight / 2);
+  get topRight(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth,
+      y: absPos.y,
+    };
   }
 
-  get rightCenter(): Point {
-    return this.toAbsolutePoint(this.textWidth, this.textHeight / 2);
+  get leftCenter(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x,
+      y: absPos.y + this.textHeight / 2,
+    };
   }
 
-  get bottomLeft(): Point {
-    return this.toAbsolutePoint(0, this.textHeight);
+  get rightCenter(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth,
+      y: absPos.y + this.textHeight / 2,
+    };
   }
 
-  get bottomCenter(): Point {
-    return this.toAbsolutePoint(this.textWidth / 2, this.textHeight);
+  get bottomLeft(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x,
+      y: absPos.y + this.textHeight,
+    };
   }
 
-  get bottomRight(): Point {
-    return this.toAbsolutePoint(this.textWidth, this.textHeight);
+  get bottomCenter(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth / 2,
+      y: absPos.y + this.textHeight,
+    };
   }
 
-  /**
-   * Convenient alias for topCenter.
-   */
-  get top(): Point {
+  get bottomRight(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth,
+      y: absPos.y + this.textHeight,
+    };
+  }
+
+  // Convenient aliases
+  get top(): { x: number; y: number } {
     return this.topCenter;
   }
 
-  /**
-   * Convenient alias for bottomCenter.
-   */
-  get bottom(): Point {
+  get bottom(): { x: number; y: number } {
     return this.bottomCenter;
   }
 
-  /**
-   * Convenient alias for leftCenter.
-   */
-  get left(): Point {
+  get left(): { x: number; y: number } {
     return this.leftCenter;
   }
 
-  /**
-   * Convenient alias for rightCenter.
-   */
-  get right(): Point {
+  get right(): { x: number; y: number } {
     return this.rightCenter;
   }
 
   /**
-   * Gets all segments in the mixed text.
-   * 
-   * @returns Array of segments with their types and content
-   */
-  getSegments(): Array<{ type: string; content: string; index: number }> {
-    return this._segments.map(s => ({
-      type: s.type,
-      content: s.content,
-      index: s.index
-    }));
-  }
-
-  /**
-   * Gets the bounding box for a specific segment.
-   * 
-   * @param segmentIndex - Index of the segment
-   * @returns Bounding box of the segment, or null if not available
-   */
-  getSegmentBoundingBox(segmentIndex: number): MixedTextPartBoundingBox | null {
-    this.ensureMeasured();
-    
-    const part = this._measuredDimensions?.parts.find(p => p.segmentIndex === segmentIndex);
-    return part || null;
-  }
-
-  /**
-   * Gets the center point of a specific segment.
-   * 
-   * @param segmentIndex - Index of the segment
-   * @returns Center point of the segment, or null if not available
-   */
-  getSegmentCenter(segmentIndex: number): Point | null {
-    const bbox = this.getSegmentBoundingBox(segmentIndex);
-    if (!bbox) {
-      return null;
-    }
-    
-    return {
-      x: `${bbox.x + bbox.width / 2}px`,
-      y: `${bbox.y + bbox.height / 2}px`
-    };
-  }
-
-  /**
-   * Finds all occurrences of a pattern in the mixed text and returns their bounding boxes.
-   * Can search in text segments, latex segments, or both.
-   * 
-   * @param pattern - String or RegExp pattern to search for
-   * @param options - Search options
-   * @returns Array of matches with their bounding boxes
-   * 
-   * @example
-   * Find power notation in LaTeX
-   * ```typescript
-   * const text = new MixedText({
-   *   content: "Einstein's equation $E = mc^2$ relates energy and mass."
-   * });
-   * const matches = text.findMatches(/\^2/, { type: 'latex' });
-   * matches.forEach(match => {
-   *   console.log(`Found "${match.match}" in LaTeX at segment ${match.segmentIndex}`);
-   *   // Use match.bbox to create highlights
-   * });
-   * ```
-   * 
-   * @example
-   * Find words in text parts only
-   * ```typescript
-   * const matches = text.findMatches(/energy|mass/, { type: 'text' });
-   * ```
-   * 
-   * @example
-   * Search both text and latex
-   * ```typescript
-   * const matches = text.findMatches(/E/); // Searches everywhere by default
-   * ```
-   */
-  findMatches(
-    pattern: string | RegExp,
-    options?: { type?: 'text' | 'latex' | 'both' }
-  ): MixedTextMatch[] {
-    this.ensureMeasured();
-    
-    const searchType = options?.type || 'both';
-    const regex = typeof pattern === 'string' 
-      ? new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
-      : new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
-    
-    const matches: MixedTextMatch[] = [];
-    
-    // Search through each segment
-    this._segments.forEach((segment) => {
-      // Skip if type doesn't match
-      if (searchType !== 'both' && segment.type !== searchType) {
-        return;
-      }
-      
-      // Reset regex lastIndex for each segment
-      regex.lastIndex = 0;
-      
-      let match: RegExpExecArray | null;
-      while ((match = regex.exec(segment.content)) !== null) {
-        const bbox = this.getSegmentBoundingBox(segment.index);
-        if (bbox) {
-          matches.push({
-            match: match[0],
-            bbox,
-            segmentIndex: segment.index,
-            type: segment.type,
-            charOffset: match.index
-          });
-        }
-      }
-    });
-    
-    return matches;
-  }
-
-  /**
    * Creates an annotated element with reference points from a bbox.
+   * IMPORTANT: Returns coordinates in ABSOLUTE world space (relative bbox + mixed text position).
+   * This matches the behavior needed for positioning highlights.
    * @internal
    */
   private createAnnotatedElement(
@@ -691,78 +574,87 @@ export class MixedText extends Shape {
     type: 'id' | 'class',
     bbox: MixedTextPartBoundingBox,
     element: SVGElement
-  ): AnnotatedMixedElement {
+  ): NewAnnotatedTextElement {
+    // Convert bbox (relative to mixed text container) to absolute world coordinates
+    // by adding the mixed text element's position
+    const absPos = this.getAbsolutePosition();
+    const absBbox = {
+      x: absPos.x + bbox.x,
+      y: absPos.y + bbox.y,
+      width: bbox.width,
+      height: bbox.height,
+      type: bbox.type,
+      segmentIndex: bbox.segmentIndex,
+    };
+
     return {
       identifier,
       type,
-      bbox,
+      bbox: absBbox,
       element,
-      // Reference points
-      get center(): Point {
+      // Reference points in absolute world coordinates
+      get center(): { x: number; y: number } {
         return {
-          x: `${bbox.x + bbox.width / 2}px`,
-          y: `${bbox.y + bbox.height / 2}px`
+          x: absBbox.x + absBbox.width / 2,
+          y: absBbox.y + absBbox.height / 2,
         };
       },
-      get topLeft(): Point {
+      get topLeft(): { x: number; y: number } {
+        return { x: absBbox.x, y: absBbox.y };
+      },
+      get topCenter(): { x: number; y: number } {
         return {
-          x: `${bbox.x}px`,
-          y: `${bbox.y}px`
+          x: absBbox.x + absBbox.width / 2,
+          y: absBbox.y,
         };
       },
-      get topCenter(): Point {
+      get topRight(): { x: number; y: number } {
         return {
-          x: `${bbox.x + bbox.width / 2}px`,
-          y: `${bbox.y}px`
+          x: absBbox.x + absBbox.width,
+          y: absBbox.y,
         };
       },
-      get topRight(): Point {
+      get leftCenter(): { x: number; y: number } {
         return {
-          x: `${bbox.x + bbox.width}px`,
-          y: `${bbox.y}px`
+          x: absBbox.x,
+          y: absBbox.y + absBbox.height / 2,
         };
       },
-      get leftCenter(): Point {
+      get rightCenter(): { x: number; y: number } {
         return {
-          x: `${bbox.x}px`,
-          y: `${bbox.y + bbox.height / 2}px`
+          x: absBbox.x + absBbox.width,
+          y: absBbox.y + absBbox.height / 2,
         };
       },
-      get rightCenter(): Point {
+      get bottomLeft(): { x: number; y: number } {
         return {
-          x: `${bbox.x + bbox.width}px`,
-          y: `${bbox.y + bbox.height / 2}px`
+          x: absBbox.x,
+          y: absBbox.y + absBbox.height,
         };
       },
-      get bottomLeft(): Point {
+      get bottomCenter(): { x: number; y: number } {
         return {
-          x: `${bbox.x}px`,
-          y: `${bbox.y + bbox.height}px`
+          x: absBbox.x + absBbox.width / 2,
+          y: absBbox.y + absBbox.height,
         };
       },
-      get bottomCenter(): Point {
+      get bottomRight(): { x: number; y: number } {
         return {
-          x: `${bbox.x + bbox.width / 2}px`,
-          y: `${bbox.y + bbox.height}px`
-        };
-      },
-      get bottomRight(): Point {
-        return {
-          x: `${bbox.x + bbox.width}px`,
-          y: `${bbox.y + bbox.height}px`
+          x: absBbox.x + absBbox.width,
+          y: absBbox.y + absBbox.height,
         };
       },
       // Convenient aliases
-      get top(): Point {
+      get top(): { x: number; y: number } {
         return this.topCenter;
       },
-      get bottom(): Point {
+      get bottom(): { x: number; y: number } {
         return this.bottomCenter;
       },
-      get left(): Point {
+      get left(): { x: number; y: number } {
         return this.leftCenter;
       },
-      get right(): Point {
+      get right(): { x: number; y: number } {
         return this.rightCenter;
       }
     };
@@ -777,23 +669,17 @@ export class MixedText extends Shape {
    * 
    * @example
    * ```typescript
-   * const text = new MixedText({
+   * const text = new NewMixedText({
    *   content: "The equation $E = \\cssId{power}{mc^2}$ is famous."
    * });
    * 
    * const powerElement = text.getElementById('power');
    * if (powerElement) {
-   *   // Use reference points like other elements
-   *   circle.position({
-   *     relativeFrom: circle.center,
-   *     relativeTo: powerElement.center,
-   *     x: "0px",
-   *     y: "-10px"
-   *   });
+   *   // Use reference points: powerElement.center, powerElement.topLeft, etc.
    * }
    * ```
    */
-  getElementById(id: string): AnnotatedMixedElement | null {
+  getElementById(id: string): NewAnnotatedTextElement | null {
     this.ensureMeasured();
     
     if (typeof document === 'undefined') {
@@ -801,7 +687,6 @@ export class MixedText extends Shape {
     }
     
     try {
-      // Create a temporary container with the rendered content
       const container = document.createElement('div');
       container.style.position = 'absolute';
       container.style.visibility = 'hidden';
@@ -809,6 +694,10 @@ export class MixedText extends Shape {
       container.style.fontFamily = this.config.fontFamily || 'sans-serif';
       container.style.display = 'inline-flex';
       container.style.alignItems = 'baseline';
+      // Ensure no zoom or transforms affect measurements
+      container.style.transform = 'none';
+      container.style.zoom = '1';
+      container.style.pointerEvents = 'none';
       
       // Render each segment
       this._segments.forEach((segment) => {
@@ -816,7 +705,6 @@ export class MixedText extends Shape {
         if (segment.type === 'text') {
           span.textContent = segment.content;
         } else {
-          // Render LaTeX
           if (typeof window !== 'undefined' && (window as any).MathJax) {
             const MathJax = (window as any).MathJax;
             try {
@@ -829,11 +717,12 @@ export class MixedText extends Shape {
                 });
                 const svg = node.querySelector('svg');
                 if (svg) {
+                  // COPIED EXACTLY FROM OLD API - NO scaling in measurement
                   span.innerHTML = svg.outerHTML;
                 }
               }
             } catch (error) {
-              // Ignore errors during measurement
+              // Ignore
             }
           }
         }
@@ -849,13 +738,15 @@ export class MixedText extends Shape {
         const bbox = svgElement.getBoundingClientRect();
         const containerBbox = container.getBoundingClientRect();
         
+        console.log(`[Measurement] ID="${id}" | width=${bbox.width.toFixed(2)} height=${bbox.height.toFixed(2)} | relX=${(bbox.left - containerBbox.left).toFixed(2)} relY=${(bbox.top - containerBbox.top).toFixed(2)}`);
+        
         const relativeBbox: MixedTextPartBoundingBox = {
           x: bbox.left - containerBbox.left,
           y: bbox.top - containerBbox.top,
           width: bbox.width,
           height: bbox.height,
           type: 'latex',
-          segmentIndex: -1  // Would need to track which segment
+          segmentIndex: -1
         };
         
         const result = this.createAnnotatedElement(id, 'id', relativeBbox, svgElement);
@@ -881,17 +772,17 @@ export class MixedText extends Shape {
    * 
    * @example
    * ```typescript
-   * const text = new MixedText({
+   * const text = new NewMixedText({
    *   content: "Formula: $\\class{var}{x}^2 + \\class{var}{y}^2 = \\class{var}{z}^2$"
    * });
    * 
    * const variables = text.getElementsByClass('var');
    * variables.forEach(v => {
-   *   // Highlight each variable
+   *   // Use v.topLeft, v.center, etc. for highlighting
    * });
    * ```
    */
-  getElementsByClass(className: string): AnnotatedMixedElement[] {
+  getElementsByClass(className: string): NewAnnotatedTextElement[] {
     this.ensureMeasured();
     
     if (typeof document === 'undefined') {
@@ -899,7 +790,6 @@ export class MixedText extends Shape {
     }
     
     try {
-      // Create a temporary container with the rendered content
       const container = document.createElement('div');
       container.style.position = 'absolute';
       container.style.visibility = 'hidden';
@@ -907,6 +797,10 @@ export class MixedText extends Shape {
       container.style.fontFamily = this.config.fontFamily || 'sans-serif';
       container.style.display = 'inline-flex';
       container.style.alignItems = 'baseline';
+      // Ensure no zoom or transforms affect measurements
+      container.style.transform = 'none';
+      container.style.zoom = '1';
+      container.style.pointerEvents = 'none';
       
       // Render each segment
       this._segments.forEach((segment) => {
@@ -914,7 +808,6 @@ export class MixedText extends Shape {
         if (segment.type === 'text') {
           span.textContent = segment.content;
         } else {
-          // Render LaTeX
           if (typeof window !== 'undefined' && (window as any).MathJax) {
             const MathJax = (window as any).MathJax;
             try {
@@ -927,11 +820,12 @@ export class MixedText extends Shape {
                 });
                 const svg = node.querySelector('svg');
                 if (svg) {
+                  // COPIED EXACTLY FROM OLD API - NO scaling in measurement
                   span.innerHTML = svg.outerHTML;
                 }
               }
             } catch (error) {
-              // Ignore errors during measurement
+              // Ignore
             }
           }
         }
@@ -942,13 +836,15 @@ export class MixedText extends Shape {
       
       // Find all elements with the class
       const elements = container.querySelectorAll(`.${CSS.escape(className)}`);
-      const results: AnnotatedMixedElement[] = [];
+      const results: NewAnnotatedTextElement[] = [];
       
       const containerBbox = container.getBoundingClientRect();
       
-      elements.forEach(svgElement => {
+      elements.forEach((svgElement, index) => {
         if (svgElement instanceof SVGElement) {
           const bbox = svgElement.getBoundingClientRect();
+          
+          console.log(`[Measurement] class="${className}"[${index}] | width=${bbox.width.toFixed(2)} height=${bbox.height.toFixed(2)} | relX=${(bbox.left - containerBbox.left).toFixed(2)} relY=${(bbox.top - containerBbox.top).toFixed(2)}`);
           
           const relativeBbox: MixedTextPartBoundingBox = {
             x: bbox.left - containerBbox.left,
@@ -956,7 +852,7 @@ export class MixedText extends Shape {
             width: bbox.width,
             height: bbox.height,
             type: 'latex',
-            segmentIndex: -1  // Would need to track which segment
+            segmentIndex: -1
           };
           
           results.push(this.createAnnotatedElement(className, 'class', relativeBbox, svgElement));
@@ -972,36 +868,19 @@ export class MixedText extends Shape {
   }
 
   /**
-   * Updates the content and forces re-parsing and re-measurement.
-   * 
-   * @param newContent - The new content with embedded LaTeX
-   */
-  updateContent(newContent: string): void {
-    this.config.content = newContent;
-    this._segments = this.parseContent();
-    this._measuredDimensions = undefined;
-  }
-
-  /**
    * Renders the mixed text to SVG using foreignObject.
-   * Pre-renders LaTeX segments to avoid script execution issues in SVG.
-   * 
-   * @returns SVG representation
    */
   render(): string {
-    const comment = this.getSVGComment();
     const absPos = this.getAbsolutePosition();
-    const transformStr = this.getTransformString();
-    const transform = transformStr ? ` transform="${transformStr}"` : "";
+    const transformStr = this.getTransformAttribute();
 
     const defaultStyle: Partial<Style> = {
       fill: "#000000",
     };
-    const style = { ...defaultStyle, ...this.config.style };
+    const style = { ...defaultStyle, ...this._style };
     const color = style.fill || "#000000";
 
-    // Pre-render all segments including LaTeX
-    // This ensures LaTeX is rendered before being embedded in SVG
+    // Pre-render all segments
     this.ensureMeasured();
 
     // Build HTML content with pre-rendered LaTeX
@@ -1011,7 +890,7 @@ export class MixedText extends Shape {
       if (segment.type === 'text') {
         htmlContent += `<span style="white-space: pre; margin: 0; padding: 0; display: inline-block;">${this.escapeHtml(segment.content)}</span>`;
       } else {
-        // LaTeX segment - render it now using MathJax
+        // LaTeX segment
         if (typeof window !== 'undefined' && (window as any).MathJax) {
           const MathJax = (window as any).MathJax;
           try {
@@ -1024,7 +903,6 @@ export class MixedText extends Shape {
               });
               const svg = node.querySelector('svg');
               if (svg) {
-                // Remove ex-based dimensions and use pixel dimensions
                 svg.removeAttribute('width');
                 svg.removeAttribute('height');
                 
@@ -1047,7 +925,6 @@ export class MixedText extends Shape {
             htmlContent += `<span style="color: red; margin: 0; padding: 0; display: inline-block;">[LaTeX Error: ${this.escapeHtml(segment.content)}]</span>`;
           }
         } else {
-          // Fallback if MathJax not available
           htmlContent += `<span style="margin: 0; padding: 0; display: inline-block;">$${this.escapeHtml(segment.content)}$</span>`;
         }
       }
@@ -1055,28 +932,22 @@ export class MixedText extends Shape {
     
     htmlContent += '</div>';
 
-    // Use foreignObject to embed HTML in SVG
-    const svg = `<foreignObject x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}"${transform}>
+    const svg = `<foreignObject x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}" ${transformStr}>
       <div xmlns="http://www.w3.org/1999/xhtml" style="font-size: ${this._fontSize}px; font-family: ${this.config.fontFamily || 'sans-serif'}; font-weight: ${this.config.fontWeight || 'normal'}; color: ${color}; display: inline-block; margin: 0; padding: 0; line-height: 1;">
         ${htmlContent}
       </div>
     </foreignObject>`;
 
-    // Add debug rectangle if debug mode is enabled
     let debugRect = '';
     if (this.config.debug) {
       debugRect = `<rect x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}" fill="none" stroke="blue" stroke-width="2" stroke-dasharray="5,5" />`;
     }
 
-    return comment + svg + debugRect;
+    return svg + debugRect;
   }
 
   /**
    * Escapes HTML special characters.
-   * 
-   * @param text - Text to escape
-   * @returns Escaped text
-   * @internal
    */
   private escapeHtml(text: string): string {
     return text
