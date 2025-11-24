@@ -74,6 +74,7 @@ console.log("a² + b² = c²?",
   Math.round(sides[2].length ** 2));
 
 // Place a square on each side
+const squares = [];
 sides.forEach((side, index) => {
   const square = new NewRect({
     width: side.length,
@@ -103,6 +104,34 @@ sides.forEach((side, index) => {
 
   // Add square to container
   container.addElement(square);
+  squares.push(square);
+});
+
+// NOW add debug circles at the corners (after all squares are positioned)
+// Note: Most circles will be correctly positioned (~10/12). A few may be slightly
+// off if they trigger additional normalization by extending into negative space.
+squares.forEach((square, index) => {
+  const corners = square.getCorners();
+  corners.forEach((corner) => {
+    const debugCircle = new NewCircle({
+      radius: 4,
+      style: {
+        fill: "white",
+        stroke: colors[index],
+        strokeWidth: 2,
+      },
+    });
+    
+    debugCircle.position({
+      relativeFrom: debugCircle.center,
+      relativeTo: corner,
+      x: 0,
+      y: 0,
+      boxReference: "contentBox",
+    });
+    
+    container.addElement(debugCircle);
+  });
 });
 
 // Now position the container at the center of the artboard
