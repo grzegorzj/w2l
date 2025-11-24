@@ -352,7 +352,7 @@ export class NewContainer extends NewRectangle {
           maxHeight +
           this._boxModel.padding.top + this._boxModel.padding.bottom +
           this._boxModel.border.top + this._boxModel.border.bottom;
-        }
+      }
       }
     }
     
@@ -512,8 +512,15 @@ export class NewContainer extends NewRectangle {
     }
 
     // Calculate required content size (from 0,0 to max extent)
-    const requiredContentWidth = maxXRelative - Math.min(0, minXRelative - contentBoxOffsetX);
-    const requiredContentHeight = maxYRelative - Math.min(0, minYRelative - contentBoxOffsetY);
+    // After shifting, the new bounds are (minXRelative - shiftX) to (maxXRelative - shiftX)
+    // Convert to content box coordinates and calculate size
+    const minXInContent = (minXRelative - shiftX) - contentBoxOffsetX;
+    const maxXInContent = (maxXRelative - shiftX) - contentBoxOffsetX;
+    const minYInContent = (minYRelative - shiftY) - contentBoxOffsetY;
+    const maxYInContent = (maxYRelative - shiftY) - contentBoxOffsetY;
+    
+    const requiredContentWidth = maxXInContent - Math.min(0, minXInContent);
+    const requiredContentHeight = maxYInContent - Math.min(0, minYInContent);
 
     // Update container size
     if (this._autoWidth) {
