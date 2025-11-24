@@ -20,7 +20,7 @@ function createAlignedStack(alignment, xPos) {
     height: 600,
     direction: 'vertical',
     spacing: 15,
-    alignment: alignment,
+    horizontalAlignment: alignment, // Horizontal alignment for vertical stack
     boxModel: { padding: 20 },
     style: {
       fill: '#34495e',
@@ -57,9 +57,9 @@ function createAlignedStack(alignment, xPos) {
 }
 
 // Create three VStacks with different alignments
-const leftStack = createAlignedStack('start', 25);
+const leftStack = createAlignedStack('left', 25);
 const centerStack = createAlignedStack('center', 425);
-const rightStack = createAlignedStack('end', 825);
+const rightStack = createAlignedStack('right', 825);
 
 artboard.addElement(leftStack);
 artboard.addElement(centerStack);

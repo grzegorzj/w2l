@@ -20,7 +20,7 @@ const columns = new Columns({
   columnWidth: 200,
   height: 600,
   gutter: 30,
-  horizontalAlignment: "start",
+  horizontalAlignment: "left",  // Left-align items within columns (changed from "start")
   style: {
     fill: "#bdc3c7",
     stroke: "#95a5a6",

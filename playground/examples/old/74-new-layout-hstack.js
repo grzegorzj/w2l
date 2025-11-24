@@ -28,13 +28,13 @@ function createDebugCircle(position, color, radius = 4) {
   return circle;
 }
 
-// Top HStack - Start alignment (top)
+// Top HStack - Top alignment
 const topStack = new NewContainer({
   width: 1000,
   height: 150,
   direction: 'horizontal',
   spacing: 15,
-  horizontalAlignment: 'start',  // Align to top
+  verticalAlignment: 'top',  // Align to top (cross-axis for horizontal stack)
   boxModel: { padding: 20, border: 2 },
   style: {
     fill: '#3498db',
@@ -73,7 +73,7 @@ const centerStack = new NewContainer({
   height: 150,
   direction: 'horizontal',
   spacing: 15,
-  horizontalAlignment: 'center',  // Align to vertical center
+  verticalAlignment: 'center',  // Align to vertical center (cross-axis for horizontal stack)
   boxModel: { padding: 20, border: 2 },
   style: {
     fill: '#2ecc71',
@@ -105,13 +105,13 @@ centerHeights.forEach((height, idx) => {
   centerStack.addElement(rect);
 });
 
-// Bottom HStack - End alignment (bottom)
+// Bottom HStack - Bottom alignment
 const bottomStack = new NewContainer({
   width: 1000,
   height: 150,
   direction: 'horizontal',
   spacing: 15,
-  horizontalAlignment: 'end',  // Align to bottom
+  verticalAlignment: 'bottom',  // Align to bottom (cross-axis for horizontal stack)
   boxModel: { padding: 20, border: 2 },
   style: {
     fill: '#e74c3c',

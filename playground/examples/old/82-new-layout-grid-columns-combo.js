@@ -68,7 +68,7 @@ const mainColumns = new Columns({
   columnWidth: 560,
   height: 650,
   gutter: 20,
-  horizontalAlignment: "start",
+  horizontalAlignment: "left",  // Left-align items within columns (changed from "start")
   style: {
     fill: "#34495e",
     stroke: "#95a5a6",
@@ -256,7 +256,7 @@ const spreadContainer = new NewContainer({
   height: 120,
   direction: "horizontal",
   spread: true,
-  horizontalAlignment: "center",
+  verticalAlignment: "center",  // Center-align children vertically (cross-axis for horizontal)
   style: {
     fill: "#27ae60",
     stroke: "#2ecc71",

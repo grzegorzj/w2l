@@ -23,7 +23,7 @@ const outerVStack = new NewContainer({
   direction: 'vertical',
   height: 700,
   spacing: 20,
-  alignment: 'center',  // Center-align children
+  horizontalAlignment: 'center',  // Center-align children horizontally
   boxModel: { padding: 30, border: 3 },
   style: {
     fill: '#34495e',
@@ -56,7 +56,7 @@ const innerVStack = new NewContainer({
   direction: 'vertical',
   height: 'auto',
   spacing: 12,
-  alignment: 'start',
+  horizontalAlignment: 'left',  // Left-align children horizontally
   boxModel: { padding: 20, border: 2 },
   style: {
     fill: '#3498db',

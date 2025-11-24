@@ -70,7 +70,7 @@ const innerHStack = new NewContainer({
   height: 120,
   direction: "horizontal",
   spacing: 15,
-  horizontalAlignment: "center", // Center vertically
+  verticalAlignment: "center", // Center vertically (cross-axis for horizontal stack)
   boxModel: { padding: 15, border: 2 },
   style: {
     fill: "#3498db",
@@ -102,7 +102,7 @@ const innerVStack = new NewContainer({
   height: "auto", // Auto-height
   direction: "vertical",
   spacing: 12,
-  horizontalAlignment: "start", // Align left
+  horizontalAlignment: "left", // Align left (cross-axis for vertical stack)
   boxModel: { padding: 15, border: 2 },
   style: {
     fill: "#2ecc71",

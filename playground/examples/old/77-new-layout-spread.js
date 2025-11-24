@@ -46,7 +46,7 @@ const verticalSpread = new NewContainer({
   height: 700,
   direction: 'vertical',
   spread: true,  // Evenly distribute vertically
-  alignment: 'center',
+  horizontalAlignment: 'center',  // Center-align children horizontally
   boxModel: { padding: 20, border: 3 },
   style: {
     fill: '#3498db',
@@ -113,7 +113,7 @@ const horizontalSpread = new NewContainer({
   height: 150,
   direction: 'horizontal',
   spread: true,  // Evenly distribute horizontally
-  alignment: 'center',
+  verticalAlignment: 'center',  // Center-align children vertically
   boxModel: { padding: 20, border: 3 },
   style: {
     fill: '#2ecc71',
@@ -181,7 +181,7 @@ const outerSpread = new NewContainer({
   height: 550,
   direction: 'vertical',
   spread: true,
-  alignment: 'center',
+  horizontalAlignment: 'center',  // Center-align children horizontally
   boxModel: { padding: 25, border: 3 },
   style: {
     fill: '#9b59b6',
@@ -203,7 +203,7 @@ const innerSpread1 = new NewContainer({
   height: 100,
   direction: 'horizontal',
   spread: true,
-  alignment: 'center',
+  verticalAlignment: 'center',  // Center-align children vertically
   boxModel: { padding: 10, border: 2 },
   style: {
     fill: '#e74c3c',
@@ -217,7 +217,7 @@ const innerSpread2 = new NewContainer({
   height: 100,
   direction: 'horizontal',
   spread: true,
-  alignment: 'center',
+  verticalAlignment: 'center',  // Center-align children vertically
   boxModel: { padding: 10, border: 2 },
   style: {
     fill: '#e67e22',

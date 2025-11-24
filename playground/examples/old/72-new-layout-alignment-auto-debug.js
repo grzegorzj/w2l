@@ -19,7 +19,7 @@ const autoRightStack = new NewContainer({
   direction: 'vertical',
   height: 'auto',
   spacing: 15,
-  alignment: 'end',
+  horizontalAlignment: 'right', // Right alignment for vertical stack
   boxModel: { padding: 25, border: 3 },
   style: {
     fill: '#34495e',
