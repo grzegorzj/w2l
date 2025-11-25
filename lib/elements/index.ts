@@ -7,6 +7,7 @@ export { Circle, type CircleConfig } from "./Circle.js";
 export { Rect, type RectConfig } from "./Rect.js";
 export { Square, type SquareConfig } from "./Square.js";
 export { Triangle, type TriangleConfig, type TriangleType, type TriangleOrientation, type TriangleSide } from "./Triangle.js";
+export { Quadrilateral, type QuadrilateralConfig, type QuadrilateralType, type QuadrilateralSide } from "./Quadrilateral.js";
 export { Line, type LineConfig, type LineLabelConfig } from "./Line.js";
 export { RegularPolygon, type RegularPolygonConfig } from "./RegularPolygon.js";
 export { Text, type TextConfig, type AnnotatedTextElement, type MixedTextPartBoundingBox } from "./Text.js";

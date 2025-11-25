@@ -221,6 +221,58 @@ export class Side {
   }
 
   /**
+   * Gets the direction vector (non-normalized) from start to end.
+   *
+   * @returns The vector from start to end
+   */
+  get vector(): Position {
+    const dx = this._end.x - this._start.x;
+    const dy = this._end.y - this._start.y;
+    return { x: dx, y: dy };
+  }
+
+  /**
+   * Find intersection points with another side.
+   * Returns array of intersection points (currently max 1 for straight sides).
+   * 
+   * @param other - The other side to intersect with
+   * @param infinite - If true, treats sides as infinite lines. If false, only returns intersections within both segments.
+   * @returns Array of intersection points (empty if no intersections)
+   */
+  getIntersections(other: Side, infinite: boolean = false): Position[] {
+    const p1 = this._start;
+    const p2 = this._end;
+    const p3 = other._start;
+    const p4 = other._end;
+
+    const x1 = p1.x, y1 = p1.y;
+    const x2 = p2.x, y2 = p2.y;
+    const x3 = p3.x, y3 = p3.y;
+    const x4 = p4.x, y4 = p4.y;
+
+    const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    
+    // Lines are parallel
+    if (Math.abs(denom) < 1e-10) {
+      return [];
+    }
+
+    const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+    const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+    // Check if intersection is within both segments (unless infinite)
+    if (!infinite && (t < 0 || t > 1 || u < 0 || u > 1)) {
+      return [];
+    }
+
+    // Calculate intersection point
+    const x = x1 + t * (x2 - x1);
+    const y = y1 + t * (y2 - y1);
+
+    return [{ x, y }];
+  }
+
+  /**
    * Creates a Text label for this side, positioned outward from the center.
    * 
    * @param text - The label text (can include LaTeX, e.g., "$a$")

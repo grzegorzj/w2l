@@ -145,6 +145,56 @@ export class Line extends Shape {
     };
   }
 
+  /**
+   * Get the direction vector (non-normalized) from start to end
+   */
+  get vector(): Position {
+    const dx = this._endOffset.x - this._startOffset.x;
+    const dy = this._endOffset.y - this._startOffset.y;
+    return { x: dx, y: dy };
+  }
+
+  /**
+   * Find intersection points with another line.
+   * Returns array of intersection points (currently max 1 for straight lines).
+   * 
+   * @param other - The other line to intersect with
+   * @param infinite - If true, treats lines as infinite. If false, only returns intersections within both line segments.
+   * @returns Array of intersection points (empty if no intersections)
+   */
+  getIntersections(other: Line, infinite: boolean = false): Position[] {
+    const p1 = this.start;
+    const p2 = this.end;
+    const p3 = other.start;
+    const p4 = other.end;
+
+    const x1 = p1.x, y1 = p1.y;
+    const x2 = p2.x, y2 = p2.y;
+    const x3 = p3.x, y3 = p3.y;
+    const x4 = p4.x, y4 = p4.y;
+
+    const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    
+    // Lines are parallel
+    if (Math.abs(denom) < 1e-10) {
+      return [];
+    }
+
+    const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+    const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+    // Check if intersection is within both line segments (unless infinite)
+    if (!infinite && (t < 0 || t > 1 || u < 0 || u > 1)) {
+      return [];
+    }
+
+    // Calculate intersection point
+    const x = x1 + t * (x2 - x1);
+    const y = y1 + t * (y2 - y1);
+
+    return [{ x, y }];
+  }
+
   getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } | null {
     const start = this.start;
     const end = this.end;
