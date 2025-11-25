@@ -222,5 +222,5 @@ console.log("\nRect3 (multiple translations):");
 console.log("  Center:", rect3.center);
 console.log("  Corners:", rect3.getCorners());
 
-artboard.render();
+return artboard.render();
 

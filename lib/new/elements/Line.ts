@@ -1,9 +1,9 @@
 /**
  * New layout system - Line
- * A line segment between two points
+ * A line segment that works with the positioning system
  * 
- * Like the original Line, this takes absolute start/end positions directly,
- * making it simple and flexible for connecting points from other elements.
+ * The line stores a relative offset from start to end, and uses getAbsolutePosition()
+ * to properly render when positioned, just like other shapes (Circle, Rectangle, etc.)
  */
 
 import { NewShape } from "../core/Shape.js";
@@ -13,14 +13,14 @@ import { type Position } from "../core/Element.js";
 
 export interface NewLineConfig {
   /**
-   * Starting point of the line (absolute coordinates).
-   * Can be a position from another element (e.g., rect.center, triangle.vertices[0])
+   * Starting point of the line (relative to positioning).
+   * Use { x: 0, y: 0 } and then position the line using .position()
    */
   start: Position;
   
   /**
-   * Ending point of the line (absolute coordinates).
-   * Can be a position from another element (e.g., rect.center, circle.center)
+   * Ending point of the line (relative to start).
+   * This is an offset from the start point.
    */
   end: Position;
   
@@ -31,58 +31,69 @@ export interface NewLineConfig {
 }
 
 /**
- * Line shape connecting two points.
+ * Line shape that works with the positioning system.
  * 
- * Takes absolute start/end positions directly, making it easy to connect
- * points from other elements without manual coordinate calculations.
+ * The line's start point acts as its position reference, and the end point
+ * is stored as a relative offset. Use .position() to place the line's start.
  * 
  * @example
- * // Connect two shape centers
+ * // Create a line from (0,0) to (100, 50) relative offset
  * const line = new NewLine({
- *   start: rect1.center,
- *   end: rect2.center,
+ *   start: { x: 0, y: 0 },
+ *   end: { x: 100, y: 50 },
  *   style: { stroke: "#e74c3c", strokeWidth: 2 }
  * });
  * 
- * @example
- * // Connect triangle vertices
- * const line = new NewLine({
- *   start: triangle.absoluteVertices[0],
- *   end: triangle.absoluteVertices[1],
- *   style: { stroke: "#3498db" }
+ * // Position the line's start point at a shape's center
+ * line.position({
+ *   relativeFrom: line.start,
+ *   relativeTo: circle.center,
+ *   x: 0,
+ *   y: 0,
+ *   boxReference: "contentBox"
  * });
  */
 export class NewLine extends NewShape {
-  private _start: Position;
-  private _end: Position;
+  private _startOffset: Position;  // Offset from element's position
+  private _endOffset: Position;    // Offset from element's position
 
   constructor(config: NewLineConfig) {
     super(config.style);
-    this._start = config.start;
-    this._end = config.end;
+    this._startOffset = config.start;
+    this._endOffset = config.end;
   }
 
   /**
-   * Get the starting point of the line
+   * Get the starting point of the line (absolute coordinates after positioning)
    */
   get start(): Position {
-    return this._start;
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this._startOffset.x,
+      y: absPos.y + this._startOffset.y,
+    };
   }
 
   /**
-   * Get the ending point of the line
+   * Get the ending point of the line (absolute coordinates after positioning)
    */
   get end(): Position {
-    return this._end;
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this._endOffset.x,
+      y: absPos.y + this._endOffset.y,
+    };
   }
 
   /**
    * Get the center (midpoint) of the line
    */
   get center(): Position {
+    const start = this.start;
+    const end = this.end;
     return {
-      x: (this._start.x + this._end.x) / 2,
-      y: (this._start.y + this._end.y) / 2,
+      x: (start.x + end.x) / 2,
+      y: (start.y + end.y) / 2,
     };
   }
 
@@ -90,8 +101,8 @@ export class NewLine extends NewShape {
    * Get the length of the line
    */
   get length(): number {
-    const dx = this._end.x - this._start.x;
-    const dy = this._end.y - this._start.y;
+    const dx = this._endOffset.x - this._startOffset.x;
+    const dy = this._endOffset.y - this._startOffset.y;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
@@ -99,8 +110,8 @@ export class NewLine extends NewShape {
    * Get the angle of the line in degrees
    */
   get angle(): number {
-    const dx = this._end.x - this._start.x;
-    const dy = this._end.y - this._start.y;
+    const dx = this._endOffset.x - this._startOffset.x;
+    const dy = this._endOffset.y - this._startOffset.y;
     return (Math.atan2(dy, dx) * 180) / Math.PI;
   }
 
@@ -109,8 +120,8 @@ export class NewLine extends NewShape {
    */
   get direction(): Position {
     const length = this.length;
-    const dx = this._end.x - this._start.x;
-    const dy = this._end.y - this._start.y;
+    const dx = this._endOffset.x - this._startOffset.x;
+    const dy = this._endOffset.y - this._startOffset.y;
     return {
       x: dx / length,
       y: dy / length,
@@ -118,24 +129,33 @@ export class NewLine extends NewShape {
   }
 
   getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } | null {
+    const start = this.start;
+    const end = this.end;
     return {
-      minX: Math.min(this._start.x, this._end.x),
-      minY: Math.min(this._start.y, this._end.y),
-      maxX: Math.max(this._start.x, this._end.x),
-      maxY: Math.max(this._start.y, this._end.y),
+      minX: Math.min(start.x, end.x),
+      minY: Math.min(start.y, end.y),
+      maxX: Math.max(start.x, end.x),
+      maxY: Math.max(start.y, end.y),
     };
   }
 
   getCorners(): { x: number; y: number }[] {
     // For a line, return start and end points
-    return [this._start, this._end];
+    return [this.start, this.end];
   }
 
   render(): string {
+    // Use getAbsolutePosition() to respect positioning, just like Circle does
+    const absPos = this.getAbsolutePosition();
     const attrs = styleToSVGAttributes(this._style);
     const transform = this.getTransformAttribute();
     
-    return `<line x1="${this._start.x}" y1="${this._start.y}" x2="${this._end.x}" y2="${this._end.y}" ${attrs} ${transform}/>`;
+    const x1 = absPos.x + this._startOffset.x;
+    const y1 = absPos.y + this._startOffset.y;
+    const x2 = absPos.x + this._endOffset.x;
+    const y2 = absPos.y + this._endOffset.y;
+    
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${attrs} ${transform}/>`;
   }
 }
 

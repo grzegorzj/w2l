@@ -15,18 +15,21 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node scripts/generate-playground-types.js",
+    "build": "tsc -p tsconfig.build.json && node scripts/generate-playground-types.js && npm test -- --no-interactive",
     "build:docs": "typedoc",
     "dev": "tsc -p tsconfig.build.json --watch",
     "dev:docs": "typedoc --watch",
     "dev:playground": "cd playground && npm run dev",
     "dev:server": "cd server && npm run dev",
-    "dev:lib": "concurrently -n \"tsc,types\" -c \"blue,cyan\" \"tsc -p tsconfig.build.json --watch\" \"node scripts/watch-and-generate-types.js\"",
+    "dev:lib": "concurrently -n \"tsc,types,tests\" -c \"blue,cyan,green\" \"tsc -p tsconfig.build.json --watch\" \"node scripts/watch-and-generate-types.js\" \"npm run test:watch\"",
     "dev:all": "concurrently -n \"lib,docs,server,indexer,playground\" -c \"blue,green,magenta,cyan,yellow\" \"npm run dev:lib\" \"npm run dev:docs\" \"npm run dev:server\" \"cd server && npm run watch:index\" \"npm run dev:playground\"",
     "dev:llm-playground": "concurrently -n \"server,indexer,playground\" -c \"magenta,cyan,yellow\" \"npm run dev:server\" \"cd server && npm run watch:index\" \"npm run dev:playground\"",
     "prepare": "npm run build",
     "playground": "cd playground && npm run dev",
-    "server": "cd server && npm run dev"
+    "server": "cd server && npm run dev",
+    "test": "node tests/snapshot-runner.js",
+    "test:watch": "node tests/snapshot-runner.js --watch",
+    "test:ci": "npm test -- --no-interactive"
   },
   "keywords": [
     "svg",

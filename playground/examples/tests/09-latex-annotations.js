@@ -223,5 +223,5 @@ concepts.forEach((concept, index) => {
 });
 
 // Render the artboard
-artboard.render();
+return artboard.render();
 

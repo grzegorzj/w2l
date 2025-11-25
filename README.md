@@ -249,6 +249,27 @@ Planned modules include:
 4. **Minimal Configuration**: Sensible defaults with optional customization
 5. **Geometric Intelligence**: Automatic calculation of centers, normals, and other geometric properties
 
+## Testing
+
+W2L uses snapshot testing to ensure visual consistency across builds. Tests are located in `playground/examples/tests/` and automatically run after each build.
+
+```bash
+# Run tests interactively
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests non-interactively (for CI)
+npm run test:ci
+
+# Manage snapshots
+node tests/manage-snapshots.js status
+node tests/manage-snapshots.js reset
+```
+
+For detailed information about the testing system, see [SNAPSHOT-TESTING.md](SNAPSHOT-TESTING.md).
+
 ## License
 
 MIT

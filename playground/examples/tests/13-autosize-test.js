@@ -1,12 +1,16 @@
-import {
-  NewArtboard,
-  NewContainer,
-  Columns,
-  Grid,
-  NewRect,
-  NewCircle,
-} from "w2l";
+/**
+ * Auto-Size Test Example
+ *
+ * Tests complete auto-sizing chain:
+ * - Auto-sized artboard
+ * - Auto-sized main container (horizontal)
+ * - Auto-sized column containers (vertical)
+ * - Various shapes inside
+ */
 
+import { NewArtboard, NewContainer, NewRect, NewCircle } from "w2l";
+
+// Auto-sized artboard with padding
 const artboard = new NewArtboard({
   width: "auto",
   height: "auto",
@@ -14,6 +18,7 @@ const artboard = new NewArtboard({
   boxModel: { padding: 40 },
 });
 
+// Auto-sized main container (horizontal layout)
 const mainContainer = new NewContainer({
   width: "auto",
   height: "auto",
@@ -31,7 +36,9 @@ const mainContainer = new NewContainer({
   },
 });
 
-const leftSection = new NewContainer({
+artboard.addElement(mainContainer);
+
+const column1 = new NewContainer({
   width: "auto", // Auto-size to content
   height: "auto", // Auto-size to content
   direction: "vertical",
@@ -48,33 +55,14 @@ const leftSection = new NewContainer({
   },
 });
 
-mainContainer.addElement(leftSection);
+mainContainer.addElement(column1);
 
-const middleSection = new NewContainer({
-  width: "auto", // Auto-size to content
-  height: "auto", // Auto-size to content
-  direction: "vertical",
-  spacing: 15,
-  horizontalAlignment: "center",
-  boxModel: {
-    padding: { top: 25, right: 25, bottom: 25, left: 25 },
-    border: { top: 3, right: 3, bottom: 3, left: 3 },
-  },
-  style: {
-    fill: "#0f3460",
-    stroke: "#e94560",
-    strokeWidth: 3,
-  },
-});
-
-mainContainer.addElement(middleSection);
-
-const rightSection = new NewContainer({
+const column2 = new NewContainer({
   width: "auto", // Auto-size to content
   height: "auto", // Auto-size to content
   direction: "vertical",
   spacing: 20,
-  horizontalAlignment: "center",
+  horizontalAlignment: "center", // Center children horizontally
   boxModel: {
     padding: 20,
     border: 2,
@@ -86,8 +74,24 @@ const rightSection = new NewContainer({
   },
 });
 
-mainContainer.addElement(rightSection);
+mainContainer.addElement(column2);
 
-artboard.addElement(mainContainer);
+const column3 = new NewContainer({
+  width: "auto", // Auto-size to content
+  height: "auto", // Auto-size to content
+  direction: "vertical",
+  spacing: 20,
+  horizontalAlignment: "center", // Center children horizontally
+  boxModel: {
+    padding: 20,
+    border: 2,
+  },
+  style: {
+    fill: "#0f3460",
+    stroke: "#e94560",
+    strokeWidth: 2,
+  },
+});
 
-artboard.render();
+mainContainer.addElement(column3);
+return artboard.render();

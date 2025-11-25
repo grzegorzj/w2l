@@ -156,6 +156,6 @@ console.log("Position:", container.getAbsolutePosition());
 console.log("\n=== ARTBOARD ===");
 console.log("Final size:", artboard.width, "x", artboard.height);
 
-artboard.render();
+return artboard.render();
 
 

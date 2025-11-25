@@ -1,14 +1,18 @@
 /**
- * Old Components with New Artboard (Debugging Test)
+ * LaTeX vs Text Comparison (New Layout System)
  *
- * Tests whether the old API components (LatexText, MixedText) work correctly
- * when used with the new artboard system. This helps isolate whether rendering
- * issues are in the components themselves or the artboard/coordinate system.
+ * Demonstrates:
+ * - Pure NewLatex rendering with highlighting
+ * - NewText with embedded LaTeX and highlighting
+ * - Comparing measurement accuracy between both approaches
+ * - Using \cssId and \class for annotations in both components
+ * 
+ * This version uses ABSOLUTE POSITIONING to rule out any layout/container issues.
  */
 
-import { NewArtboard, LatexText, MixedText, NewRect } from "w2l";
+import { NewArtboard, NewLatex, NewText, NewRect } from "w2l";
 
-// Create new artboard
+// Create artboard with FIXED SIZE (no auto-sizing, no containers)
 const artboard = new NewArtboard({
   width: 900,
   height: 1200,
@@ -16,14 +20,15 @@ const artboard = new NewArtboard({
   boxModel: { padding: 0 },
 });
 
+// Helper to position elements absolutely
 let currentY = 50;
 
 // ============================================================================
-// SECTION 1: Pure LatexText (Old API) with New Artboard
+// SECTION 1: Pure NewLatex with Highlighting
 // ============================================================================
 
-const sectionTitle1 = new MixedText({
-  content: "1. Old LatexText with New Artboard",
+const sectionTitle1 = new NewText({
+  content: "1. Pure NewLatex (No text mixing)",
   fontSize: 20,
   fontFamily: "Arial",
   fontWeight: "bold",
@@ -43,10 +48,12 @@ artboard.addElement(sectionTitle1);
 currentY += 40;
 
 // Example 1a: Simple formula with ID annotation
-const latex1 = new LatexText({
+const latex1 = new NewLatex({
   content: "E = \\cssId{mass-energy}{mc^2}",
-  fontSize: "28px",
-  displayMode: "inline",
+  fontSize: 28,
+  style: {
+    fill: "#2c3e50",
+  },
 });
 
 latex1.position({
@@ -71,9 +78,9 @@ if (elem1) {
 
   highlight1.position({
     relativeFrom: highlight1.topLeft,
-    relativeTo: latex1.topLeft,
-    x: `${elem1.bbox.x}px`,
-    y: `${elem1.bbox.y}px`,
+    relativeTo: { x: elem1.topLeft.x, y: elem1.topLeft.y },
+    x: 0,
+    y: 0,
   });
 
   artboard.addElement(highlight1);
@@ -82,10 +89,12 @@ if (elem1) {
 currentY += 50;
 
 // Example 1b: Pythagorean theorem with class annotations
-const latex2 = new LatexText({
+const latex2 = new NewLatex({
   content: "\\class{variable}{x}^2 + \\class{variable}{y}^2 = \\class{variable}{z}^2",
-  fontSize: "26px",
-  displayMode: "inline",
+  fontSize: 26,
+  style: {
+    fill: "#2c3e50",
+  },
 });
 
 latex2.position({
@@ -111,9 +120,9 @@ vars2.forEach((v, idx) => {
 
   highlight.position({
     relativeFrom: highlight.topLeft,
-    relativeTo: latex2.topLeft,
-    x: `${v.bbox.x}px`,
-    y: `${v.bbox.y}px`,
+    relativeTo: { x: v.topLeft.x, y: v.topLeft.y },
+    x: 0,
+    y: 0,
   });
 
   artboard.addElement(highlight);
@@ -122,10 +131,13 @@ vars2.forEach((v, idx) => {
 currentY += 50;
 
 // Example 1c: Quadratic formula with multiple ID annotations
-const latex3 = new LatexText({
+const latex3 = new NewLatex({
   content: "x = \\frac{-\\cssId{coef-b}{b} \\pm \\sqrt{\\cssId{discriminant}{b^2-4ac}}}{\\cssId{denominator}{2a}}",
-  fontSize: "36px",
-  displayMode: "display",
+  fontSize: 36,
+  displayMode: true, // Display mode for larger, centered formula
+  style: {
+    fill: "#2c3e50",
+  },
 });
 
 latex3.position({
@@ -138,12 +150,12 @@ latex3.position({
 artboard.addElement(latex3);
 
 const annotations = [
-  { id: "coef-b", color: "#fff3cd" },
-  { id: "discriminant", color: "#f8d7da" },
-  { id: "denominator", color: "#d4edda" },
+  { id: "coef-b", color: "#fff3cd", stroke: "#856404" },
+  { id: "discriminant", color: "#f8d7da", stroke: "#721c24" },
+  { id: "denominator", color: "#d4edda", stroke: "#155724" },
 ];
 
-annotations.forEach(({ id, color }) => {
+annotations.forEach(({ id, color, stroke }) => {
   const elem = latex3.getElementById(id);
   if (elem) {
     const highlight = new NewRect({
@@ -157,9 +169,9 @@ annotations.forEach(({ id, color }) => {
 
     highlight.position({
       relativeFrom: highlight.topLeft,
-      relativeTo: latex3.topLeft,
-      x: `${elem.bbox.x}px`,
-      y: `${elem.bbox.y}px`,
+      relativeTo: { x: elem.topLeft.x, y: elem.topLeft.y },
+      x: 0,
+      y: 0,
     });
 
     artboard.addElement(highlight);
@@ -169,11 +181,11 @@ annotations.forEach(({ id, color }) => {
 currentY += 80;
 
 // ============================================================================
-// SECTION 2: MixedText (Old API) with New Artboard
+// SECTION 2: NewText with embedded LaTeX and Highlighting
 // ============================================================================
 
-const sectionTitle2 = new MixedText({
-  content: "2. Old MixedText with New Artboard",
+const sectionTitle2 = new NewText({
+  content: "2. NewText with embedded LaTeX (Text mixing)",
   fontSize: 20,
   fontFamily: "Arial",
   fontWeight: "bold",
@@ -193,9 +205,9 @@ artboard.addElement(sectionTitle2);
 currentY += 40;
 
 // Example 2a: Mixed text with ID annotation
-const text1 = new MixedText({
+const text1 = new NewText({
   content: "Einstein's equation $E = \\cssId{mass-energy-2}{mc^2}$ is famous.",
-  fontSize: "24px",
+  fontSize: 24,
   fontFamily: "Georgia",
   style: {
     fill: "#2c3e50",
@@ -211,8 +223,59 @@ text1.position({
 
 artboard.addElement(text1);
 
+// Debug: Draw rectangle around entire text element (RED)
+const textDebugRect1 = new NewRect({
+  width: text1.textWidth,
+  height: text1.textHeight,
+  style: {
+    fill: "none",
+    stroke: "red",
+    strokeWidth: 1,
+    opacity: 0.7,
+  },
+});
+textDebugRect1.position({
+  relativeFrom: textDebugRect1.topLeft,
+  relativeTo: text1.topLeft,
+  x: 0,
+  y: 0,
+});
+artboard.addElement(textDebugRect1);
+
+// Debug: Draw rectangles around entire LaTeX segments (BLUE dashed)
+const latexSegments1 = text1.getLatexSegmentBBoxes();
+console.log("\n=== TEXT 1: Einstein's equation ===");
+console.log("Text position:", text1.topLeft);
+console.log("LaTeX segments:", latexSegments1);
+
+latexSegments1.forEach((segment) => {
+  const latexDebugRect = new NewRect({
+    width: segment.width,
+    height: segment.height,
+    style: {
+      fill: "none",
+      stroke: "blue",
+      strokeWidth: 1,
+      strokeDasharray: "3,3",
+      opacity: 0.7,
+    },
+  });
+  latexDebugRect.position({
+    relativeFrom: latexDebugRect.topLeft,
+    relativeTo: artboard.topLeft,
+    x: segment.x,
+    y: segment.y,
+  });
+  artboard.addElement(latexDebugRect);
+});
+
 const elem2 = text1.getElementById("mass-energy-2");
 if (elem2) {
+  console.log("\nAnnotated element 'mass-energy-2':");
+  console.log("  bbox:", elem2.bbox);
+  console.log("  topLeft:", elem2.topLeft);
+  console.log("  Relative to text:", { x: elem2.topLeft.x - text1.topLeft.x, y: elem2.topLeft.y - text1.topLeft.y });
+  
   const highlight2 = new NewRect({
     width: elem2.bbox.width,
     height: elem2.bbox.height,
@@ -224,9 +287,9 @@ if (elem2) {
 
   highlight2.position({
     relativeFrom: highlight2.topLeft,
-    relativeTo: text1.topLeft,
-    x: `${elem2.bbox.x}px`,
-    y: `${elem2.bbox.y}px`,
+    relativeTo: { x: elem2.topLeft.x, y: elem2.topLeft.y },
+    x: 0,
+    y: 0,
   });
 
   artboard.addElement(highlight2);
@@ -235,9 +298,9 @@ if (elem2) {
 currentY += 50;
 
 // Example 2b: Mixed text with class annotations
-const text2 = new MixedText({
+const text2 = new NewText({
   content: "Pythagorean theorem: $\\class{variable2}{x}^2 + \\class{variable2}{y}^2 = \\class{variable2}{z}^2$",
-  fontSize: "22px",
+  fontSize: 22,
   fontFamily: "Georgia",
   style: {
     fill: "#2c3e50",
@@ -253,9 +316,62 @@ text2.position({
 
 artboard.addElement(text2);
 
+// Debug: Draw rectangle around entire text element (RED)
+const textDebugRect2 = new NewRect({
+  width: text2.textWidth,
+  height: text2.textHeight,
+  style: {
+    fill: "none",
+    stroke: "red",
+    strokeWidth: 1,
+    opacity: 0.7,
+  },
+});
+textDebugRect2.position({
+  relativeFrom: textDebugRect2.topLeft,
+  relativeTo: text2.topLeft,
+  x: 0,
+  y: 0,
+});
+artboard.addElement(textDebugRect2);
+
+// Debug: Draw rectangles around entire LaTeX segments (BLUE dashed)
+const latexSegments2 = text2.getLatexSegmentBBoxes();
+console.log("\n=== TEXT 2: Pythagorean theorem ===");
+console.log("Text position:", text2.topLeft);
+console.log("LaTeX segments:", latexSegments2);
+
+latexSegments2.forEach((segment) => {
+  const latexDebugRect = new NewRect({
+    width: segment.width,
+    height: segment.height,
+    style: {
+      fill: "none",
+      stroke: "blue",
+      strokeWidth: 1,
+      strokeDasharray: "3,3",
+      opacity: 0.7,
+    },
+  });
+  latexDebugRect.position({
+    relativeFrom: latexDebugRect.topLeft,
+    relativeTo: artboard.topLeft,
+    x: segment.x,
+    y: segment.y,
+  });
+  artboard.addElement(latexDebugRect);
+});
+
 const vars3 = text2.getElementsByClass("variable2");
 
+console.log("\nAnnotated elements with class 'variable2':");
 vars3.forEach((v, idx) => {
+  console.log(`  [${idx}]:`, {
+    bbox: v.bbox,
+    topLeft: v.topLeft,
+    relativeToText: { x: v.topLeft.x - text2.topLeft.x, y: v.topLeft.y - text2.topLeft.y }
+  });
+  
   const highlight = new NewRect({
     width: v.bbox.width,
     height: v.bbox.height,
@@ -267,9 +383,9 @@ vars3.forEach((v, idx) => {
 
   highlight.position({
     relativeFrom: highlight.topLeft,
-    relativeTo: text2.topLeft,
-    x: `${v.bbox.x}px`,
-    y: `${v.bbox.y}px`,
+    relativeTo: { x: v.topLeft.x, y: v.topLeft.y },
+    x: 0,
+    y: 0,
   });
 
   artboard.addElement(highlight);
@@ -277,10 +393,10 @@ vars3.forEach((v, idx) => {
 
 currentY += 50;
 
-// Example 2c: Mixed text with multiple ID annotations
-const text3 = new MixedText({
+// Example 2c: Mixed text with multiple ID annotations (inline LaTeX within text)
+const text3 = new NewText({
   content: "Quadratic formula: $x = \\frac{-\\cssId{coef-b-2}{b} \\pm \\sqrt{\\cssId{discriminant-2}{b^2-4ac}}}{\\cssId{denominator-2}{2a}}$",
-  fontSize: "22px",
+  fontSize: 22,
   fontFamily: "Georgia",
   style: {
     fill: "#2c3e50",
@@ -297,12 +413,12 @@ text3.position({
 artboard.addElement(text3);
 
 const annotations2 = [
-  { id: "coef-b-2", color: "#fff3cd" },
-  { id: "discriminant-2", color: "#f8d7da" },
-  { id: "denominator-2", color: "#d4edda" },
+  { id: "coef-b-2", color: "#fff3cd", stroke: "#856404" },
+  { id: "discriminant-2", color: "#f8d7da", stroke: "#721c24" },
+  { id: "denominator-2", color: "#d4edda", stroke: "#155724" },
 ];
 
-annotations2.forEach(({ id, color }) => {
+annotations2.forEach(({ id, color, stroke }) => {
   const elem = text3.getElementById(id);
   if (elem) {
     const highlight = new NewRect({
@@ -316,9 +432,9 @@ annotations2.forEach(({ id, color }) => {
 
     highlight.position({
       relativeFrom: highlight.topLeft,
-      relativeTo: text3.topLeft,
-      x: `${elem.bbox.x}px`,
-      y: `${elem.bbox.y}px`,
+      relativeTo: { x: elem.topLeft.x, y: elem.topLeft.y },
+      x: 0,
+      y: 0,
     });
 
     artboard.addElement(highlight);
@@ -326,5 +442,5 @@ annotations2.forEach(({ id, color }) => {
 });
 
 // Render the artboard
-artboard.render();
+return artboard.render();
 

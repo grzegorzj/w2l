@@ -1,0 +1,9 @@
+# Snapshots directory (generated)
+snapshots/
+
+# Temp test files
+snapshots/_temp_*.js
+
+# Keep the status file tracked
+!snapshot-status.json
+
