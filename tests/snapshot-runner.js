@@ -199,31 +199,164 @@ function compareSVGs(svg1, svg2) {
 }
 
 /**
- * Prompt user for input
+ * Prompt user for input (with optional diff viewing)
  */
-function prompt(question) {
+async function prompt(question, oldContent = null, newContent = null) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
   
   return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim().toLowerCase());
-    });
+    const askQuestion = () => {
+      rl.question(question, async (answer) => {
+        const choice = answer.trim().toLowerCase();
+        
+        // If user wants to see diff
+        if (choice === 'd' && oldContent && newContent) {
+          rl.close();
+          await showPaginatedDiff(oldContent, newContent);
+          
+          // Ask again after showing diff
+          const rl2 = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+          });
+          rl2.question(question, (answer2) => {
+            rl2.close();
+            resolve(answer2.trim().toLowerCase());
+          });
+        } else {
+          rl.close();
+          resolve(choice);
+        }
+      });
+    };
+    
+    askQuestion();
   });
 }
 
 /**
- * Show diff summary
+ * Show paginated diff (like git)
  */
-function showDiffSummary(oldContent, newContent) {
-  const maxLength = 200;
-  log('\n  Old output (first 200 chars):', 'gray');
-  log(`  ${oldContent.substring(0, maxLength)}...`, 'gray');
-  log('\n  New output (first 200 chars):', 'cyan');
-  log(`  ${newContent.substring(0, maxLength)}...`, 'cyan');
+async function showPaginatedDiff(oldContent, newContent) {
+  const oldLines = oldContent.split('\n');
+  const newLines = newContent.split('\n');
+  const maxLines = Math.max(oldLines.length, newLines.length);
+  
+  // Build diff lines
+  const diffLines = [];
+  for (let i = 0; i < maxLines; i++) {
+    const oldLine = oldLines[i] || '';
+    const newLine = newLines[i] || '';
+    
+    if (oldLine === newLine) {
+      diffLines.push({ type: 'same', line: i + 1, content: oldLine });
+    } else {
+      diffLines.push({ type: 'old', line: i + 1, content: oldLine });
+      diffLines.push({ type: 'new', line: i + 1, content: newLine });
+    }
+  }
+  
+  // Display with pagination
+  const pageSize = 20;
+  let currentPage = 0;
+  const totalPages = Math.ceil(diffLines.length / pageSize);
+  
+  const showPage = (page) => {
+    console.clear();
+    log('\n  Diff View (use Space/Enter to see more, q to quit)', 'bright');
+    log('  ' + '─'.repeat(70), 'gray');
+    
+    const start = page * pageSize;
+    const end = Math.min(start + pageSize, diffLines.length);
+    
+    for (let i = start; i < end; i++) {
+      const item = diffLines[i];
+      const lineNum = item.line.toString().padStart(4);
+      const content = item.content.substring(0, 62);
+      
+      if (item.type === 'same') {
+        log(`  ${lineNum} │ ${content}`, 'gray');
+      } else if (item.type === 'old') {
+        log(`  ${lineNum} - ${content}`, 'red');
+      } else {
+        log(`  ${lineNum} + ${content}`, 'green');
+      }
+    }
+    
+    log('  ' + '─'.repeat(70), 'gray');
+    log(`  Page ${page + 1}/${totalPages} | Lines ${start + 1}-${end} of ${diffLines.length}`, 'bright');
+    log('  [Space/Enter] next page | [q] quit', 'gray');
+    log('');
+  };
+  
+  // Interactive paging
+  return new Promise((resolve) => {
+    showPage(currentPage);
+    
+    const handleInput = (key) => {
+      if (key === ' ' || key === '\r' || key === '\n') {
+        currentPage++;
+        if (currentPage >= totalPages) {
+          process.stdin.setRawMode(false);
+          process.stdin.removeListener('data', handleInput);
+          console.clear();
+          resolve();
+        } else {
+          showPage(currentPage);
+        }
+      } else if (key === 'q' || key === '\u0003') { // q or Ctrl+C
+        process.stdin.setRawMode(false);
+        process.stdin.removeListener('data', handleInput);
+        console.clear();
+        resolve();
+      }
+    };
+    
+    // If only one page, skip pagination
+    if (totalPages === 1) {
+      resolve();
+      return;
+    }
+    
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', handleInput);
+  });
+}
+
+/**
+ * Show diff summary with side-by-side comparison
+ */
+async function showDiffSummary(oldContent, newContent, interactive = true) {
+  const oldLines = oldContent.split('\n');
+  const newLines = newContent.split('\n');
+  const maxLines = Math.max(oldLines.length, newLines.length);
+  
+  // Find first difference
+  let firstDiff = -1;
+  for (let i = 0; i < maxLines; i++) {
+    if (oldLines[i] !== newLines[i]) {
+      firstDiff = i;
+      break;
+    }
+  }
+  
+  if (firstDiff === -1) {
+    log('\n  Files are identical (whitespace difference only)', 'gray');
+    return;
+  }
+  
+  log('\n  Full diff stats:', 'bright');
+  log(`    Total lines: ${oldLines.length} → ${newLines.length}`, 'gray');
+  log(`    Changed from line ${firstDiff + 1}`, 'gray');
+  
+  if (interactive) {
+    log('  Press [d] to view full diff, or [a/r/s] to accept/reject/skip', 'gray');
+  }
   log('');
 }
 
@@ -291,8 +424,8 @@ async function runAllTests(options = {}) {
         log('  ⚠ Output changed!', 'yellow');
         
         if (interactive) {
-          showDiffSummary(existingSnapshot, output);
-          const answer = await prompt('  [a]ccept new output, [r]eject, or [s]kip? (a/r/s): ');
+          await showDiffSummary(existingSnapshot, output, interactive);
+          const answer = await prompt('  [a]ccept new output, [r]eject, [s]kip, or [d] view diff? (a/r/s/d): ', existingSnapshot, output);
           
           if (answer === 'a' || answer === 'accept') {
             await saveSnapshot(testFile, output);
