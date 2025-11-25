@@ -12,4 +12,5 @@ export { NewRegularPolygon, type NewRegularPolygonConfig } from "./RegularPolygo
 export { NewText, type NewTextConfig, type NewAnnotatedTextElement, type MixedTextPartBoundingBox } from "./Text.js";
 export { NewLatex, type NewLatexConfig, type NewAnnotatedLatexElement, type LatexPartBoundingBox } from "./Latex.js";
 export { NewFunctionGraph, type NewFunctionGraphConfig, type PlottedFunction, type RemarkablePoint, type RemarkablePointType, type GraphAxis } from "./FunctionGraph.js";
+export { NewSide, type NewSideConfig } from "./Side.js";
 

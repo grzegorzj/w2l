@@ -33,6 +33,7 @@ export {
   NewText,
   NewLatex,
   NewFunctionGraph,
+  NewSide,
   type NewArtboardConfig,
   type NewCircleConfig,
   type NewRectConfig,
@@ -40,6 +41,7 @@ export {
   type NewTriangleConfig,
   type TriangleType,
   type TriangleOrientation,
+  type TriangleSide,
   type NewLineConfig,
   type NewRegularPolygonConfig,
   type NewTextConfig,
@@ -51,6 +53,7 @@ export {
   type RemarkablePoint,
   type RemarkablePointType,
   type GraphAxis,
+  type NewSideConfig,
 } from "./elements/index.js";
 
 // Utils

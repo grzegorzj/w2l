@@ -7,6 +7,7 @@ import { NewShape } from "../core/Shape.js";
 import { type Style } from "../../core/Stylable.js";
 import { styleToSVGAttributes } from "../../core/Stylable.js";
 import { type Position } from "../core/Element.js";
+import { NewSide } from "./Side.js";
 
 export type TriangleType = "right" | "equilateral" | "isosceles";
 export type TriangleOrientation = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
@@ -20,11 +21,29 @@ export interface NewTriangleConfig {
   style?: Partial<Style>;
 }
 
+/**
+ * Represents a side (edge) of a triangle with geometric properties.
+ * 
+ * Provides access to side length, center, angle, endpoints, and normal vectors
+ * useful for positioning adjacent elements.
+ */
 export interface TriangleSide {
+  /** Length of the side in pixels */
   length: number;
+  /** Center point of the side */
   center: Position;
-  angle: number; // Angle in degrees
-  outwardNormal: Position; // Unit vector
+  /** Starting point of the side */
+  start: Position;
+  /** Ending point of the side */
+  end: Position;
+  /** Angle of the side in degrees (0° = horizontal right, 90° = down) */
+  angle: number;
+  /** Outward-facing unit normal vector (perpendicular to side, pointing away from triangle) */
+  outwardNormal: Position;
+  /** Inward-facing unit normal vector (perpendicular to side, pointing toward triangle) */
+  inwardNormal: Position;
+  /** Direction unit vector (along the side from start to end) */
+  direction: Position;
 }
 
 /**
@@ -197,35 +216,39 @@ export class NewTriangle extends NewShape {
 
   /**
    * Get the three sides of the triangle with their geometric properties.
-   * Each side includes length, center, angle, and outward normal.
+   * Each side includes length, center, angle, endpoints, normals, and direction.
+   * 
+   * Sides are returned in counter-clockwise order (see CONVENTIONS.md).
+   * 
+   * @returns Array of three triangle sides with full geometric properties
+   * 
+   * @example
+   * Position elements along triangle sides
+   * ```typescript
+   * const triangle = new NewTriangle({ type: "right", a: 100, b: 100 });
+   * triangle.sides.forEach((side, index) => {
+   *   console.log(`Side ${index}: length=${side.length}, angle=${side.angle}°`);
+   *   // Use side.outwardNormal to position elements outside the triangle
+   *   // Use side.inwardNormal to position elements inside the triangle
+   * });
+   * ```
    */
   get sides(): [TriangleSide, TriangleSide, TriangleSide] {
     const verts = this.absoluteVertices;
     
     const createSide = (start: Position, end: Position): TriangleSide => {
-      // Calculate length
-      const dx = end.x - start.x;
-      const dy = end.y - start.y;
-      const length = Math.sqrt(dx * dx + dy * dy);
+      const side = new NewSide({ start, end });
       
-      // Calculate center
-      const center = {
-        x: (start.x + end.x) / 2,
-        y: (start.y + end.y) / 2,
+      return {
+        length: side.length,
+        center: side.center,
+        start: side.start,
+        end: side.end,
+        angle: side.angle,
+        outwardNormal: side.outwardNormal,
+        inwardNormal: side.inwardNormal,
+        direction: side.direction,
       };
-      
-      // Calculate angle in degrees (from horizontal axis)
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-      
-      // Calculate outward normal (perpendicular, 90° clockwise rotation)
-      // For counter-clockwise winding, outward is to the right of the edge
-      // 90° clockwise rotation: (dx, dy) -> (-dy, dx)
-      const outwardNormal = {
-        x: -dy / length,
-        y: dx / length,
-      };
-      
-      return { length, center, angle, outwardNormal };
     };
     
     // Create sides in counter-clockwise order: v0→v1, v1→v2, v2→v0
