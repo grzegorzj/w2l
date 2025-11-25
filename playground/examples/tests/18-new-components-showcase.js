@@ -1,239 +1,124 @@
 /**
  * New Components Showcase
  * 
- * Demonstrates the newly migrated components:
- * - NewImage: Raster image support
- * - NewBezierCurve: Smooth curved paths
- * - NewArrow: Directional arrows with various styles
- * 
- * Creates a visual diagram showing these components in action.
+ * Demonstrates NewBezierCurve and NewArrow
  */
 
 import {
   NewArtboard,
-  NewImage,
   NewBezierCurve,
   NewArrow,
   NewCircle,
   NewRect,
-  NewText,
-  NewContainer,
 } from "w2l";
 
 const artboard = new NewArtboard({
-  width: 1200,
-  height: 800,
+  width: 900,
+  height: 500,
   backgroundColor: "#f8f9fa",
   boxModel: { padding: 50 },
 });
 
-// Create a main container for the diagram
-const mainContainer = new NewContainer({
-  width: "auto",
-  height: "auto",
-  direction: "horizontal",
-  spacing: 150,
-  horizontalAlignment: "center",
-  verticalAlignment: "center",
+// Three simple shapes
+const circle1 = new NewCircle({
+  radius: 50,
+  style: { fill: "#3498db", stroke: "#2980b9", strokeWidth: 2 },
 });
 
-// ===== LEFT SIDE: Image with curved path =====
-
-// Create a colored rectangle as a placeholder "image"
-// (In real use, you'd use a real image URL)
-const imageBox = new NewRect({
-  width: 200,
-  height: 150,
-  style: {
-    fill: "#3498db",
-    stroke: "#2980b9",
-    strokeWidth: 3,
-    rx: 10,
-    ry: 10,
-  },
-});
-
-const imageLabel = new NewText({
-  content: "NewImage\nSupport",
-  width: 200,
-  style: {
-    fill: "white",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAnchor: "middle",
-  },
-});
-
-const leftColumn = new NewContainer({
-  width: "auto",
-  height: "auto",
-  direction: "vertical",
-  spacing: 20,
-  horizontalAlignment: "center",
-});
-
-leftColumn.addElement(imageBox);
-leftColumn.addElement(imageLabel);
-
-mainContainer.addElement(leftColumn);
-
-// ===== CENTER: Circle with bezier curves =====
-
-const centerCircle = new NewCircle({
-  radius: 80,
-  style: {
-    fill: "#e74c3c",
-    stroke: "#c0392b",
-    strokeWidth: 3,
-  },
-});
-
-const centerLabel = new NewText({
-  content: "Bezier\nCurves",
-  width: 150,
-  style: {
-    fill: "white",
-    fontSize: 22,
-    fontWeight: "bold",
-    textAnchor: "middle",
-  },
-});
-
-centerLabel.position({
-  relativeFrom: centerLabel.center,
-  relativeTo: centerCircle.center,
-  x: 0,
+circle1.position({
+  relativeFrom: circle1.center,
+  relativeTo: artboard.contentBox.center,
+  x: -250,
   y: 0,
+  boxReference: "contentBox",
 });
 
-const centerColumn = new NewContainer({
-  width: "auto",
-  height: "auto",
-  direction: "vertical",
-  spacing: 20,
-  horizontalAlignment: "center",
+artboard.addElement(circle1);
+
+const circle2 = new NewCircle({
+  radius: 50,
+  style: { fill: "#e74c3c", stroke: "#c0392b", strokeWidth: 2 },
 });
 
-centerColumn.addElement(centerCircle);
-centerColumn.addElement(centerLabel);
-
-mainContainer.addElement(centerColumn);
-
-// ===== RIGHT SIDE: Rectangle with arrows =====
-
-const rightBox = new NewRect({
-  width: 200,
-  height: 150,
-  style: {
-    fill: "#2ecc71",
-    stroke: "#27ae60",
-    strokeWidth: 3,
-    rx: 10,
-    ry: 10,
-  },
-});
-
-const rightLabel = new NewText({
-  content: "NewArrow\nComponents",
-  width: 200,
-  style: {
-    fill: "white",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAnchor: "middle",
-  },
-});
-
-const rightColumn = new NewContainer({
-  width: "auto",
-  height: "auto",
-  direction: "vertical",
-  spacing: 20,
-  horizontalAlignment: "center",
-});
-
-rightColumn.addElement(rightBox);
-rightColumn.addElement(rightLabel);
-
-mainContainer.addElement(rightColumn);
-
-// Position the main container
-mainContainer.position({
-  relativeFrom: mainContainer.center,
+circle2.position({
+  relativeFrom: circle2.center,
   relativeTo: artboard.contentBox.center,
   x: 0,
   y: 0,
   boxReference: "contentBox",
 });
 
-artboard.addElement(mainContainer);
+artboard.addElement(circle2);
 
-// Helper function to get positions after elements are in hierarchy
-// We'll compute relative positions based on the container layout
-const getRelativePos = (containerElement, offsetX = 0, offsetY = 0) => {
-  // For positioned elements, use a calculated center based on container
-  const artboardCenter = { x: 600, y: 400 }; // Center of 1200x800
-  return {
-    x: artboardCenter.x + offsetX,
-    y: artboardCenter.y + offsetY,
-  };
-};
+const circle3 = new NewCircle({
+  radius: 50,
+  style: { fill: "#2ecc71", stroke: "#27ae60", strokeWidth: 2 },
+});
 
-// ===== ADD BEZIER CURVES =====
-// Smooth S-curve connecting left and center (using calculated positions)
-const leftToCenterCurve = new NewBezierCurve({
-  start: { x: 225, y: 400 }, // Right edge of left box
-  end: { x: 525, y: 400 },   // Left edge of center circle
-  controlPoint1: { x: 305, y: 350 },
-  controlPoint2: { x: 445, y: 450 },
+circle3.position({
+  relativeFrom: circle3.center,
+  relativeTo: artboard.contentBox.center,
+  x: 250,
+  y: 0,
+  boxReference: "contentBox",
+});
+
+artboard.addElement(circle3);
+
+// Bezier curves connecting them
+const c1 = circle1.center;
+const c2 = circle2.center;
+const c3 = circle3.center;
+
+const curve1 = new NewBezierCurve({
+  start: { x: c1.x + 50, y: c1.y },
+  end: { x: c2.x - 50, y: c2.y },
+  controlPoint1: { x: c1.x + 100, y: c1.y - 60 },
+  controlPoint2: { x: c2.x - 100, y: c2.y + 60 },
   style: {
     stroke: "#9b59b6",
-    strokeWidth: 4,
+    strokeWidth: 3,
     fill: "none",
-    strokeDasharray: "10,5",
+    strokeDasharray: "8,4",
   },
 });
 
-artboard.addElement(leftToCenterCurve);
+artboard.addElement(curve1);
 
-// Smooth curve from center to right
-const centerToRightCurve = new NewBezierCurve({
-  start: { x: 680, y: 400 },  // Right edge of center circle
-  end: { x: 875, y: 400 },    // Left edge of right box
-  controlPoint1: { x: 760, y: 440 },
-  controlPoint2: { x: 795, y: 360 },
+const curve2 = new NewBezierCurve({
+  start: { x: c2.x + 50, y: c2.y },
+  end: { x: c3.x - 50, y: c3.y },
+  controlPoint1: { x: c2.x + 100, y: c2.y + 60 },
+  controlPoint2: { x: c3.x - 100, y: c3.y - 60 },
   style: {
     stroke: "#f39c12",
-    strokeWidth: 4,
+    strokeWidth: 3,
     fill: "none",
   },
 });
 
-artboard.addElement(centerToRightCurve);
+artboard.addElement(curve2);
 
-// ===== ADD ARROWS =====
-
-// Simple arrow from top-left to center
-const topLeftArrow = new NewArrow({
-  start: { x: 150, y: 150 },
-  end: { x: 550, y: 350 },
+// Arrows
+const arrow1 = new NewArrow({
+  start: { x: c1.x, y: c1.y - 50 },
+  end: { x: c2.x, y: c2.y - 50 },
   headStyle: "triangle",
-  headSize: 12,
+  headSize: 10,
   style: {
     stroke: "#3498db",
-    strokeWidth: 3,
+    strokeWidth: 2,
     fill: "#3498db",
   },
 });
 
-artboard.addElement(topLeftArrow);
+artboard.addElement(arrow1);
 
-// Double-ended arrow at the top
-const doubleArrow = new NewArrow({
-  start: { x: 225, y: 250 },
-  end: { x: 975, y: 250 },
+const arrow2 = new NewArrow({
+  start: { x: c2.x, y: c2.y + 50 },
+  end: { x: c3.x, y: c3.y + 50 },
   headStyle: "line",
-  headSize: 15,
+  headSize: 12,
   doubleEnded: true,
   style: {
     stroke: "#e74c3c",
@@ -241,41 +126,21 @@ const doubleArrow = new NewArrow({
   },
 });
 
-artboard.addElement(doubleArrow);
+artboard.addElement(arrow2);
 
-// Arrow pointing down from right side
-const downArrow = new NewArrow({
-  start: { x: 975, y: 475 },
-  end: { x: 975, y: 575 },
-  headStyle: "triangle",
-  headSize: 14,
-  style: {
-    stroke: "#2ecc71",
-    strokeWidth: 3,
-    fill: "#2ecc71",
-  },
-});
-
-artboard.addElement(downArrow);
-
-// ===== ADD DECORATIVE ELEMENTS =====
-
-// Small circles along the bezier curve (showing curve sampling)
-for (let i = 0; i <= 10; i++) {
-  const t = i / 10;
-  const point = leftToCenterCurve.pointAt(t);
+// Sample points on curve
+for (let i = 0; i <= 8; i++) {
+  const t = i / 8;
+  const point = curve1.pointAt(t);
   
   const dot = new NewCircle({
-    radius: 4,
-    style: {
-      fill: "#9b59b6",
-      opacity: 0.6,
-    },
+    radius: 3,
+    style: { fill: "#9b59b6", opacity: 0.7 },
   });
   
   dot.position({
     relativeFrom: dot.center,
-    relativeTo: { x: point.x, y: point.y },
+    relativeTo: point,
     x: 0,
     y: 0,
   });
@@ -283,46 +148,4 @@ for (let i = 0; i <= 10; i++) {
   artboard.addElement(dot);
 }
 
-// Title text
-const title = new NewText({
-  content: "New Components Showcase",
-  width: 1100,
-  style: {
-    fill: "#2c3e50",
-    fontSize: 32,
-    fontWeight: "bold",
-    textAnchor: "middle",
-  },
-});
-
-title.position({
-  relativeFrom: title.center,
-  relativeTo: { x: artboard.contentBox.center.x, y: 80 },
-  x: 0,
-  y: 0,
-});
-
-artboard.addElement(title);
-
-// Subtitle text
-const subtitle = new NewText({
-  content: "NewImage • NewBezierCurve • NewArrow",
-  width: 1100,
-  style: {
-    fill: "#7f8c8d",
-    fontSize: 18,
-    textAnchor: "middle",
-  },
-});
-
-subtitle.position({
-  relativeFrom: subtitle.center,
-  relativeTo: { x: artboard.contentBox.center.x, y: 120 },
-  x: 0,
-  y: 0,
-});
-
-artboard.addElement(subtitle);
-
 return artboard.render();
-
