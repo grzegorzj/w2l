@@ -917,7 +917,7 @@ export class NewContainer extends NewRectangle {
    * Ensure freeform layout is finalized before any positioning operations.
    * This is called automatically before accessing position properties or positioning the container.
    */
-  private ensureFreeformFinalized(): void {
+  protected ensureFreeformFinalized(): void {
     if (this.direction === "freeform" && (this._autoWidth || this._autoHeight) && this.children.length > 0) {
       // Only finalize once - check if we've already finalized by seeing if size is non-zero
       // This is a simple heuristic: if we have children and auto-size, we should have been finalized

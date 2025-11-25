@@ -39,10 +39,11 @@ export interface NewArtboardConfig {
  * The Artboard is the canvas where all elements are rendered.
  * By default, creates an 800x600px SVG.
  *
- * Artboard extends NewContainer with direction "none", which means:
- * - Children must be positioned manually (no automatic layout)
+ * Artboard extends NewContainer with direction "freeform", which means:
+ * - Children position themselves freely (like CSS absolute positioning)
  * - Can use 'auto' for width/height to fit children bounds
  * - Bounds are normalized (children shifted to positive coordinates)
+ * - Layout is finalized automatically before rendering
  *
  * All layout logic is handled by the parent NewContainer class.
  */
@@ -59,7 +60,7 @@ export class NewArtboard extends NewContainer {
     super({
       width,
       height,
-      direction: "none", // Artboard uses "none" mode from Container
+      direction: "freeform",
       boxModel: config.boxModel,
       style,
     });
@@ -73,6 +74,11 @@ export class NewArtboard extends NewContainer {
    * Overrides NewContainer's render to provide SVG wrapper.
    */
   render(): string {
+    // Ensure freeform layout is finalized before rendering
+    // This is critical for artboards with auto-sizing, as they have no parent
+    // to trigger finalization through position() calls
+    this.ensureFreeformFinalized();
+
     const bgAttrs = styleToSVGAttributes(this.style);
     const bgRect = bgAttrs
       ? `  <rect width="${this.width}" height="${this.height}" ${bgAttrs}/>\n`
