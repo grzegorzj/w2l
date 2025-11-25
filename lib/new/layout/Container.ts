@@ -282,25 +282,16 @@ export class NewContainer extends NewRectangle {
     } else if (this.direction === "vertical") {
       // Vertical stack
       if (this._autoWidth) {
-        // For cross-axis (width), use bounding box if we have manually positioned children
-        if (childrenBounds && (childrenBounds.maxX - childrenBounds.minX > 0)) {
-          const contentLeft = ourPos.x + this._boxModel.border.left + this._boxModel.padding.left;
-          const relativeMaxX = childrenBounds.maxX - contentLeft;
-          this._borderBoxWidth = 
-            relativeMaxX +
-            this._boxModel.padding.left + this._boxModel.padding.right +
-            this._boxModel.border.left + this._boxModel.border.right;
-        } else {
-          // Fallback to max child width for stacked children
+        // Use max child width for stacked children (simpler and more reliable)
         let maxWidth = 0;
         for (const child of this.children) {
-          maxWidth = Math.max(maxWidth, this.getChildWidth(child));
+          const childWidth = this.getChildWidth(child);
+          maxWidth = Math.max(maxWidth, childWidth);
         }
         this._borderBoxWidth = 
           maxWidth + 
           this._boxModel.padding.left + this._boxModel.padding.right +
           this._boxModel.border.left + this._boxModel.border.right;
-        }
       }
 
       if (this._autoHeight) {
@@ -351,16 +342,7 @@ export class NewContainer extends NewRectangle {
       }
 
       if (this._autoHeight) {
-        // For cross-axis (height), use bounding box if we have manually positioned children
-        if (childrenBounds && (childrenBounds.maxY - childrenBounds.minY > 0)) {
-          const contentTop = ourPos.y + this._boxModel.border.top + this._boxModel.padding.top;
-          const relativeMaxY = childrenBounds.maxY - contentTop;
-          this._borderBoxHeight = 
-            relativeMaxY +
-            this._boxModel.padding.top + this._boxModel.padding.bottom +
-            this._boxModel.border.top + this._boxModel.border.bottom;
-        } else {
-          // Fallback to max child height for stacked children
+        // Use max child height for stacked children (simpler and more reliable)
         let maxHeight = 0;
         for (const child of this.children) {
           maxHeight = Math.max(maxHeight, this.getChildHeight(child));
@@ -369,7 +351,6 @@ export class NewContainer extends NewRectangle {
           maxHeight +
           this._boxModel.padding.top + this._boxModel.padding.bottom +
           this._boxModel.border.top + this._boxModel.border.bottom;
-      }
       }
     }
     
