@@ -50,5 +50,17 @@
   "14-from-83.js": {
     "status": "passed",
     "timestamp": "2025-11-25T03:32:44.439Z"
+  },
+  "15-function-graphs.js": {
+    "status": "pending",
+    "timestamp": "2025-11-25T05:48:18.447Z"
+  },
+  "16-remarkable-points-debug.js": {
+    "status": "pending",
+    "timestamp": "2025-11-25T05:48:18.449Z"
+  },
+  "17-remarkable-points-layouts.js": {
+    "status": "pending",
+    "timestamp": "2025-11-25T05:48:18.451Z"
   }
 }

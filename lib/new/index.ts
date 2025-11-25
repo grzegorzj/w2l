@@ -32,6 +32,7 @@ export {
   NewRegularPolygon,
   NewText,
   NewLatex,
+  NewFunctionGraph,
   type NewArtboardConfig,
   type NewCircleConfig,
   type NewRectConfig,
@@ -45,6 +46,11 @@ export {
   type NewLatexConfig,
   type NewAnnotatedTextElement,
   type NewAnnotatedLatexElement,
+  type NewFunctionGraphConfig,
+  type PlottedFunction,
+  type RemarkablePoint,
+  type RemarkablePointType,
+  type GraphAxis,
 } from "./elements/index.js";
 
 // Utils
