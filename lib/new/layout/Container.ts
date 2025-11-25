@@ -737,7 +737,36 @@ export class NewContainer extends NewRectangle {
    * Get the alignment point on a child element based on current alignment setting
    */
   private getChildAlignmentPoint(child: NewElement): { x: number; y: number } {
-    if ((child as any).borderBox) {
+    // Check for elements with direct anchor points (Text, Latex)
+    if ((child as any).topLeft && (child as any).topCenter && (child as any).leftCenter) {
+      const element = child as any;
+      
+      if (this.direction === "vertical") {
+        // Vertical stack: align horizontally (left edge, center, or right edge)
+        switch (this.horizontalAlignment) {
+          case "left":
+            return element.leftCenter;   // Left edge, vertically centered
+          case "center":
+            return element.center;       // Horizontally and vertically centered
+          case "right":
+            return element.rightCenter;  // Right edge, vertically centered
+          default:
+            return element.leftCenter;
+        }
+      } else {
+        // Horizontal stack: align vertically (top edge, center, or bottom edge)
+        switch (this.verticalAlignment) {
+          case "top":
+            return element.topCenter;    // Top edge, horizontally centered
+          case "center":
+            return element.center;       // Horizontally and vertically centered
+          case "bottom":
+            return element.bottomCenter; // Bottom edge, horizontally centered
+          default:
+            return element.topCenter;
+        }
+      }
+    } else if ((child as any).borderBox) {
       // Rectangle-based element
       const rect = child as any;
       

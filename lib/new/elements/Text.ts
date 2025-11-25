@@ -919,7 +919,7 @@ export class NewText extends NewShape {
 
     // Ensure LaTeX is pre-rendered and measured
     this.ensureMeasured();
-
+    
     // Build HTML content using PRE-RENDERED LaTeX (SAME as NewLatex approach)
     let htmlContent = '<div style="display: inline-flex; align-items: baseline; flex-wrap: nowrap; margin: 0; padding: 0;">';
     
