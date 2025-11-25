@@ -106,7 +106,7 @@ const leftAlignColumns = new Columns({
   columnBoxModel: { padding: 8 },
 });
 
-leftSection.addElement(leftAlignColumns.container);
+// leftSection.addElement(leftAlignColumns.container);
 
 // Add content to left-aligned columns
 for (let i = 0; i < 2; i++) {
@@ -132,7 +132,7 @@ for (let i = 0; i < 2; i++) {
     vstack.addElement(rect);
   });
 
-  leftAlignColumns.getColumn(i).addElement(vstack);
+  // leftAlignColumns.getColumn(i).addElement(vstack);
 }
 
 // Columns with CENTER alignment
@@ -155,7 +155,7 @@ const centerAlignColumns = new Columns({
   columnBoxModel: { padding: 8 },
 });
 
-leftSection.addElement(centerAlignColumns.container);
+// leftSection.addElement(centerAlignColumns.container);
 
 // Add circles to center-aligned columns
 for (let i = 0; i < 2; i++) {
@@ -180,7 +180,7 @@ for (let i = 0; i < 2; i++) {
     vstack.addElement(circle);
   });
 
-  centerAlignColumns.getColumn(i).addElement(vstack);
+  // centerAlignColumns.getColumn(i).addElement(vstack);
 }
 
 // Columns with RIGHT alignment
@@ -203,7 +203,7 @@ const rightAlignColumns = new Columns({
   columnBoxModel: { padding: 8 },
 });
 
-leftSection.addElement(rightAlignColumns.container);
+// leftSection.addElement(rightAlignColumns.container);
 
 // Add mixed content to right-aligned columns
 for (let i = 0; i < 2; i++) {
@@ -278,7 +278,7 @@ const mainGrid = new Grid({
   },
 });
 
-middleSection.addElement(mainGrid.container);
+// middleSection.addElement(mainGrid.container);
 
 // Fill grid with different patterns showing box model
 const colors = [
@@ -368,7 +368,7 @@ const spreadContainer = new NewContainer({
   },
 });
 
-middleSection.addElement(spreadContainer);
+// middleSection.addElement(spreadContainer);
 
 // Add items to spread
 for (let i = 0; i < 4; i++) {
@@ -422,7 +422,7 @@ const topVertical = new NewContainer({
   },
 });
 
-rightSection.addElement(topVertical);
+// rightSection.addElement(topVertical);
 
 // Add progressively wider rectangles
 [100, 200, 300].forEach((width, idx) => {
@@ -456,7 +456,7 @@ const middleHorizontal = new NewContainer({
   },
 });
 
-rightSection.addElement(middleHorizontal);
+// rightSection.addElement(middleHorizontal);
 
 // Add rectangles of different heights
 [60, 90, 50, 80].forEach((height, idx) => {
@@ -490,7 +490,7 @@ const smallGrid = new Grid({
   },
 });
 
-rightSection.addElement(smallGrid.container);
+// rightSection.addElement(smallGrid.container);
 
 // Fill small grid with circles
 for (let row = 0; row < 2; row++) {
@@ -535,7 +535,7 @@ const verticalSpread = new NewContainer({
   },
 });
 
-rightSection.addElement(verticalSpread);
+// rightSection.addElement(verticalSpread);
 
 // Add items to vertical spread
 for (let i = 0; i < 3; i++) {
@@ -551,26 +551,7 @@ for (let i = 0; i < 3; i++) {
   verticalSpread.addElement(rect);
 }
 
-// ===== ADD DEBUG MARKERS FOR MAIN CONTAINER BOX MODEL =====
-const mainDebugMarkers = [
-  // Content box corners (white)
-  createDebugCircle(mainContainer.contentBox.topLeft, "#fff", 6),
-  createDebugCircle(mainContainer.contentBox.topRight, "#fff", 6),
-  createDebugCircle(mainContainer.contentBox.bottomLeft, "#fff", 6),
-  createDebugCircle(mainContainer.contentBox.bottomRight, "#fff", 6),
-  // Border box corners (yellow)
-  createDebugCircle(mainContainer.topLeft, "#fbbf24", 5),
-  createDebugCircle(mainContainer.topRight, "#fbbf24", 5),
-  createDebugCircle(mainContainer.bottomLeft, "#fbbf24", 5),
-  createDebugCircle(mainContainer.bottomRight, "#fbbf24", 5),
-];
-
 // Add main container and debug markers to artboard
 artboard.addElement(mainContainer);
-
-mainDebugMarkers.forEach((marker, idx) => {
-  marker.zIndex = 1000 + idx;
-  artboard.addElement(marker);
-});
 
 return artboard.render();

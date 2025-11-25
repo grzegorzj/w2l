@@ -94,6 +94,12 @@ export class NewContainer extends NewRectangle {
     this.direction = config.direction ?? "none";
     this._autoWidth = config.width === "auto";
     this._autoHeight = config.height === "auto";
+    
+    // Initialize auto-sized empty containers with padding+border size
+    // This ensures empty containers are still visible with their padding/border
+    if (this._autoWidth || this._autoHeight) {
+      this.updateAutoSize();
+    }
   }
 
   /**

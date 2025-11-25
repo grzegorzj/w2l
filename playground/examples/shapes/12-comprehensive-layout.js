@@ -37,6 +37,14 @@ const mainContainer = new NewContainer({
   },
 });
 
+// Position the main container explicitly (required for auto-sizing)
+mainContainer.position({
+  relativeFrom: mainContainer.topLeft,
+  relativeTo: artboard.contentBox.topLeft,
+  x: 0,
+  y: 0,
+});
+
 artboard.addElement(mainContainer);
 
 // ========================================
@@ -60,7 +68,14 @@ const column1 = new NewContainer({
 
 mainContainer.addElement(column1);
 
-// Add pure LaTeX to column 1
+// Add pure LaTeX to column 1 - wrapped in containers like example 83
+const latexContainer1 = new NewContainer({
+  width: "auto",
+  height: "auto",
+  direction: "vertical",
+  spacing: 15,
+});
+
 const latex1 = new NewLatex({
   content: "E = mc^2",
   fontSize: 32,
@@ -69,7 +84,7 @@ const latex1 = new NewLatex({
     fill: "#1976d2",
   },
 });
-column1.addElement(latex1);
+latexContainer1.addElement(latex1);
 
 const latex2 = new NewLatex({
   content: "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}",
@@ -79,7 +94,7 @@ const latex2 = new NewLatex({
     fill: "#1976d2",
   },
 });
-column1.addElement(latex2);
+latexContainer1.addElement(latex2);
 
 const latex3 = new NewLatex({
   content: "e^{i\\pi} + 1 = 0",
@@ -89,7 +104,9 @@ const latex3 = new NewLatex({
     fill: "#1976d2",
   },
 });
-column1.addElement(latex3);
+latexContainer1.addElement(latex3);
+
+column1.addElement(latexContainer1);
 
 // ========================================
 // COLUMN 2
@@ -112,7 +129,14 @@ const column2 = new NewContainer({
 
 mainContainer.addElement(column2);
 
-// Add mixed text with inline LaTeX to column 2
+// Add mixed text with inline LaTeX to column 2 - wrapped in container
+const textContainer2 = new NewContainer({
+  width: "auto",
+  height: "auto",
+  direction: "vertical",
+  spacing: 15,
+});
+
 const mixedText1 = new NewText({
   content: "Einstein's equation $E = mc^2$ is famous.",
   fontSize: 20,
@@ -121,7 +145,7 @@ const mixedText1 = new NewText({
     fill: "#7b1fa2",
   },
 });
-column2.addElement(mixedText1);
+textContainer2.addElement(mixedText1);
 
 const mixedText2 = new NewText({
   content: "The theorem $a^2 + b^2 = c^2$ for right triangles.",
@@ -131,7 +155,7 @@ const mixedText2 = new NewText({
     fill: "#7b1fa2",
   },
 });
-column2.addElement(mixedText2);
+textContainer2.addElement(mixedText2);
 
 const mixedText3 = new NewText({
   content: "Calculate $\\frac{df}{dx}$ for any function $f(x)$.",
@@ -141,7 +165,7 @@ const mixedText3 = new NewText({
     fill: "#7b1fa2",
   },
 });
-column2.addElement(mixedText3);
+textContainer2.addElement(mixedText3);
 
 const mixedText4 = new NewText({
   content: "Complex: $a + bi$ where $i^2 = -1$.",
@@ -151,7 +175,9 @@ const mixedText4 = new NewText({
     fill: "#7b1fa2",
   },
 });
-column2.addElement(mixedText4);
+textContainer2.addElement(mixedText4);
+
+column2.addElement(textContainer2);
 
 // ========================================
 // COLUMN 3
@@ -174,7 +200,14 @@ const column3 = new NewContainer({
 
 mainContainer.addElement(column3);
 
-// Add pure text to column 3
+// Add pure text to column 3 - wrapped in container
+const textContainer3 = new NewContainer({
+  width: "auto",
+  height: "auto",
+  direction: "vertical",
+  spacing: 12,
+});
+
 const text1 = new NewText({
   content: "Pure text elements are simple and clean.",
   fontSize: 18,
@@ -183,7 +216,7 @@ const text1 = new NewText({
     fill: "#388e3c",
   },
 });
-column3.addElement(text1);
+textContainer3.addElement(text1);
 
 const text2 = new NewText({
   content: "They support multiple lines and different font sizes.",
@@ -193,7 +226,7 @@ const text2 = new NewText({
     fill: "#388e3c",
   },
 });
-column3.addElement(text2);
+textContainer3.addElement(text2);
 
 const text3 = new NewText({
   content: "Containers auto-size to fit their content.",
@@ -203,7 +236,7 @@ const text3 = new NewText({
     fill: "#388e3c",
   },
 });
-column3.addElement(text3);
+textContainer3.addElement(text3);
 
 const text4 = new NewText({
   content: "This creates flexible layouts.",
@@ -213,7 +246,7 @@ const text4 = new NewText({
     fill: "#388e3c",
   },
 });
-column3.addElement(text4);
+textContainer3.addElement(text4);
 
 const text5 = new NewText({
   content: "Perfect for documents and diagrams!",
@@ -224,7 +257,9 @@ const text5 = new NewText({
     fill: "#388e3c",
   },
 });
-column3.addElement(text5);
+textContainer3.addElement(text5);
+
+column3.addElement(textContainer3);
 
 // Render the artboard
 return artboard.render();
