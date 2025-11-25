@@ -6,22 +6,22 @@
  * equal the area of the largest square.
  *
  * Uses the new layout system with geometric transforms:
- * - NewTriangle with sides property (length, center, angle, outward normal)
- * - NewRect with geometric transforms (rotate, translate)
- * - NewContainer with "freeform" mode for auto-sizing with normalization
- * - Fixed-size NewArtboard as the canvas
+ * - Triangle with sides property (length, center, angle, outward normal)
+ * - Rect with geometric transforms (rotate, translate)
+ * - Container with "freeform" mode for auto-sizing with normalization
+ * - Fixed-size Artboard as the canvas
  */
 
 import {
-  NewArtboard,
-  NewContainer,
-  NewTriangle,
-  NewRect,
-  NewCircle,
+  Artboard,
+  Container,
+  Triangle,
+  Rect,
+  Circle,
 } from "w2l";
 
 // Fixed-size artboard as the canvas
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: 800,
   height: 600,
   backgroundColor: "#2c3e50",
@@ -29,7 +29,7 @@ const artboard = new NewArtboard({
 });
 
 // Container with auto-sizing to hold the triangle and squares
-const container = new NewContainer({
+const container = new Container({
   width: "auto",
   height: "auto",
   direction: "freeform", // Freeform mode with normalization
@@ -43,7 +43,7 @@ const container = new NewContainer({
 });
 
 // Create a 3-4-5 right triangle (classic Pythagorean triple)
-const triangle = new NewTriangle({
+const triangle = new Triangle({
   type: "right",
   a: 120, // Base = 3 units
   b: 90, // Height = 4 units
@@ -84,7 +84,7 @@ console.log(
 // Place a square on each side
 const squares = [];
 sides.forEach((side, index) => {
-  const square = new NewRect({
+  const square = new Rect({
     width: side.length,
     height: side.length,
     style: {
@@ -119,7 +119,7 @@ sides.forEach((side, index) => {
 squares.forEach((square, index) => {
   const corners = square.getCorners();
   corners.forEach((corner) => {
-    const debugCircle = new NewCircle({
+    const debugCircle = new Circle({
       radius: 4,
       style: {
         fill: "white",

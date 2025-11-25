@@ -1,77 +1,41 @@
 /**
- * Geometric shapes module - BezierCurve implementation.
- *
- * Provides bezier curve primitives for smooth, curved paths.
- *
- * @module elements
+ * New layout system - BezierCurve
+ * Quadratic and cubic bezier curves for smooth paths
  */
 
 import { Shape } from "../core/Shape.js";
-import type { Point } from "../core/Artboard.js";
-import { parseUnit } from "../core/units.js";
-import type { Style } from "../core/Stylable.js";
+import { type Style } from "../core/Stylable.js";
 import { styleToSVGAttributes } from "../core/Stylable.js";
+import { type Position } from "../core/Element.js";
 
-/**
- * A point with numeric coordinates (used internally for calculations).
- */
-interface NumericPoint {
-  x: number;
-  y: number;
-}
-
-/**
- * Configuration for creating a BezierCurve.
- *
- * Supports both quadratic (2 control points) and cubic (3 control points) bezier curves.
- * Visual styling is handled through the style property using CSS/SVG properties.
- */
 export interface BezierCurveConfig {
   /**
    * Starting point of the curve.
-   * Can be a Point object with string coordinates or numeric values.
    */
-  start: Point | NumericPoint;
+  start: Position;
 
   /**
    * Ending point of the curve.
-   * Can be a Point object with string coordinates or numeric values.
    */
-  end: Point | NumericPoint;
+  end: Position;
 
   /**
    * First control point of the curve.
    * For quadratic curves, this is the only control point.
    * For cubic curves, this is the first control point.
    */
-  controlPoint1: Point | NumericPoint;
+  controlPoint1: Position;
 
   /**
    * Second control point of the curve (optional).
    * If provided, creates a cubic bezier curve.
    * If not provided, creates a quadratic bezier curve.
    */
-  controlPoint2?: Point | NumericPoint;
-
-  /**
-   * Optional name for debugging and SVG comments.
-   */
-  name?: string;
+  controlPoint2?: Position;
 
   /**
    * Visual styling properties (stroke, strokeWidth, etc.).
-   * Uses standard CSS/SVG property names.
-   *
    * Note: Bezier curves are typically stroked rather than filled.
-   *
-   * @example
-   * ```typescript
-   * {
-   *   stroke: "#3498db",
-   *   strokeWidth: 3,
-   *   fill: "none"
-   * }
-   * ```
    */
   style?: Partial<Style>;
 }
@@ -90,16 +54,13 @@ export interface BezierCurveConfig {
  * - The curve does not necessarily pass through the control points
  * - Control points determine the direction and magnitude of the curve
  *
- * Bezier curves are useful for creating smooth, organic shapes and connections
- * between elements.
- *
  * @example
  * Create a quadratic bezier curve
  * ```typescript
  * const curve = new BezierCurve({
- *   start: { x: "100px", y: "100px" },
- *   end: { x: "300px", y: "100px" },
- *   controlPoint1: { x: "200px", y: "50px" },
+ *   start: { x: 100, y: 100 },
+ *   end: { x: 300, y: 100 },
+ *   controlPoint1: { x: 200, y: 50 },
  *   style: {
  *     stroke: "#3498db",
  *     strokeWidth: 3,
@@ -112,10 +73,10 @@ export interface BezierCurveConfig {
  * Create a cubic bezier curve
  * ```typescript
  * const curve = new BezierCurve({
- *   start: { x: "100px", y: "100px" },
- *   end: { x: "400px", y: "100px" },
- *   controlPoint1: { x: "200px", y: "50px" },
- *   controlPoint2: { x: "300px", y: "150px" },
+ *   start: { x: 100, y: 100 },
+ *   end: { x: 400, y: 100 },
+ *   controlPoint1: { x: 200, y: 50 },
+ *   controlPoint2: { x: 300, y: 150 },
  *   style: {
  *     stroke: "#e74c3c",
  *     strokeWidth: 2,
@@ -123,30 +84,12 @@ export interface BezierCurveConfig {
  *   }
  * });
  * ```
- *
- * @example
- * Create a smooth S-curve connection
- * ```typescript
- * const curve = new BezierCurve({
- *   start: circle1.rightCenter,
- *   end: circle2.leftCenter,
- *   controlPoint1: { x: "200px", y: "100px" },
- *   controlPoint2: { x: "400px", y: "300px" },
- *   style: {
- *     stroke: "#2ecc71",
- *     strokeWidth: 2,
- *     fill: "none",
- *     strokeDasharray: "5,5"
- *   }
- * });
- * ```
  */
 export class BezierCurve extends Shape {
-  private config: BezierCurveConfig;
-  private _start: NumericPoint;
-  private _end: NumericPoint;
-  private _controlPoint1: NumericPoint;
-  private _controlPoint2: NumericPoint | null;
+  private _start: Position;
+  private _end: Position;
+  private _controlPoint1: Position;
+  private _controlPoint2: Position | null;
 
   /**
    * Creates a new BezierCurve instance.
@@ -154,29 +97,12 @@ export class BezierCurve extends Shape {
    * @param config - Configuration for the bezier curve
    */
   constructor(config: BezierCurveConfig) {
-    super(config.name);
-    this.config = config;
+    super(config.style);
 
-    this._start = this.parsePoint(config.start);
-    this._end = this.parsePoint(config.end);
-    this._controlPoint1 = this.parsePoint(config.controlPoint1);
-    this._controlPoint2 = config.controlPoint2
-      ? this.parsePoint(config.controlPoint2)
-      : null;
-  }
-
-  /**
-   * Parse a point to numeric coordinates.
-   * @internal
-   */
-  private parsePoint(point: Point | NumericPoint): NumericPoint {
-    if (typeof point.x === "string" || typeof point.y === "string") {
-      return {
-        x: typeof point.x === "string" ? parseUnit(point.x) : point.x,
-        y: typeof point.y === "string" ? parseUnit(point.y) : point.y,
-      };
-    }
-    return point as NumericPoint;
+    this._start = config.start;
+    this._end = config.end;
+    this._controlPoint1 = config.controlPoint1;
+    this._controlPoint2 = config.controlPoint2 || null;
   }
 
   /**
@@ -189,40 +115,56 @@ export class BezierCurve extends Shape {
   }
 
   /**
-   * Gets the starting point of the curve.
+   * Gets the starting point of the curve in absolute coordinates.
    *
    * @returns The start point
    */
-  get start(): Point {
-    return this.toAbsolutePoint(this._start.x, this._start.y);
+  get start(): Position {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this._start.x,
+      y: absPos.y + this._start.y,
+    };
   }
 
   /**
-   * Gets the ending point of the curve.
+   * Gets the ending point of the curve in absolute coordinates.
    *
    * @returns The end point
    */
-  get end(): Point {
-    return this.toAbsolutePoint(this._end.x, this._end.y);
+  get end(): Position {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this._end.x,
+      y: absPos.y + this._end.y,
+    };
   }
 
   /**
-   * Gets the first control point of the curve.
+   * Gets the first control point of the curve in absolute coordinates.
    *
    * @returns The first control point
    */
-  get controlPoint1(): Point {
-    return this.toAbsolutePoint(this._controlPoint1.x, this._controlPoint1.y);
+  get controlPoint1(): Position {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this._controlPoint1.x,
+      y: absPos.y + this._controlPoint1.y,
+    };
   }
 
   /**
-   * Gets the second control point of the curve (if cubic).
+   * Gets the second control point of the curve in absolute coordinates (if cubic).
    *
    * @returns The second control point, or null if quadratic
    */
-  get controlPoint2(): Point | null {
+  get controlPoint2(): Position | null {
     if (!this._controlPoint2) return null;
-    return this.toAbsolutePoint(this._controlPoint2.x, this._controlPoint2.y);
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this._controlPoint2.x,
+      y: absPos.y + this._controlPoint2.y,
+    };
   }
 
   /**
@@ -235,25 +177,15 @@ export class BezierCurve extends Shape {
    * B(t) = (1-t)³P₀ + 3(1-t)²tP₁ + 3(1-t)t²P₂ + t³P₃
    *
    * @param t - Parameter from 0 to 1 (0 = start, 1 = end)
-   * @returns A point on the curve
+   * @returns A point on the curve in absolute coordinates
    *
    * @example
    * Get the midpoint of a curve
    * ```typescript
    * const midpoint = curve.pointAt(0.5);
    * ```
-   *
-   * @example
-   * Sample points along a curve
-   * ```typescript
-   * for (let i = 0; i <= 10; i++) {
-   *   const t = i / 10;
-   *   const point = curve.pointAt(t);
-   *   // Use point for positioning or visualization
-   * }
-   * ```
    */
-  pointAt(t: number): Point {
+  pointAt(t: number): Position {
     // Clamp t to [0, 1]
     t = Math.max(0, Math.min(1, t));
 
@@ -295,7 +227,11 @@ export class BezierCurve extends Shape {
         t2 * this._end.y;
     }
 
-    return this.toAbsolutePoint(x, y);
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + x,
+      y: absPos.y + y,
+    };
   }
 
   /**
@@ -304,7 +240,7 @@ export class BezierCurve extends Shape {
    *
    * @returns The approximate center point of the curve
    */
-  get center(): Point {
+  get center(): Position {
     return this.pointAt(0.5);
   }
 
@@ -325,8 +261,8 @@ export class BezierCurve extends Shape {
       const t = i / segments;
       const currPoint = this.pointAt(t);
 
-      const dx = parseUnit(currPoint.x) - parseUnit(prevPoint.x);
-      const dy = parseUnit(currPoint.y) - parseUnit(prevPoint.y);
+      const dx = currPoint.x - prevPoint.x;
+      const dy = currPoint.y - prevPoint.y;
 
       length += Math.sqrt(dx * dx + dy * dy);
       prevPoint = currPoint;
@@ -338,13 +274,8 @@ export class BezierCurve extends Shape {
   /**
    * Gets the bounding box of the curve.
    * This is an approximation using sampled points.
-   *
-   * @param axisAligned - Whether to return axis-aligned (true) or oriented (false) bounding box
-   * @returns The bounding box
    */
-  getBoundingBox(
-    axisAligned: boolean = true
-  ): import("../core/Element.js").BoundingBox {
+  getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } {
     // Sample points along the curve to find bounds
     const samples = 50;
     let minX = Infinity;
@@ -355,22 +286,14 @@ export class BezierCurve extends Shape {
     for (let i = 0; i <= samples; i++) {
       const t = i / samples;
       const point = this.pointAt(t);
-      const x = parseUnit(point.x);
-      const y = parseUnit(point.y);
 
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
+      minX = Math.min(minX, point.x);
+      minY = Math.min(minY, point.y);
+      maxX = Math.max(maxX, point.x);
+      maxY = Math.max(maxY, point.y);
     }
 
-    return {
-      topLeft: { x: `${minX}px`, y: `${minY}px` },
-      bottomRight: { x: `${maxX}px`, y: `${maxY}px` },
-      width: maxX - minX,
-      height: maxY - minY,
-      isAxisAligned: true,
-    };
+    return { minX, minY, maxX, maxY };
   }
 
   /**
@@ -379,7 +302,6 @@ export class BezierCurve extends Shape {
    * @returns SVG path element representing the curve
    */
   render(): string {
-    // Use absolute position for rendering to account for parent hierarchy
     const absPos = this.getAbsolutePosition();
     const startX = this._start.x + absPos.x;
     const startY = this._start.y + absPos.y;
@@ -406,15 +328,12 @@ export class BezierCurve extends Shape {
       stroke: "#000000",
       strokeWidth: "2",
     };
-    const style = { ...defaultStyle, ...this.config.style };
+    const style = { ...defaultStyle, ...this._style };
     const styleAttrs = styleToSVGAttributes(style);
 
-    const transformStr = this.getTransformString();
-    const transform = transformStr ? ` transform="${transformStr}"` : "";
+    const transform = this.getTransformAttribute();
 
-    const comment = this.getSVGComment();
-
-    return `${comment}<path d="${pathData}" ${styleAttrs}${transform} />`;
+    return `<path d="${pathData}" ${styleAttrs} ${transform}/>`;
   }
 }
 

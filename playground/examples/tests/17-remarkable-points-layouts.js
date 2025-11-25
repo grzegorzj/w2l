@@ -1,18 +1,18 @@
 /**
  * Example 17: Remarkable Points in Various Layouts (New System)
  *
- * Tests remarkable point positioning in horizontal and vertical NewContainer layouts.
+ * Tests remarkable point positioning in horizontal and vertical Container layouts.
  */
 
 import {
-  NewArtboard,
-  NewFunctionGraph,
-  NewText,
-  NewRect,
-  NewContainer,
+  Artboard,
+  FunctionGraph,
+  Text,
+  Rect,
+  Container,
 } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#ffffff",
@@ -20,7 +20,7 @@ const artboard = new NewArtboard({
 });
 
 // Title
-const title = new NewText({
+const title = new Text({
   content: "Remarkable Points in Horizontal & Vertical Containers",
   fontSize: 24,
   fontWeight: "bold",
@@ -37,7 +37,7 @@ title.position({
 artboard.addElement(title);
 
 // Description
-const description = new NewText({
+const description = new Text({
   content:
     "Testing remarkable point coordinate retrieval in different layout contexts. Red dots = auto-rendered | Crosshairs = manually positioned via getRemarkablePoint()",
   fontSize: 12,
@@ -55,7 +55,7 @@ description.position({
 artboard.addElement(description);
 
 // Create a horizontal stack with two columns
-const hstack = new NewContainer({
+const hstack = new Container({
   width: "auto",
   height: "auto",
   direction: "horizontal",
@@ -79,7 +79,7 @@ hstack.position({
 artboard.addElement(hstack);
 
 // ===== COLUMN 1: Vertical Container with graph =====
-const column1 = new NewContainer({
+const column1 = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -93,7 +93,7 @@ const column1 = new NewContainer({
   boxModel: { padding: 15 },
 });
 
-const col1Title = new NewText({
+const col1Title = new Text({
   content: "Column 1: Vertical Container",
   fontSize: 16,
   fontWeight: "bold",
@@ -102,7 +102,7 @@ const col1Title = new NewText({
 
 column1.addElement(col1Title);
 
-const graph1 = new NewFunctionGraph({
+const graph1 = new FunctionGraph({
   functions: {
     fn: (x) => x * x - 4,
     color: "#3498db",
@@ -118,7 +118,7 @@ const graph1 = new NewFunctionGraph({
 
 column1.addElement(graph1);
 
-const col1Note = new NewText({
+const col1Note = new Text({
   content: "Graph in Vertical Container",
   fontSize: 11,
   style: { fill: "#7f8c8d" },
@@ -129,7 +129,7 @@ column1.addElement(col1Note);
 hstack.addElement(column1);
 
 // ===== COLUMN 2: Vertical Container with graph =====
-const column2 = new NewContainer({
+const column2 = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -143,7 +143,7 @@ const column2 = new NewContainer({
   boxModel: { padding: 15 },
 });
 
-const col2Title = new NewText({
+const col2Title = new Text({
   content: "Column 2: Vertical Container",
   fontSize: 16,
   fontWeight: "bold",
@@ -152,7 +152,7 @@ const col2Title = new NewText({
 
 column2.addElement(col2Title);
 
-const graph2 = new NewFunctionGraph({
+const graph2 = new FunctionGraph({
   functions: {
     fn: (x) => Math.sin(x * 2),
     color: "#e74c3c",
@@ -168,7 +168,7 @@ const graph2 = new NewFunctionGraph({
 
 column2.addElement(graph2);
 
-const col2Note = new NewText({
+const col2Note = new Text({
   content: "Graph in Vertical Container (2nd column)",
   fontSize: 11,
   style: { fill: "#7f8c8d" },
@@ -203,7 +203,7 @@ if (g1Roots.length > 0) {
 
   if (rootPos) {
     // Horizontal line
-    const hLine = new NewRect({
+    const hLine = new Rect({
       width: 30,
       height: 2,
       style: { fill: "#e74c3c", stroke: "none" },
@@ -219,7 +219,7 @@ if (g1Roots.length > 0) {
     artboard.addElement(hLine);
 
     // Vertical line
-    const vLine = new NewRect({
+    const vLine = new Rect({
       width: 2,
       height: 30,
       style: { fill: "#e74c3c", stroke: "none" },
@@ -235,7 +235,7 @@ if (g1Roots.length > 0) {
     artboard.addElement(vLine);
 
     // Label
-    const label = new NewText({
+    const label = new Text({
       content: "Root (G1)",
       fontSize: 9,
       style: { fill: "#e74c3c" },
@@ -258,7 +258,7 @@ if (g1YIntercept.length > 0) {
   console.log("Graph1 Y-intercept position:", pos);
 
   if (pos) {
-    const hLine = new NewRect({
+    const hLine = new Rect({
       width: 30,
       height: 2,
       style: { fill: "#27ae60", stroke: "none" },
@@ -273,7 +273,7 @@ if (g1YIntercept.length > 0) {
 
     artboard.addElement(hLine);
 
-    const vLine = new NewRect({
+    const vLine = new Rect({
       width: 2,
       height: 30,
       style: { fill: "#27ae60", stroke: "none" },
@@ -288,7 +288,7 @@ if (g1YIntercept.length > 0) {
 
     artboard.addElement(vLine);
 
-    const label = new NewText({
+    const label = new Text({
       content: "Y-int (G1)",
       fontSize: 9,
       style: { fill: "#27ae60" },
@@ -321,7 +321,7 @@ if (g2Roots.length > 0) {
   console.log("Graph2 Root 0 position:", rootPos);
 
   if (rootPos) {
-    const hLine = new NewRect({
+    const hLine = new Rect({
       width: 30,
       height: 2,
       style: { fill: "#9b59b6", stroke: "none" },
@@ -336,7 +336,7 @@ if (g2Roots.length > 0) {
 
     artboard.addElement(hLine);
 
-    const vLine = new NewRect({
+    const vLine = new Rect({
       width: 2,
       height: 30,
       style: { fill: "#9b59b6", stroke: "none" },
@@ -351,7 +351,7 @@ if (g2Roots.length > 0) {
 
     artboard.addElement(vLine);
 
-    const label = new NewText({
+    const label = new Text({
       content: "Root (G2)",
       fontSize: 9,
       style: { fill: "#9b59b6" },
@@ -374,7 +374,7 @@ if (g2Maxima.length > 0) {
   console.log("Graph2 Maximum 0 position:", pos);
 
   if (pos) {
-    const hLine = new NewRect({
+    const hLine = new Rect({
       width: 30,
       height: 2,
       style: { fill: "#f39c12", stroke: "none" },
@@ -389,7 +389,7 @@ if (g2Maxima.length > 0) {
 
     artboard.addElement(hLine);
 
-    const vLine = new NewRect({
+    const vLine = new Rect({
       width: 2,
       height: 30,
       style: { fill: "#f39c12", stroke: "none" },
@@ -404,7 +404,7 @@ if (g2Maxima.length > 0) {
 
     artboard.addElement(vLine);
 
-    const label = new NewText({
+    const label = new Text({
       content: "Max (G2)",
       fontSize: 9,
       style: { fill: "#f39c12" },
@@ -422,7 +422,7 @@ if (g2Maxima.length > 0) {
 }
 
 // Add summary note
-const summary = new NewText({
+const summary = new Text({
   content:
     "If working correctly: crosshairs should be centered on red dots in both graphs. Check console for position details.",
   fontSize: 11,

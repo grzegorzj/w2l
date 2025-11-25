@@ -1,46 +1,103 @@
 /**
- * Text module - Text and TextArea implementation.
+ * Text - Text with optional embedded LaTeX formulas for the new layout system.
  *
- * Provides text primitives with typography support including word wrapping,
- * alignment, and comprehensive styling options.
- *
- * @module elements
+ * Supports plain text and mixed text with LaTeX formulas using $ and $$ delimiters.
+ * Provides measurement capabilities and annotation support for highlighting.
  */
 
 import { Shape } from "../core/Shape.js";
-import type { Point } from "../core/Artboard.js";
-import { parseUnit } from "../core/units.js";
 import type { Style } from "../core/Stylable.js";
 import { styleToSVGAttributes } from "../core/Stylable.js";
+import { parseUnit } from "../core/units.js";
+import { 
+  MATHJAX_EX_TO_EM_RATIO, 
+  MATHJAX_CONTAINER_WIDTH_MULTIPLIER,
+  MATHJAX_UNITS_PER_EM
+} from "../core/mathjax-constants.js";
 
 /**
- * Text alignment options.
+ * Represents a segment of mixed text content.
  */
-export type TextAlign = "left" | "center" | "right";
+interface TextSegment {
+  type: "text" | "latex";
+  content: string;
+  displayMode?: boolean;
+  index: number;
+}
 
 /**
- * Vertical alignment options for text.
+ * Bounding box for any part of mixed text (word or formula).
  */
-export type TextVerticalAlign = "top" | "middle" | "bottom";
+export interface MixedTextPartBoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  type: "text" | "latex";
+  segmentIndex: number;
+}
+
+/**
+ * Represents an annotated element within a Text formula.
+ * Annotated using \cssId{id}{content} or \class{class}{content} commands in LaTeX segments.
+ */
+export interface AnnotatedTextElement {
+  /** ID or class name of the annotation */
+  identifier: string;
+  /** Type of annotation: 'id' or 'class' */
+  type: 'id' | 'class';
+  /** Bounding box of the annotated element */
+  bbox: MixedTextPartBoundingBox;
+  /** The SVG element itself */
+  element: SVGElement;
+  
+  // Reference points for positioning (absolute world coordinates)
+  /** Center point of the element */
+  readonly center: { x: number; y: number };
+  /** Top-left corner */
+  readonly topLeft: { x: number; y: number };
+  /** Top-center point */
+  readonly topCenter: { x: number; y: number };
+  /** Top-right corner */
+  readonly topRight: { x: number; y: number };
+  /** Left-center point */
+  readonly leftCenter: { x: number; y: number };
+  /** Right-center point */
+  readonly rightCenter: { x: number; y: number };
+  /** Bottom-left corner */
+  readonly bottomLeft: { x: number; y: number };
+  /** Bottom-center point */
+  readonly bottomCenter: { x: number; y: number };
+  /** Bottom-right corner */
+  readonly bottomRight: { x: number; y: number };
+  
+  // Convenient aliases
+  /** Alias for topCenter */
+  readonly top: { x: number; y: number };
+  /** Alias for bottomCenter */
+  readonly bottom: { x: number; y: number };
+  /** Alias for leftCenter */
+  readonly left: { x: number; y: number };
+  /** Alias for rightCenter */
+  readonly right: { x: number; y: number };
+}
 
 /**
  * Configuration for creating a Text element.
- *
- * Supports comprehensive typography options that are easy for LLMs to work with.
- * Visual styling is handled through the style property using CSS/SVG properties.
  */
 export interface TextConfig {
   /**
-   * The text content to display.
-   * Can include newlines for multi-line text.
+   * The content with embedded LaTeX formulas.
+   * Use $...$ for inline LaTeX and $$...$$ for display mode LaTeX.
+   * 
+   * @example
+   * ```typescript
+   * content: "The famous equation $E = mc^2$ was discovered by Einstein."
+   * content: "The quadratic formula is $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$"
+   * content: "Euler's identity: $e^{i\\pi} + 1 = 0$ is beautiful."
+   * ```
    */
   content: string;
-
-  /**
-   * Maximum width for text wrapping (supports units like "300px", "20rem", or numbers).
-   * If not specified, text will not wrap.
-   */
-  maxWidth?: string | number;
 
   /**
    * Font size (supports units like "16px", "1rem", or numbers).
@@ -49,28 +106,16 @@ export interface TextConfig {
   fontSize?: string | number;
 
   /**
-   * Font family (CSS font-family value).
+   * Font family for text portions (CSS font-family value).
    * @defaultValue "sans-serif"
    */
   fontFamily?: string;
 
   /**
-   * Font weight (CSS font-weight value).
+   * Font weight for text portions (CSS font-weight value).
    * @defaultValue "normal"
    */
   fontWeight?: string | number;
-
-  /**
-   * Horizontal text alignment.
-   * @defaultValue "left"
-   */
-  textAlign?: TextAlign;
-
-  /**
-   * Vertical text alignment.
-   * @defaultValue "top"
-   */
-  verticalAlign?: TextVerticalAlign;
 
   /**
    * Line height multiplier (relative to font size).
@@ -79,152 +124,92 @@ export interface TextConfig {
   lineHeight?: number;
 
   /**
-   * Letter spacing (supports units like "0.5px", "0.05em", or numbers).
-   * @defaultValue 0
-   */
-  letterSpacing?: string | number;
-
-  /**
-   * Optional name for debugging and SVG comments.
-   */
-  name?: string;
-
-  /**
-   * Padding around the content (CSS-like spacing).
-   * Supports uniform values or individual sides.
-   * @defaultValue 0
-   */
-  padding?: import("../core/Bounded.js").Spacing;
-
-  /**
-   * Margin around the element (CSS-like spacing).
-   * Supports uniform values or individual sides.
-   * @defaultValue 0
-   */
-  margin?: import("../core/Bounded.js").Spacing;
-
-  /**
    * Visual styling properties (fill, stroke, opacity, etc.).
-   * Uses standard CSS/SVG property names.
-   *
-   * @example
-   * ```typescript
-   * {
-   *   fill: "#2c3e50",
-   *   stroke: "#ecf0f1",
-   *   strokeWidth: "0.5px",
-   *   opacity: 0.9
-   * }
-   * ```
    */
   style?: Partial<Style>;
 
   /**
-   * Show visual debug guides for alignment points.
-   * Useful for debugging text positioning issues.
+   * Enable debug mode to visualize bounding box.
    * @defaultValue false
    */
   debug?: boolean;
 }
 
 /**
- * Text shape with word wrapping and comprehensive typography support.
+ * Text with optional embedded LaTeX formulas.
  *
- * The Text class provides a high-level interface for creating and
- * manipulating text elements. It automatically handles word wrapping,
- * line breaks, and provides flexible alignment options.
- *
- * @remarks
- * This implementation uses SVG `<text>` and `<tspan>` elements to render text.
- * Word wrapping is calculated based on character count estimates since SVG
- * doesn't have native text wrapping. For precise wrapping, font metrics
- * would be needed (future enhancement).
+ * The Text class allows you to render plain text or seamlessly mix regular text with
+ * mathematical notation, providing measurement capabilities and annotation
+ * support for highlighting specific parts of formulas.
  *
  * @example
- * Create simple text
+ * Create plain text
  * ```typescript
  * const text = new Text({
  *   content: "Hello, World!",
- *   fontSize: "24px",
- *   fontFamily: "Arial",
- *   fill: "#2c3e50"
+ *   fontSize: 18
  * });
  * ```
  *
  * @example
- * Create text with word wrapping
+ * Create text with inline formula
  * ```typescript
- * const paragraph = new Text({
- *   content: "This is a long paragraph that will wrap to multiple lines.",
- *   maxWidth: "300px",
- *   fontSize: "16px",
- *   lineHeight: 1.5,
- *   textAlign: "left"
+ * const text = new Text({
+ *   content: "The equation $E = mc^2$ is famous.",
+ *   fontSize: 18
  * });
  * ```
  *
  * @example
- * Create multi-line text with custom styling
+ * Create text with annotated formula
  * ```typescript
- * const title = new Text({
- *   content: "Main Title\nSubtitle",
- *   fontSize: "32px",
- *   fontWeight: "bold",
- *   textAlign: "center",
- *   fill: "#3498db",
- *   stroke: "#2980b9",
- *   strokeWidth: "1px"
+ * const text = new Text({
+ *   content: "Equation: $E = \\cssId{power}{mc^2}$",
+ *   fontSize: 20
  * });
+ * const power = text.getElementById('power');
+ * if (power) {
+ *   // Use power.topLeft, power.center, etc. for highlighting
+ * }
  * ```
  */
-/**
- * Bounding box for a word or text element.
- */
-export interface WordBoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-/**
- * Result of a pattern match in text.
- */
-export interface TextMatch {
-  /** The matched text content */
-  match: string;
-  /** Bounding box of the match */
-  bbox: WordBoundingBox;
-  /** Index of the word containing this match */
-  wordIndex: number;
-  /** Character offset within the full text */
-  charOffset: number;
-}
-
 export class Text extends Shape {
   private config: TextConfig;
   private _fontSize: number;
-  private _maxWidth: number | null;
   private _lineHeight: number;
-  private _lines: string[];
-
-  /**
-   * Function to get the measurement container from the parent artboard.
-   * Set by artboard when element is added.
-   * @internal
-   */
-  private _measurementContainerGetter?: () => SVGElement;
-
+  private _segments: TextSegment[];
+  private _renderedLatexSegments: Map<number, string> = new Map(); // Store pre-rendered LaTeX by segment index
+  
   /**
    * Cached measured dimensions from browser.
-   * Populated lazily when positions are queried.
+   * Populated lazily when measurement is needed.
    * @internal
    */
   private _measuredDimensions?: {
-    words: Array<WordBoundingBox>;
+    parts: Array<MixedTextPartBoundingBox>;
     totalWidth: number;
     totalHeight: number;
   };
+
+  /**
+   * Get bounding boxes for all LaTeX segments (full segments, not annotated parts).
+   * Returns absolute coordinates.
+   */
+  getLatexSegmentBBoxes(): Array<{ x: number; y: number; width: number; height: number; segmentIndex: number }> {
+    this.ensureMeasured();
+    if (!this._measuredDimensions) return [];
+    
+    const absPos = this.getAbsolutePosition();
+    return this._measuredDimensions.parts
+      .filter(part => part.type === 'latex')
+      .map(part => ({
+        x: absPos.x + part.x,
+        y: absPos.y + part.y,
+        width: part.width,
+        height: part.height,
+        segmentIndex: part.segmentIndex
+      }));
+  }
 
   /**
    * Creates a new Text instance.
@@ -232,805 +217,750 @@ export class Text extends Shape {
    * @param config - Configuration for the text element
    */
   constructor(config: TextConfig) {
-    super(config.name);
+    super();
     this.config = config;
-
-    this._fontSize = parseUnit(config.fontSize || "16px");
-    this._maxWidth = config.maxWidth ? parseUnit(config.maxWidth) : null;
+    this._fontSize = typeof config.fontSize === 'number' ? config.fontSize : parseUnit(config.fontSize || "16px");
     this._lineHeight = config.lineHeight || 1.2;
-
-    this._lines = this.calculateLines();
-
-    // Set padding and margin if provided
-    if (config.padding !== undefined) {
-      this.padding = config.padding;
-    }
-    if (config.margin !== undefined) {
-      this.margin = config.margin;
+    this._segments = this.parseContent();
+    
+    // Apply style if provided
+    if (config.style) {
+      this._style = { ...config.style };
     }
   }
 
   /**
-   * Calculates the lines of text based on content and wrapping constraints.
-   *
-   * @returns Array of text lines
+   * Parses the content to identify text and LaTeX segments.
+   * 
+   * @returns Array of text segments
    * @internal
    */
-  private calculateLines(): string[] {
+  private parseContent(): TextSegment[] {
     const content = this.config.content || "";
+    const segments: TextSegment[] = [];
+    let segmentIndex = 0;
 
-    // Split by explicit line breaks first
-    const explicitLines = content.split("\n");
+    // Regex to match $$...$$ (display) or $...$ (inline)
+    const latexRegex = /\$\$([^\$]+)\$\$|\$([^\$]+)\$/g;
+    let match;
+    let lastIndex = 0;
 
-    // If no max width, return explicit lines as-is
-    if (!this._maxWidth) {
-      return explicitLines;
-    }
-
-    // Perform word wrapping
-    const wrappedLines: string[] = [];
-
-    for (const line of explicitLines) {
-      if (line.trim() === "") {
-        wrappedLines.push("");
-        continue;
-      }
-
-      // Estimate characters per line based on average character width
-      // This is a rough approximation; precise wrapping requires font metrics
-      const avgCharWidth = this._fontSize * 0.5; // Rough estimate
-      const maxCharsPerLine = Math.floor(this._maxWidth / avgCharWidth);
-
-      if (line.length <= maxCharsPerLine) {
-        wrappedLines.push(line);
-        continue;
-      }
-
-      // Word wrapping
-      const words = line.split(/\s+/);
-      let currentLine = "";
-
-      for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-
-        if (testLine.length <= maxCharsPerLine) {
-          currentLine = testLine;
-        } else {
-          if (currentLine) {
-            wrappedLines.push(currentLine);
-          }
-          // If single word is too long, just add it anyway
-          currentLine = word;
-        }
-      }
-
-      if (currentLine) {
-        wrappedLines.push(currentLine);
-      }
-    }
-
-    return wrappedLines;
-  }
-
-  /**
-   * Sets the measurement container getter.
-   * Called by Artboard when this text element is added.
-   *
-   * @param getter - Function that returns the measurement SVG container
-   * @internal
-   */
-  setMeasurementContainer(getter: () => SVGElement): void {
-    this._measurementContainerGetter = getter;
-  }
-
-  /**
-   * Perform measurement of text dimensions.
-   * Overrides Element.performMeasurement().
-   *
-   * @internal
-   */
-  protected performMeasurement(): void {
-    // Already have cached dimensions?
-    if (this._measuredDimensions) {
-      return;
-    }
-
-    // No DOM access available? Will use estimate-based dimensions
-    if (!this._measurementContainerGetter || typeof document === "undefined") {
-      return;
-    }
-
-    try {
-      // Get the hidden measurement container
-      const container = this._measurementContainerGetter();
-
-      // Create temporary group to hold our text
-      const tempGroup = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "g"
-      );
-      tempGroup.innerHTML = this.renderTextElement();
-      container.appendChild(tempGroup);
-
-      // Measure actual dimensions
-      const textElement = tempGroup.querySelector("text");
-      if (textElement) {
-        const bbox = textElement.getBBox();
-
-        // Use getComputedTextLength() for more accurate width measurement
-        // This is especially important for special glyphs (arrows, emoji, etc.)
-        // that may render wider than their logical bounding box
-        let totalWidth = bbox.width;
-        try {
-          const computedLength = (
-            textElement as SVGTextElement
-          ).getComputedTextLength();
-          // Use the maximum of both measurements to ensure we don't clip content
-          totalWidth = Math.max(bbox.width, computedLength);
-        } catch (e) {
-          // Fall back to bbox.width if getComputedTextLength fails
-        }
-
-        // For height, also check getBoundingClientRect for actual rendered pixels
-        let totalHeight = bbox.height;
-        try {
-          const clientRect = textElement.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          // Convert client rect to SVG coordinates (rough approximation)
-          // Take max to avoid clipping
-          if (clientRect.height > 0) {
-            totalHeight = Math.max(bbox.height, clientRect.height);
-          }
-        } catch (e) {
-          // Fall back to bbox.height
-        }
-
-        // Measure each word (each tspan has an ID)
-        const wordBBoxes: Array<WordBoundingBox> = [];
-        const tspans = textElement.querySelectorAll("tspan[data-word-index]");
-        tspans.forEach((tspan) => {
-          const wordBBox = (tspan as SVGTSpanElement).getBBox();
-          wordBBoxes.push({
-            x: wordBBox.x,
-            y: wordBBox.y,
-            width: wordBBox.width,
-            height: wordBBox.height,
+    while ((match = latexRegex.exec(content)) !== null) {
+      // Add text before the LaTeX
+      if (match.index > lastIndex) {
+        const textContent = content.substring(lastIndex, match.index);
+        if (textContent) {
+          segments.push({
+            type: "text",
+            content: textContent,
+            index: segmentIndex++
           });
-        });
-
-        this._measuredDimensions = {
-          words: wordBBoxes,
-          totalWidth: totalWidth,
-          totalHeight: totalHeight,
-        };
+        }
       }
 
-      // Clean up temporary element
-      container.removeChild(tempGroup);
-    } catch (error) {
-      // If measurement fails, fall back to estimates
-      console.warn("Text measurement failed, using estimates:", error);
+      // Add LaTeX segment
+      const latexContent = match[1] || match[2]; // match[1] for $$, match[2] for $
+      const displayMode = !!match[1]; // true if $$...$$
+      segments.push({
+        type: "latex",
+        content: latexContent,
+        displayMode,
+        index: segmentIndex++
+      });
+
+      lastIndex = match.index + match[0].length;
     }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+      const textContent = content.substring(lastIndex);
+      if (textContent) {
+        segments.push({
+          type: "text",
+          content: textContent,
+          index: segmentIndex++
+        });
+      }
+    }
+
+    // If no LaTeX found, treat entire content as text
+    if (segments.length === 0) {
+      segments.push({
+        type: "text",
+        content: content,
+        index: 0
+      });
+    }
+
+    return segments;
   }
 
   /**
-   * Ensures this text has been measured with actual browser metrics.
-   * Backward compatibility wrapper - calls measure().
-   *
+   * Pre-renders LaTeX segments and stores them.
+   * COPIED FROM Latex approach - ensures consistency.
    * @internal
-   * @deprecated Use measure() instead
+   */
+  private prerenderLatexSegments(): void {
+    if (typeof window === 'undefined' || !(window as any).MathJax) {
+      return;
+    }
+
+    const MathJax = (window as any).MathJax;
+    if (!MathJax.tex2svg) {
+      return;
+    }
+
+    this._segments.forEach((segment) => {
+      if (segment.type === 'latex' && !this._renderedLatexSegments.has(segment.index)) {
+        try {
+          const node = MathJax.tex2svg(segment.content, {
+            display: true, // Always use display mode for consistency with Latex
+            em: this._fontSize,
+            ex: this._fontSize * MATHJAX_EX_TO_EM_RATIO,
+            containerWidth: MATHJAX_CONTAINER_WIDTH_MULTIPLIER * this._fontSize,
+          });
+
+          const svg = node.querySelector('svg');
+          if (svg) {
+            // SAME scaling as Latex
+            svg.removeAttribute('width');
+            svg.removeAttribute('height');
+
+            const viewBox = svg.getAttribute('viewBox');
+            if (viewBox) {
+              const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+              const scale = this._fontSize / MATHJAX_UNITS_PER_EM;
+              svg.setAttribute('width', `${vbWidth * scale}px`);
+              svg.setAttribute('height', `${vbHeight * scale}px`);
+            }
+
+            this._renderedLatexSegments.set(segment.index, svg.outerHTML);
+          } else {
+            this._renderedLatexSegments.set(segment.index, node.outerHTML);
+          }
+        } catch (error) {
+          this._renderedLatexSegments.set(
+            segment.index,
+            `<text fill="red">LaTeX Error: ${segment.content}</text>`
+          );
+        }
+      }
+    });
+  }
+
+  /**
+   * Perform measurement of mixed text dimensions.
+   * Called automatically when dimensions are needed.
+   * 
+   * @internal
    */
   private ensureMeasured(): void {
-    this.measure();
-  }
-
-  /**
-   * Gets the font size in pixels.
-   *
-   * @returns The font size value
-   */
-  get fontSize(): number {
-    return this._fontSize;
-  }
-
-  /**
-   * Gets the line height in pixels.
-   *
-   * @returns The line height value (fontSize * lineHeight multiplier)
-   */
-  get lineHeight(): number {
-    return this._fontSize * this._lineHeight;
-  }
-
-  /**
-   * Gets the number of lines in the text.
-   *
-   * @returns The number of lines
-   */
-  get lineCount(): number {
-    return this._lines.length;
-  }
-
-  /**
-   * Gets the total height of the text block in pixels.
-   * Uses accurate browser measurements when available, estimates otherwise.
-   *
-   * @returns The height of all lines combined
-   */
-  get textHeight(): number {
-    // Try to get accurate measurement
-    this.ensureMeasured();
-
     if (this._measuredDimensions) {
-      return this._measuredDimensions.totalHeight;
+      return;
     }
 
-    // Fallback to estimate
-    return this._lines.length * this.lineHeight;
+    // Pre-render LaTeX segments first (like Latex does)
+    this.prerenderLatexSegments();
+    
+    if (typeof document === 'undefined') {
+      return;
+    }
+    
+    try {
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.visibility = 'hidden';
+      container.style.fontSize = `${this._fontSize}px`;
+      container.style.fontFamily = this.config.fontFamily || 'sans-serif';
+      container.style.fontWeight = String(this.config.fontWeight || 'normal');
+      container.style.lineHeight = String(this._lineHeight);
+      container.style.display = 'inline-flex';
+      container.style.alignItems = 'baseline';
+      container.style.flexWrap = 'nowrap';
+      container.style.margin = '0';
+      container.style.padding = '0';
+      
+      document.body.appendChild(container);
+
+      const parts: Array<MixedTextPartBoundingBox> = [];
+
+      // Render each segment
+      this._segments.forEach((segment) => {
+        const span = document.createElement('span');
+        span.setAttribute('data-segment-index', String(segment.index));
+        span.setAttribute('data-segment-type', segment.type);
+        span.style.margin = '0';
+        span.style.padding = '0';
+        span.style.display = 'inline-block';
+        
+        if (segment.type === 'text') {
+          span.textContent = segment.content;
+          span.style.whiteSpace = 'pre';
+        } else {
+          // Use pre-rendered LaTeX (SAME approach as Latex)
+          const renderedSvg = this._renderedLatexSegments.get(segment.index);
+          if (renderedSvg) {
+            span.innerHTML = renderedSvg;
+          } else {
+            span.textContent = `$${segment.content}$`;
+          }
+        }
+        
+        container.appendChild(span);
+      });
+
+      // Measure the container
+      const containerBbox = container.getBoundingClientRect();
+
+      // Measure each segment
+      const spans = container.querySelectorAll('[data-segment-index]');
+      spans.forEach((span) => {
+        const segmentType = span.getAttribute('data-segment-type') as 'text' | 'latex';
+        let bbox;
+        
+        if (segmentType === 'latex') {
+          const svg = span.querySelector('svg');
+          if (svg) {
+            bbox = svg.getBoundingClientRect();
+          } else {
+            bbox = (span as HTMLElement).getBoundingClientRect();
+          }
+        } else {
+          bbox = (span as HTMLElement).getBoundingClientRect();
+        }
+        
+        const segmentIndex = parseInt(span.getAttribute('data-segment-index') || '0');
+        
+        parts.push({
+          x: bbox.left - containerBbox.left,
+          y: bbox.top - containerBbox.top,
+          width: bbox.width,
+          height: bbox.height,
+          type: segmentType,
+          segmentIndex
+        });
+      });
+
+      this._measuredDimensions = {
+        parts,
+        totalWidth: containerBbox.width,
+        totalHeight: containerBbox.height
+      };
+
+      document.body.removeChild(container);
+    } catch (error) {
+      // Silent fail
+    }
   }
 
   /**
-   * Gets the width of the text block in pixels.
-   * Uses accurate browser measurements when available, estimates otherwise.
-   *
-   * @returns The text width
+   * Gets the width of the mixed text.
    */
   get textWidth(): number {
-    // Try to get accurate measurement
     this.ensureMeasured();
-
-    if (this._measuredDimensions) {
-      return this._measuredDimensions.totalWidth;
-    }
-
-    // Fallback to estimate
-    if (this._maxWidth) {
-      return this._maxWidth;
-    }
-
-    // Estimate width based on longest line
-    const longestLine = this._lines.reduce(
-      (max, line) => (line.length > max.length ? line : max),
-      ""
-    );
-    const avgCharWidth = this._fontSize * 0.5;
-    return longestLine.length * avgCharWidth;
+    return this._measuredDimensions?.totalWidth || 200;
   }
 
   /**
-   * Gets the width of the text block (alias for textWidth).
-   * Provided for compatibility with layout systems that expect width/height properties.
-   *
-   * @returns The text width
+   * Gets the height of the mixed text.
+   */
+  get textHeight(): number {
+    this.ensureMeasured();
+    return this._measuredDimensions?.totalHeight || this._fontSize * this._lineHeight;
+  }
+
+  /**
+   * Alias for textWidth (for compatibility with layout systems).
    */
   get width(): number {
     return this.textWidth;
   }
 
   /**
-   * Gets the height of the text block (alias for textHeight).
-   * Provided for compatibility with layout systems that expect width/height properties.
-   *
-   * @returns The text height
+   * Alias for textHeight (for compatibility with layout systems).
    */
   get height(): number {
     return this.textHeight;
   }
 
   /**
-   * Gets the geometric center of the text block.
-   *
-   * @returns The center point of the text
+   * Gets the bounding box of this element.
    */
-  get center(): Point {
+  getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } {
     const absPos = this.getAbsolutePosition();
     return {
-      x: `${absPos.x + this.textWidth / 2}px`,
-      y: `${absPos.y + this.textHeight / 2}px`,
+      minX: absPos.x,
+      minY: absPos.y,
+      maxX: absPos.x + this.textWidth,
+      maxY: absPos.y + this.textHeight,
     };
+  }
+
+  /**
+   * Gets the rotation center (center of the text).
+   */
+  protected getRotationCenter(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth / 2,
+      y: absPos.y + this.textHeight / 2,
+    };
+  }
+
+  /**
+   * Gets the corners of the text box.
+   */
+  getCorners(): { x: number; y: number }[] {
+    const absPos = this.getAbsolutePosition();
+    return [
+      { x: absPos.x, y: absPos.y }, // topLeft
+      { x: absPos.x + this.textWidth, y: absPos.y }, // topRight
+      { x: absPos.x + this.textWidth, y: absPos.y + this.textHeight }, // bottomRight
+      { x: absPos.x, y: absPos.y + this.textHeight }, // bottomLeft
+    ];
   }
 
   /**
    * Standard reference points for positioning.
    */
-
-  get topLeft(): Point {
-    const absPos = this.getAbsolutePosition();
-    // Don't use bound points - they cache stale coordinates
-    const point = { x: `${absPos.x}px`, y: `${absPos.y}px` };
-    if (this.config.debug) {
-      console.log(
-        `[Text "${this.config.content?.substring(0, 20)}..."] GET topLeft: ${point.x}, ${point.y} | absPos: (${absPos.x}, ${absPos.y}) | currentPos: (${this.currentPosition.x}, ${this.currentPosition.y})`
-      );
-    }
-    return point;
-  }
-
-  get topCenter(): Point {
-    const absPos = this.getAbsolutePosition();
-    return { x: `${absPos.x + this.textWidth / 2}px`, y: `${absPos.y}px` };
-  }
-
-  get topRight(): Point {
-    const absPos = this.getAbsolutePosition();
-    return { x: `${absPos.x + this.textWidth}px`, y: `${absPos.y}px` };
-  }
-
-  get leftCenter(): Point {
-    const absPos = this.getAbsolutePosition();
-    // Don't use bound points - they cache stale coordinates
-    const point = {
-      x: `${absPos.x}px`,
-      y: `${absPos.y + this.textHeight / 2}px`,
-    };
-    if (this.config.debug) {
-      console.log(
-        `[Text "${this.config.content?.substring(0, 20)}..."] GET leftCenter: ${point.x}, ${point.y} | absPos: (${absPos.x}, ${absPos.y}) | textHeight/2: ${this.textHeight / 2}`
-      );
-    }
-    return point;
-  }
-
-  get rightCenter(): Point {
+  get center(): { x: number; y: number } {
     const absPos = this.getAbsolutePosition();
     return {
-      x: `${absPos.x + this.textWidth}px`,
-      y: `${absPos.y + this.textHeight / 2}px`,
+      x: absPos.x + this.textWidth / 2,
+      y: absPos.y + this.textHeight / 2,
     };
   }
 
-  get bottomLeft(): Point {
-    const absPos = this.getAbsolutePosition();
-    return { x: `${absPos.x}px`, y: `${absPos.y + this.textHeight}px` };
+  get topLeft(): { x: number; y: number } {
+    return this.getAbsolutePosition();
   }
 
-  get bottomCenter(): Point {
-    const absPos = this.getAbsolutePosition();
-    return {
-      x: `${absPos.x + this.textWidth / 2}px`,
-      y: `${absPos.y + this.textHeight}px`,
-    };
-  }
-
-  get bottomRight(): Point {
+  get topCenter(): { x: number; y: number } {
     const absPos = this.getAbsolutePosition();
     return {
-      x: `${absPos.x + this.textWidth}px`,
-      y: `${absPos.y + this.textHeight}px`,
+      x: absPos.x + this.textWidth / 2,
+      y: absPos.y,
     };
   }
 
-  /**
-   * Convenient alias for topCenter.
-   */
-  get top(): Point {
+  get topRight(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth,
+      y: absPos.y,
+    };
+  }
+
+  get leftCenter(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x,
+      y: absPos.y + this.textHeight / 2,
+    };
+  }
+
+  get rightCenter(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth,
+      y: absPos.y + this.textHeight / 2,
+    };
+  }
+
+  get bottomLeft(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x,
+      y: absPos.y + this.textHeight,
+    };
+  }
+
+  get bottomCenter(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth / 2,
+      y: absPos.y + this.textHeight,
+    };
+  }
+
+  get bottomRight(): { x: number; y: number } {
+    const absPos = this.getAbsolutePosition();
+    return {
+      x: absPos.x + this.textWidth,
+      y: absPos.y + this.textHeight,
+    };
+  }
+
+  // Convenient aliases
+  get top(): { x: number; y: number } {
     return this.topCenter;
   }
 
-  /**
-   * Convenient alias for bottomCenter.
-   */
-  get bottom(): Point {
+  get bottom(): { x: number; y: number } {
     return this.bottomCenter;
   }
 
-  /**
-   * Convenient alias for leftCenter.
-   */
-  get left(): Point {
+  get left(): { x: number; y: number } {
     return this.leftCenter;
   }
 
-  /**
-   * Convenient alias for rightCenter.
-   */
-  get right(): Point {
+  get right(): { x: number; y: number } {
     return this.rightCenter;
   }
 
   /**
-   * Gets the alignment point based on horizontal and vertical alignment.
-   * Used by layout systems to position text elements correctly.
-   *
-   * @param horizontalAlign - Horizontal alignment (left, center, right)
-   * @param verticalAlign - Vertical alignment (top, center, bottom)
-   * @returns The point corresponding to the specified alignment
+   * Creates an annotated element with reference points from a bbox.
+   * IMPORTANT: Returns coordinates in ABSOLUTE world space (relative bbox + mixed text position).
+   * This matches the behavior needed for positioning highlights.
+   * @internal
    */
-  getAlignmentPoint(
-    horizontalAlign: "left" | "center" | "right",
-    verticalAlign: "top" | "center" | "bottom"
-  ): Point {
-    // Map alignment to the correct reference point
-    if (horizontalAlign === "left") {
-      if (verticalAlign === "top") return this.topLeft;
-      if (verticalAlign === "bottom") return this.bottomLeft;
-      return this.leftCenter; // center
-    } else if (horizontalAlign === "right") {
-      if (verticalAlign === "top") return this.topRight;
-      if (verticalAlign === "bottom") return this.bottomRight;
-      return this.rightCenter; // center
-    } else {
-      // horizontalAlign === "center"
-      if (verticalAlign === "top") return this.topCenter;
-      if (verticalAlign === "bottom") return this.bottomCenter;
-      return this.center; // center-center
-    }
-  }
+  private createAnnotatedElement(
+    identifier: string,
+    type: 'id' | 'class',
+    bbox: MixedTextPartBoundingBox,
+    element: SVGElement
+  ): AnnotatedTextElement {
+    // Convert bbox (relative to mixed text container) to absolute world coordinates
+    // by adding the mixed text element's position
+    const absPos = this.getAbsolutePosition();
+    const absBbox = {
+      x: absPos.x + bbox.x,
+      y: absPos.y + bbox.y,
+      width: bbox.width,
+      height: bbox.height,
+      type: bbox.type,
+      segmentIndex: bbox.segmentIndex,
+    };
 
-  /**
-   * Gets the bounding box of the text.
-   *
-   * @returns Object with bounding box properties
-   */
-  get boundingBox(): {
-    topLeft: Point;
-    bottomRight: Point;
-    width: number;
-    height: number;
-  } {
     return {
-      topLeft: this.topLeft,
-      bottomRight: this.bottomRight,
-      width: this.textWidth,
-      height: this.textHeight,
+      identifier,
+      type,
+      bbox: absBbox,
+      element,
+      // Reference points in absolute world coordinates
+      get center(): { x: number; y: number } {
+        return {
+          x: absBbox.x + absBbox.width / 2,
+          y: absBbox.y + absBbox.height / 2,
+        };
+      },
+      get topLeft(): { x: number; y: number } {
+        return { x: absBbox.x, y: absBbox.y };
+      },
+      get topCenter(): { x: number; y: number } {
+        return {
+          x: absBbox.x + absBbox.width / 2,
+          y: absBbox.y,
+        };
+      },
+      get topRight(): { x: number; y: number } {
+        return {
+          x: absBbox.x + absBbox.width,
+          y: absBbox.y,
+        };
+      },
+      get leftCenter(): { x: number; y: number } {
+        return {
+          x: absBbox.x,
+          y: absBbox.y + absBbox.height / 2,
+        };
+      },
+      get rightCenter(): { x: number; y: number } {
+        return {
+          x: absBbox.x + absBbox.width,
+          y: absBbox.y + absBbox.height / 2,
+        };
+      },
+      get bottomLeft(): { x: number; y: number } {
+        return {
+          x: absBbox.x,
+          y: absBbox.y + absBbox.height,
+        };
+      },
+      get bottomCenter(): { x: number; y: number } {
+        return {
+          x: absBbox.x + absBbox.width / 2,
+          y: absBbox.y + absBbox.height,
+        };
+      },
+      get bottomRight(): { x: number; y: number } {
+        return {
+          x: absBbox.x + absBbox.width,
+          y: absBbox.y + absBbox.height,
+        };
+      },
+      // Convenient aliases
+      get top(): { x: number; y: number } {
+        return this.topCenter;
+      },
+      get bottom(): { x: number; y: number } {
+        return this.bottomCenter;
+      },
+      get left(): { x: number; y: number } {
+        return this.leftCenter;
+      },
+      get right(): { x: number; y: number } {
+        return this.rightCenter;
+      }
     };
   }
 
   /**
-   * Gets all words in the text as an array.
-   * Splits text by whitespace across all lines.
-   *
-   * @returns Array of words
-   *
+   * Gets an annotated element by its ID within LaTeX segments.
+   * Use \cssId{id}{content} in your LaTeX segments to mark elements.
+   * 
+   * @param id - The ID assigned using \cssId command
+   * @returns The annotated element with position info, or null if not found
+   * 
    * @example
-   * Get all words
    * ```typescript
-   * const text = new Text({ content: "Hello World\nFoo Bar" });
-   * const words = text.getWords(); // ["Hello", "World", "Foo", "Bar"]
+   * const text = new NewMixedText({
+   *   content: "The equation $E = \\cssId{power}{mc^2}$ is famous."
+   * });
+   * 
+   * const powerElement = text.getElementById('power');
+   * if (powerElement) {
+   *   // Use reference points: powerElement.center, powerElement.topLeft, etc.
+   * }
    * ```
    */
-  getWords(): string[] {
-    const allWords: string[] = [];
-    for (const line of this._lines) {
-      const words = line.split(/\s+/).filter((w) => w.length > 0);
-      allWords.push(...words);
-    }
-    return allWords;
-  }
-
-  /**
-   * Gets the accurate bounding box for a specific word.
-   * Requires browser environment for measurement.
-   *
-   * @param wordIndex - Index of the word (0-based, across all lines)
-   * @returns Bounding box of the word, or null if not available
-   *
-   * @example
-   * Get bounding box for the first word
-   * ```typescript
-   * const text = new Text({ content: "Hello World" });
-   * const bbox = text.getWordBoundingBox(0); // Bounding box for "Hello"
-   * ```
-   */
-  getWordBoundingBox(wordIndex: number): WordBoundingBox | null {
+  getElementById(id: string): AnnotatedTextElement | null {
     this.ensureMeasured();
-
-    if (this._measuredDimensions && this._measuredDimensions.words[wordIndex]) {
-      return this._measuredDimensions.words[wordIndex];
+    
+    if (typeof document === 'undefined') {
+      return null;
     }
-
+    
+    try {
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.visibility = 'hidden';
+      container.style.fontSize = `${this._fontSize}px`;
+      container.style.fontFamily = this.config.fontFamily || 'sans-serif';
+      container.style.fontWeight = String(this.config.fontWeight || 'normal');
+      container.style.lineHeight = String(this._lineHeight);
+      container.style.display = 'inline-flex';
+      container.style.alignItems = 'baseline';
+      container.style.flexWrap = 'nowrap';
+      container.style.margin = '0';
+      container.style.padding = '0';
+      // Ensure no zoom or transforms affect measurements
+      container.style.transform = 'none';
+      container.style.zoom = '1';
+      container.style.pointerEvents = 'none';
+      
+      // Render each segment using PRE-RENDERED LaTeX WITH SAME STYLING AS RENDER
+      this._segments.forEach((segment) => {
+        const span = document.createElement('span');
+        span.style.margin = '0';
+        span.style.padding = '0';
+        span.style.display = 'inline-block';
+        
+        if (segment.type === 'text') {
+          span.style.whiteSpace = 'pre';
+          span.textContent = segment.content;
+        } else {
+          span.style.verticalAlign = 'middle';
+          // Use pre-rendered LaTeX (SAME approach as Latex)
+          const renderedSvg = this._renderedLatexSegments.get(segment.index);
+          if (renderedSvg) {
+            span.innerHTML = renderedSvg;
+          }
+        }
+        container.appendChild(span);
+      });
+      
+      document.body.appendChild(container);
+      
+      // Find element with the ID
+      const svgElement = container.querySelector(`#${CSS.escape(id)}`);
+      
+      if (svgElement && svgElement instanceof SVGElement) {
+        const bbox = svgElement.getBoundingClientRect();
+        const containerBbox = container.getBoundingClientRect();
+        
+        console.log(`[Measurement] ID="${id}" | width=${bbox.width.toFixed(2)} height=${bbox.height.toFixed(2)} | relX=${(bbox.left - containerBbox.left).toFixed(2)} relY=${(bbox.top - containerBbox.top).toFixed(2)}`);
+        
+        const relativeBbox: MixedTextPartBoundingBox = {
+          x: bbox.left - containerBbox.left,
+          y: bbox.top - containerBbox.top,
+          width: bbox.width,
+          height: bbox.height,
+          type: 'latex',
+          segmentIndex: -1
+        };
+        
+        const result = this.createAnnotatedElement(id, 'id', relativeBbox, svgElement);
+        
+        document.body.removeChild(container);
+        return result;
+      }
+      
+      document.body.removeChild(container);
+    } catch (error) {
+      console.warn('Failed to get element by ID:', error);
+    }
+    
     return null;
   }
 
   /**
-   * Gets the center point of a specific word.
-   * Useful for positioning elements relative to individual words.
-   *
-   * @param wordIndex - Index of the word (0-based)
-   * @returns Center point of the word, or null if not available
-   *
+   * Gets all annotated elements with a specific class within LaTeX segments.
+   * Use \class{classname}{content} in your LaTeX segments to mark elements.
+   * 
+   * @param className - The class name assigned using \class command
+   * @returns Array of annotated elements with position info
+   * 
    * @example
-   * Position a circle at the center of a word
    * ```typescript
-   * const text = new Text({ content: "Hello World" });
-   * const wordCenter = text.getWordCenter(0);
-   * if (wordCenter) {
-   *   circle.position({
-   *     relativeFrom: circle.center,
-   *     relativeTo: wordCenter,
-   *     x: "0px",
-   *     y: "0px"
-   *   });
-   * }
-   * ```
-   */
-  getWordCenter(wordIndex: number): Point | null {
-    const bbox = this.getWordBoundingBox(wordIndex);
-    if (!bbox) {
-      return null;
-    }
-
-    return {
-      x: `${bbox.x + bbox.width / 2}px`,
-      y: `${bbox.y + bbox.height / 2}px`,
-    };
-  }
-
-  /**
-   * Finds all occurrences of a pattern in the text and returns their bounding boxes.
-   *
-   * @param pattern - String or RegExp pattern to search for
-   * @returns Array of matches with their bounding boxes
-   *
-   * @example
-   * Find and highlight specific words
-   * ```typescript
-   * const text = new Text({ content: "The quick brown fox jumps over the lazy dog" });
-   * const matches = text.findMatches(/fox|dog/);
-   * matches.forEach(match => {
-   *   console.log(`Found "${match.match}" at word index ${match.wordIndex}`);
-   *   // Use match.bbox to create highlights
+   * const text = new NewMixedText({
+   *   content: "Formula: $\\class{var}{x}^2 + \\class{var}{y}^2 = \\class{var}{z}^2$"
+   * });
+   * 
+   * const variables = text.getElementsByClass('var');
+   * variables.forEach(v => {
+   *   // Use v.topLeft, v.center, etc. for highlighting
    * });
    * ```
-   *
-   * @example
-   * Case-insensitive search
-   * ```typescript
-   * const matches = text.findMatches(/ENERGY/i);
-   * ```
    */
-  findMatches(pattern: string | RegExp): TextMatch[] {
+  getElementsByClass(className: string): AnnotatedTextElement[] {
     this.ensureMeasured();
-
-    const content = this.config.content || "";
-    const regex =
-      typeof pattern === "string"
-        ? new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")
-        : new RegExp(
-            pattern.source,
-            pattern.flags.includes("g") ? pattern.flags : pattern.flags + "g"
-          );
-
-    const matches: TextMatch[] = [];
-    let match: RegExpExecArray | null;
-
-    // Build a map of character offset to word index
-    const words = this._lines.join(" ").split(/\s+/);
-    const charToWordMap: number[] = [];
-    let currentOffset = 0;
-
-    words.forEach((word, wordIndex) => {
-      for (let i = 0; i < word.length; i++) {
-        charToWordMap[currentOffset + i] = wordIndex;
-      }
-      currentOffset += word.length + 1; // +1 for space
-    });
-
-    // Find all matches
-    while ((match = regex.exec(content)) !== null) {
-      const matchText = match[0];
-      const charOffset = match.index;
-
-      // Find which word this match belongs to
-      let wordIndex = charToWordMap[charOffset];
-      if (wordIndex === undefined) {
-        // Match might be in whitespace or at boundary, find nearest word
-        for (let i = charOffset; i >= 0; i--) {
-          if (charToWordMap[i] !== undefined) {
-            wordIndex = charToWordMap[i];
-            break;
+    
+    if (typeof document === 'undefined') {
+      return [];
+    }
+    
+    try {
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.visibility = 'hidden';
+      container.style.fontSize = `${this._fontSize}px`;
+      container.style.fontFamily = this.config.fontFamily || 'sans-serif';
+      container.style.fontWeight = String(this.config.fontWeight || 'normal');
+      container.style.lineHeight = String(this._lineHeight);
+      container.style.display = 'inline-flex';
+      container.style.alignItems = 'baseline';
+      container.style.flexWrap = 'nowrap';
+      container.style.margin = '0';
+      container.style.padding = '0';
+      // Ensure no zoom or transforms affect measurements
+      container.style.transform = 'none';
+      container.style.zoom = '1';
+      container.style.pointerEvents = 'none';
+      
+      // Render each segment using PRE-RENDERED LaTeX WITH SAME STYLING AS RENDER
+      this._segments.forEach((segment) => {
+        const span = document.createElement('span');
+        span.style.margin = '0';
+        span.style.padding = '0';
+        span.style.display = 'inline-block';
+        
+        if (segment.type === 'text') {
+          span.style.whiteSpace = 'pre';
+          span.textContent = segment.content;
+        } else {
+          span.style.verticalAlign = 'middle';
+          // Use pre-rendered LaTeX (SAME approach as Latex)
+          const renderedSvg = this._renderedLatexSegments.get(segment.index);
+          if (renderedSvg) {
+            span.innerHTML = renderedSvg;
           }
         }
-      }
-
-      // Get bounding box for the word containing this match
-      const bbox = this.getWordBoundingBox(wordIndex);
-      if (bbox) {
-        matches.push({
-          match: matchText,
-          bbox,
-          wordIndex,
-          charOffset,
-        });
-      }
+        container.appendChild(span);
+      });
+      
+      document.body.appendChild(container);
+      
+      // Find all elements with the class
+      const elements = container.querySelectorAll(`.${CSS.escape(className)}`);
+      const results: AnnotatedTextElement[] = [];
+      
+      const containerBbox = container.getBoundingClientRect();
+      
+      elements.forEach((svgElement, index) => {
+        if (svgElement instanceof SVGElement) {
+          const bbox = svgElement.getBoundingClientRect();
+          
+          console.log(`[Measurement] class="${className}"[${index}] | width=${bbox.width.toFixed(2)} height=${bbox.height.toFixed(2)} | relX=${(bbox.left - containerBbox.left).toFixed(2)} relY=${(bbox.top - containerBbox.top).toFixed(2)}`);
+          
+          const relativeBbox: MixedTextPartBoundingBox = {
+            x: bbox.left - containerBbox.left,
+            y: bbox.top - containerBbox.top,
+            width: bbox.width,
+            height: bbox.height,
+            type: 'latex',
+            segmentIndex: -1
+          };
+          
+          results.push(this.createAnnotatedElement(className, 'class', relativeBbox, svgElement));
+        }
+      });
+      
+      document.body.removeChild(container);
+      return results;
+    } catch (error) {
+      console.warn('Failed to get elements by class:', error);
+      return [];
     }
-
-    return matches;
   }
 
   /**
-   * Updates the text content and recalculates lines.
-   * Clears cached measurements to force re-measurement on next access.
-   *
-   * @param newContent - The new text content
-   *
-   * @example
-   * Update text dynamically
-   * ```typescript
-   * const text = new Text({ content: "Original text", fontSize: "16px" });
-   * text.updateContent("New text content");
-   * ```
+   * Renders the mixed text to SVG using foreignObject.
    */
-  updateContent(newContent: string): void {
-    this.config.content = newContent;
-    this._lines = this.calculateLines();
-    // Clear cached measurements since content changed
-    this._measuredDimensions = undefined;
-  }
-
-  /**
-   * Generates the SVG text element with word-level detail for measurements.
-   * Each word gets a data-word-index attribute for accurate bounding box queries.
-   *
-   * @returns SVG text element string
-   * @internal
-   */
-  private renderTextElement(): string {
-    // Use absolute position for rendering to account for parent hierarchy
+  render(): string {
     const absPos = this.getAbsolutePosition();
-    const x = absPos.x;
-    const y = absPos.y;
+    const transformStr = this.getTransformAttribute();
 
-    if (this.config.debug) {
-      console.log(
-        `[Text "${this.config.content?.substring(0, 20)}..."] RENDER at absPos (${x}, ${y}), SVG baseline y=${y + this._fontSize}, dimensions: ${this.textWidth}x${this.textHeight}`
-      );
-    }
-
-    const fontSize = this._fontSize;
-    const fontFamily = this.config.fontFamily || "sans-serif";
-    const fontWeight = this.config.fontWeight || "normal";
-    const textAlign = this.config.textAlign || "left";
-    const letterSpacing = this.config.letterSpacing
-      ? parseUnit(this.config.letterSpacing)
-      : 0;
-
-    // Default style if none provided
     const defaultStyle: Partial<Style> = {
       fill: "#000000",
-      stroke: "none",
     };
-    const style = { ...defaultStyle, ...this.config.style };
-    const styleAttrs = styleToSVGAttributes(style);
+    const style = { ...defaultStyle, ...this._style };
+    const color = style.fill || "#000000";
 
-    // Calculate text anchor based on alignment
-    let textAnchor: "start" | "middle" | "end" = "start";
-    let xOffset = 0;
-
-    if (textAlign === "center") {
-      textAnchor = "middle";
-      xOffset = this.textWidth / 2;
-    } else if (textAlign === "right") {
-      textAnchor = "end";
-      xOffset = this.textWidth;
-    }
-
-    const transformStr = this.getTransformString();
-    const transform = transformStr ? ` transform="${transformStr}"` : "";
-
-    // Build SVG text element with tspan for each word
-    let svgText = `<text x="${x + xOffset}" y="${y + fontSize}" font-size="${fontSize}" font-family="${fontFamily}" font-weight="${fontWeight}" text-anchor="${textAnchor}" letter-spacing="${letterSpacing}" ${styleAttrs}${transform}>`;
-
-    let wordIndex = 0;
-    this._lines.forEach((line, lineIndex) => {
-      const dy = lineIndex === 0 ? 0 : this.lineHeight;
-
-      // Split line into words for individual measurement
-      const words = line.split(/(\s+)/); // Keep whitespace in array
-
-      if (words.length === 0 || (words.length === 1 && words[0] === "")) {
-        // Empty line
-        svgText += `<tspan x="${x + xOffset}" dy="${dy}"></tspan>`;
+    // Ensure LaTeX is pre-rendered and measured
+    this.ensureMeasured();
+    
+    // Build HTML content using PRE-RENDERED LaTeX (SAME as Latex approach)
+    let htmlContent = '<div style="display: inline-flex; align-items: baseline; flex-wrap: nowrap; margin: 0; padding: 0;">';
+    
+    this._segments.forEach((segment) => {
+      if (segment.type === 'text') {
+        htmlContent += `<span style="white-space: pre; margin: 0; padding: 0; display: inline-block;">${this.escapeHtml(segment.content)}</span>`;
       } else {
-        // First word/space in the line needs dy attribute
-        let isFirstInLine = true;
-
-        for (const part of words) {
-          if (part.match(/^\s+$/)) {
-            // Whitespace - render as-is without word index
-            svgText += this.escapeXml(part);
-          } else if (part.length > 0) {
-            // Actual word - give it an index for measurement
-            const dyAttr = isFirstInLine ? ` dy="${dy}"` : "";
-            const xAttr = isFirstInLine ? ` x="${x + xOffset}"` : "";
-            svgText += `<tspan${xAttr}${dyAttr} data-word-index="${wordIndex}">${this.escapeXml(part)}</tspan>`;
-            wordIndex++;
-            isFirstInLine = false;
-          }
+        // Use pre-rendered LaTeX (SAME approach as Latex for consistency)
+        const renderedSvg = this._renderedLatexSegments.get(segment.index);
+        if (renderedSvg) {
+          htmlContent += `<span style="margin: 0; padding: 0; display: inline-block; vertical-align: middle;">${renderedSvg}</span>`;
+        } else {
+          htmlContent += `<span style="margin: 0; padding: 0; display: inline-block;">$${this.escapeHtml(segment.content)}$</span>`;
         }
       }
     });
+    
+    htmlContent += '</div>';
 
-    svgText += "</text>";
-    return svgText;
-  }
+    const svg = `<foreignObject x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}" ${transformStr} overflow="visible">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font-size: ${this._fontSize}px; font-family: ${this.config.fontFamily || 'sans-serif'}; font-weight: ${this.config.fontWeight || 'normal'}; color: ${color}; margin: 0; padding: 0; line-height: ${this._lineHeight}; overflow: visible;">${htmlContent}</div>
+    </foreignObject>`;
 
-  render(): string {
-    const comment = this.getSVGComment();
-    let svg = comment + this.renderTextElement();
+    let debugRect = '';
     if (this.config.debug) {
-      svg += this.generateDebugMarkers();
-    }
-    return svg;
-  }
-
-  private generateDebugMarkers(): string {
-    const markers = [];
-    const absPos = this.getAbsolutePosition();
-
-    // Log all alignment points during render
-    console.log(
-      `[Text "${this.config.content?.substring(0, 20)}..."] DEBUG MARKERS:`
-    );
-    console.log(`  absPos: (${absPos.x}, ${absPos.y})`);
-    console.log(`  dimensions: ${this.textWidth} x ${this.textHeight}`);
-
-    // Get all 9 alignment points
-    const points = {
-      topLeft: this.topLeft,
-      topCenter: this.topCenter,
-      topRight: this.topRight,
-      leftCenter: this.leftCenter,
-      center: this.center,
-      rightCenter: this.rightCenter,
-      bottomLeft: this.bottomLeft,
-      bottomCenter: this.bottomCenter,
-      bottomRight: this.bottomRight,
-    };
-
-    // Draw a small circle at each alignment point with different colors
-    const colors: Record<string, string> = {
-      topLeft: "#ff0000", // red
-      topCenter: "#ff8800", // orange
-      topRight: "#ffff00", // yellow
-      leftCenter: "#00ff00", // green
-      center: "#00ffff", // cyan
-      rightCenter: "#0088ff", // light blue
-      bottomLeft: "#0000ff", // blue
-      bottomCenter: "#8800ff", // purple
-      bottomRight: "#ff00ff", // magenta
-    };
-
-    for (const [name, point] of Object.entries(points)) {
-      const px = parseFloat(String(point.x));
-      const py = parseFloat(String(point.y));
-      const color = colors[name] || "#ff0000";
-
-      console.log(`  ${name}: (${px}, ${py})`);
-
-      // Draw circle marker
-      markers.push(
-        `<circle cx="${px}" cy="${py}" r="3" fill="${color}" stroke="#000" stroke-width="0.5" opacity="0.8"/>`
-      );
-
-      // Add label if there's space
-      markers.push(
-        `<text x="${px + 5}" y="${py - 5}" font-family="monospace" font-size="8" fill="${color}" opacity="0.8">${name}</text>`
-      );
+      debugRect = `<rect x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}" fill="none" stroke="blue" stroke-width="2" stroke-dasharray="5,5" />`;
     }
 
-    // Draw bounding box
-    markers.push(
-      `<rect x="${absPos.x}" y="${absPos.y}" width="${this.textWidth}" height="${this.textHeight}" ` +
-        `fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>`
-    );
-
-    return markers.join("\n");
+    return svg + debugRect;
   }
 
   /**
-   * Escapes XML special characters in text content.
-   *
-   * @param text - The text to escape
-   * @returns The escaped text
-   * @internal
+   * Escapes HTML special characters.
    */
-  private escapeXml(text: string): string {
+  private escapeHtml(text: string): string {
     return text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
-      .replace(/'/g, "&apos;");
+      .replace(/'/g, "&#039;");
   }
 }
+

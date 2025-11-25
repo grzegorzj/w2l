@@ -1,15 +1,15 @@
 /**
  * Shapes Example: Lines Connecting Shapes
  * 
- * Demonstrates NewLine connecting different shapes
+ * Demonstrates Line connecting different shapes
  * to verify line positioning works correctly.
  * 
  * NO CONTAINER - positioning directly on artboard to test artboard positioning.
  */
 
-import { NewArtboard, NewCircle, NewSquare, NewTriangle, NewLine } from "w2l";
+import { Artboard, Circle, Square, Triangle, Line } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#2c3e50",
@@ -17,7 +17,7 @@ const artboard = new NewArtboard({
 });
 
 // Center circle - position at artboard center
-const centerCircle = new NewCircle({
+const centerCircle = new Circle({
   radius: 60,
   style: {
     fill: "#e74c3c",
@@ -37,7 +37,7 @@ centerCircle.position({
 artboard.addElement(centerCircle);
 
 // Top square - position above center circle
-const topSquare = new NewSquare({
+const topSquare = new Square({
   size: 100,
   style: {
     fill: "#3498db",
@@ -57,7 +57,7 @@ topSquare.position({
 artboard.addElement(topSquare);
 
 // Right triangle - position to the right
-const rightTriangle = new NewTriangle({
+const rightTriangle = new Triangle({
   type: "equilateral",
   a: 120,
   style: {
@@ -78,7 +78,7 @@ rightTriangle.position({
 artboard.addElement(rightTriangle);
 
 // Bottom circle - position below
-const bottomCircle = new NewCircle({
+const bottomCircle = new Circle({
   radius: 70,
   style: {
     fill: "#f39c12",
@@ -98,7 +98,7 @@ bottomCircle.position({
 artboard.addElement(bottomCircle);
 
 // Left triangle - position to the left
-const leftTriangle = new NewTriangle({
+const leftTriangle = new Triangle({
   type: "right",
   a: 100,
   b: 100,
@@ -121,7 +121,7 @@ leftTriangle.position({
 artboard.addElement(leftTriangle);
 
 // Draw lines from center circle to each shape
-// Using the NEW positioning-aware NewLine API
+// Using the NEW positioning-aware Line API
 const lineTargets = [
   { shape: topSquare, color: "#3498db", name: "topSquare" },
   { shape: rightTriangle, color: "#2ecc71", name: "rightTriangle" },
@@ -143,7 +143,7 @@ lineTargets.forEach((target) => {
   console.log(`${target.name}: dx=${dx}, dy=${dy}`);
   
   // Create a line with start at (0,0) and end at the relative offset
-  const line = new NewLine({
+  const line = new Line({
     start: { x: 0, y: 0 },
     end: { x: dx, y: dy },
     style: {

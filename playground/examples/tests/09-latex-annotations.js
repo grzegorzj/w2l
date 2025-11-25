@@ -6,10 +6,10 @@
  * - Using \class{classname}{content} to mark multiple similar parts
  * - Querying annotated elements by ID or class
  * - Highlighting annotated elements precisely
- * - Works with NewText (with embedded LaTeX) in the new layout system
+ * - Works with Text (with embedded LaTeX) in the new layout system
  */
 
-import { NewArtboard, NewText, NewRect, NewCircle, NewContainer } from "w2l";
+import { Artboard, Text, Rect, Circle, Container } from "w2l";
 
 // Add debug CSS to outline annotated elements
 if (typeof document !== 'undefined') {
@@ -48,7 +48,7 @@ if (typeof document !== 'undefined') {
 }
 
 // Create artboard with auto-sizing
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#f8f9fa",
@@ -56,7 +56,7 @@ const artboard = new NewArtboard({
 });
 
 // Main container for all content (vertical layout)
-const mainContainer = new NewContainer({
+const mainContainer = new Container({
   width: 600,
   height: "auto",
   direction: "vertical",
@@ -73,7 +73,7 @@ artboard.addElement(mainContainer);
 
 // Helper function to create a section with text (with LaTeX) and highlights
 function createSection(content, highlights) {
-  const text = new NewText({
+  const text = new Text({
     content,
     fontSize: 24,
     fontFamily: "Georgia",
@@ -98,7 +98,7 @@ function createSection(content, highlights) {
         console.log(`  Highlight size: ${el.bbox.width.toFixed(2)} x ${el.bbox.height.toFixed(2)} (no padding)`);
         console.log(`  Highlight position: (${el.topLeft.x.toFixed(2)}, ${el.topLeft.y.toFixed(2)})`);
         
-        const highlight = new NewRect({
+        const highlight = new Rect({
           width: el.bbox.width,
           height: el.bbox.height,
           style: {
@@ -127,7 +127,7 @@ function createSection(content, highlights) {
       console.log(`  Highlight size: ${element.bbox.width.toFixed(2)} x ${element.bbox.height.toFixed(2)} (no padding)`);
       console.log(`  Highlight position: (${element.topLeft.x.toFixed(2)}, ${element.topLeft.y.toFixed(2)})`);
       
-      const highlight = new NewRect({
+      const highlight = new Rect({
         width: element.bbox.width,
         height: element.bbox.height,
         style: {
@@ -185,7 +185,7 @@ createSection(
 );
 
 // Example 4: Text with annotations and circle markers
-const sentence = new NewText({
+const sentence = new Text({
   content:
     "Key concepts: $\\class{concept}{energy}$, $\\class{concept}{mass}$, and $\\class{concept}{light}$.",
   fontSize: 20,
@@ -203,7 +203,7 @@ console.log(`Found ${concepts.length} concepts:`, concepts);
 
 concepts.forEach((concept, index) => {
   // Add a small circle marker above each concept
-  const marker = new NewCircle({
+  const marker = new Circle({
     radius: 5,
     style: {
       fill: "#28a745",

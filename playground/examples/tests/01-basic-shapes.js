@@ -4,9 +4,9 @@
  * Tests alignment with 2 columns and 2 identical circles per column
  */
 
-import { NewArtboard, NewCircle, Columns } from "w2l";
+import { Artboard, Circle, Columns } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#f5f5f5",
@@ -51,7 +51,7 @@ columns.container.position({
 artboard.addElement(columns.container);
 
 // Column 1: Two identical circles
-const circle1 = new NewCircle({
+const circle1 = new Circle({
   radius: 60,
   style: {
     fill: "#3498db",
@@ -60,7 +60,7 @@ const circle1 = new NewCircle({
   },
 });
 
-const circle2 = new NewCircle({
+const circle2 = new Circle({
   radius: 60,
   style: {
     fill: "#e74c3c",
@@ -73,7 +73,7 @@ columns.getColumn(0).addElement(circle1);
 columns.getColumn(0).addElement(circle2);
 
 // Column 2: Two identical circles
-const circle3 = new NewCircle({
+const circle3 = new Circle({
   radius: 60,
   style: {
     fill: "#2ecc71",
@@ -82,7 +82,7 @@ const circle3 = new NewCircle({
   },
 });
 
-const circle4 = new NewCircle({
+const circle4 = new Circle({
   radius: 60,
   style: {
     fill: "#f39c12",
@@ -96,7 +96,7 @@ columns.getColumn(1).addElement(circle4);
 
 // Add debug markers for column content boxes
 function createDebugCircle(position, color, radius) {
-  const circle = new NewCircle({
+  const circle = new Circle({
     radius: radius,
     style: {
       fill: color,

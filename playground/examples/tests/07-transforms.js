@@ -7,9 +7,9 @@
  * - getCorners(): Query actual corner/vertex positions
  */
 
-import { NewArtboard, NewRect, NewCircle, NewTriangle } from "w2l";
+import { Artboard, Rect, Circle, Triangle } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: 800,
   height: 600,
   backgroundColor: "#ecf0f1",
@@ -17,7 +17,7 @@ const artboard = new NewArtboard({
 });
 
 // Example 1: Rotate a rectangle
-const rect1 = new NewRect({
+const rect1 = new Rect({
   width: 100,
   height: 60,
   style: {
@@ -41,7 +41,7 @@ artboard.addElement(rect1);
 
 // Add debug circles at corners (after adding to artboard)
 rect1.getCorners().forEach((corner, index) => {
-  const circle = new NewCircle({
+  const circle = new Circle({
     radius: 4,
     style: {
       fill: ["#e74c3c", "#f39c12", "#2ecc71", "#9b59b6"][index],
@@ -62,7 +62,7 @@ rect1.getCorners().forEach((corner, index) => {
 });
 
 // Example 2: Rotate and translate
-const rect2 = new NewRect({
+const rect2 = new Rect({
   width: 80,
   height: 80,
   style: {
@@ -89,7 +89,7 @@ artboard.addElement(rect2);
 
 // Add debug circles
 rect2.getCorners().forEach((corner, index) => {
-  const circle = new NewCircle({
+  const circle = new Circle({
     radius: 4,
     style: {
       fill: ["#e74c3c", "#f39c12", "#2ecc71", "#9b59b6"][index],
@@ -110,7 +110,7 @@ rect2.getCorners().forEach((corner, index) => {
 });
 
 // Example 3: Triangle with rotation
-const triangle = new NewTriangle({
+const triangle = new Triangle({
   type: "equilateral",
   a: 80,
   style: {
@@ -137,7 +137,7 @@ artboard.addElement(triangle);
 
 // Add debug circles at triangle vertices
 triangle.getCorners().forEach((corner, index) => {
-  const circle = new NewCircle({
+  const circle = new Circle({
     radius: 5,
     style: {
       fill: ["#e74c3c", "#f39c12", "#9b59b6"][index],
@@ -158,7 +158,7 @@ triangle.getCorners().forEach((corner, index) => {
 });
 
 // Example 4: Multiple translations
-const rect3 = new NewRect({
+const rect3 = new Rect({
   width: 60,
   height: 40,
   style: {
@@ -185,7 +185,7 @@ artboard.addElement(rect3);
 
 // Add debug circles
 rect3.getCorners().forEach((corner, index) => {
-  const circle = new NewCircle({
+  const circle = new Circle({
     radius: 4,
     style: {
       fill: ["#e74c3c", "#f39c12", "#2ecc71", "#9b59b6"][index],

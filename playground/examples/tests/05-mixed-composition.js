@@ -6,18 +6,18 @@
  */
 
 import { 
-  NewArtboard, 
-  NewCircle, 
-  NewRect, 
-  NewSquare, 
-  NewTriangle, 
-  NewRegularPolygon,
-  NewLine,
+  Artboard, 
+  Circle, 
+  Rect, 
+  Square, 
+  Triangle, 
+  RegularPolygon,
+  Line,
   Grid,
-  NewContainer
+  Container
 } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#34495e",
@@ -49,7 +49,7 @@ topGrid.container.position({
 artboard.addElement(topGrid.container);
 
 // Cell 0: Circle with inscribed square
-const cell0Circle = new NewCircle({
+const cell0Circle = new Circle({
   radius: 80,
   style: {
     fill: "none",
@@ -65,7 +65,7 @@ cell0Circle.position({
   y: 0,
 });
 
-const cell0Square = new NewSquare({
+const cell0Square = new Square({
   size: 113, // 80 * sqrt(2)
   style: {
     fill: "#3498db",
@@ -85,7 +85,7 @@ topGrid.getCell(0, 0).addElement(cell0Circle);
 topGrid.getCell(0, 0).addElement(cell0Square);
 
 // Cell 1: Triangle
-const cell1Triangle = new NewTriangle({
+const cell1Triangle = new Triangle({
   type: "equilateral",
   a: 150,
   style: {
@@ -105,7 +105,7 @@ cell1Triangle.position({
 topGrid.getCell(0, 1).addElement(cell1Triangle);
 
 // Cell 2: Pentagon
-const cell2Pentagon = new NewRegularPolygon({
+const cell2Pentagon = new RegularPolygon({
   sides: 5,
   radius: 75,
   style: {
@@ -125,7 +125,7 @@ cell2Pentagon.position({
 topGrid.getCell(0, 2).addElement(cell2Pentagon);
 
 // Cell 3: Hexagon
-const cell3Hexagon = new NewRegularPolygon({
+const cell3Hexagon = new RegularPolygon({
   sides: 6,
   radius: 75,
   rotation: 30,
@@ -146,7 +146,7 @@ cell3Hexagon.position({
 topGrid.getCell(0, 3).addElement(cell3Hexagon);
 
 // Cell 4: Octagon
-const cell4Octagon = new NewRegularPolygon({
+const cell4Octagon = new RegularPolygon({
   sides: 8,
   radius: 75,
   rotation: 22.5,
@@ -167,7 +167,7 @@ cell4Octagon.position({
 topGrid.getCell(0, 4).addElement(cell4Octagon);
 
 // Bottom section: Container with mixed shapes and lines
-const bottomContainer = new NewContainer({
+const bottomContainer = new Container({
   width: 1340,
   height: 600,
   direction: "none",
@@ -191,19 +191,19 @@ artboard.addElement(bottomContainer);
 // Create a pattern of shapes connected by lines
 const pattern = [
   { 
-    shape: new NewCircle({ radius: 50, style: { fill: "#3498db", stroke: "#2980b9", strokeWidth: 2 } }), 
+    shape: new Circle({ radius: 50, style: { fill: "#3498db", stroke: "#2980b9", strokeWidth: 2 } }), 
     pos: { x: 200, y: 300 } 
   },
   { 
-    shape: new NewSquare({ size: 90, style: { fill: "#e74c3c", stroke: "#c0392b", strokeWidth: 2 } }), 
+    shape: new Square({ size: 90, style: { fill: "#e74c3c", stroke: "#c0392b", strokeWidth: 2 } }), 
     pos: { x: 500, y: 200 } 
   },
   { 
-    shape: new NewTriangle({ type: "equilateral", a: 100, style: { fill: "#2ecc71", stroke: "#27ae60", strokeWidth: 2 } }), 
+    shape: new Triangle({ type: "equilateral", a: 100, style: { fill: "#2ecc71", stroke: "#27ae60", strokeWidth: 2 } }), 
     pos: { x: 800, y: 300 } 
   },
   { 
-    shape: new NewRegularPolygon({ sides: 6, radius: 50, rotation: 30, style: { fill: "#f39c12", stroke: "#e67e22", strokeWidth: 2 } }), 
+    shape: new RegularPolygon({ sides: 6, radius: 50, rotation: 30, style: { fill: "#f39c12", stroke: "#e67e22", strokeWidth: 2 } }), 
     pos: { x: 1100, y: 200 } 
   },
 ];
@@ -227,7 +227,7 @@ for (let i = 0; i < pattern.length - 1; i++) {
   const dx = endShape.center.x - startShape.center.x;
   const dy = endShape.center.y - startShape.center.y;
   
-  const line = new NewLine({
+  const line = new Line({
     start: { x: 0, y: 0 },
     end: { x: dx, y: dy },
     style: {

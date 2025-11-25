@@ -6,15 +6,15 @@
  */
 
 import {
-  NewArtboard,
-  NewFunctionGraph,
-  NewText,
-  NewCircle,
-  NewRect,
+  Artboard,
+  FunctionGraph,
+  Text,
+  Circle,
+  Rect,
   Columns,
 } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#ffffff",
@@ -22,7 +22,7 @@ const artboard = new NewArtboard({
 });
 
 // Title
-const title = new NewText({
+const title = new Text({
   content: "Remarkable Points Position Debug (New System)",
   fontSize: 24,
   fontWeight: "bold",
@@ -39,7 +39,7 @@ title.position({
 artboard.addElement(title);
 
 // Description
-const description = new NewText({
+const description = new Text({
   content:
     "Graph is in a Columns layout (2 columns) in the second column with debug borders visible. Red dots = auto-rendered remarkable points | Colored boxes = manually positioned using getRemarkablePoint()",
   fontSize: 12,
@@ -89,7 +89,7 @@ columns.container.position({
 artboard.addElement(columns.container);
 
 // Add a placeholder in the first column
-const placeholder = new NewText({
+const placeholder = new Text({
   content: "Column 1 (empty)",
   fontSize: 14,
   style: { fill: "#95a5a6" },
@@ -98,7 +98,7 @@ const placeholder = new NewText({
 columns.getColumn(0).addElement(placeholder);
 
 // Simple function graph with remarkable points enabled - in SECOND COLUMN
-const graph = new NewFunctionGraph({
+const graph = new FunctionGraph({
   functions: {
     fn: (x) => x * x - 4,
     color: "#3498db",
@@ -134,7 +134,7 @@ if (roots.length > 0) {
 
   if (rootPos) {
     // Large red box
-    const bbox = new NewRect({
+    const bbox = new Rect({
       width: 30,
       height: 30,
       style: {
@@ -156,7 +156,7 @@ if (roots.length > 0) {
     artboard.addElement(bbox);
 
     // Add crosshair at the exact position
-    const hLine = new NewRect({
+    const hLine = new Rect({
       width: 40,
       height: 1,
       style: { fill: "#e74c3c", stroke: "none" },
@@ -171,7 +171,7 @@ if (roots.length > 0) {
 
     artboard.addElement(hLine);
 
-    const vLine = new NewRect({
+    const vLine = new Rect({
       width: 1,
       height: 40,
       style: { fill: "#e74c3c", stroke: "none" },
@@ -186,7 +186,7 @@ if (roots.length > 0) {
 
     artboard.addElement(vLine);
 
-    const label = new NewText({
+    const label = new Text({
       content: "Root 0",
       fontSize: 10,
       style: { fill: "#e74c3c" },
@@ -210,7 +210,7 @@ if (roots.length > 1) {
   console.log("Root 1 position from getRemarkablePoint:", rootPos);
 
   if (rootPos) {
-    const bbox = new NewRect({
+    const bbox = new Rect({
       width: 30,
       height: 30,
       style: {
@@ -232,7 +232,7 @@ if (roots.length > 1) {
     artboard.addElement(bbox);
 
     // Add crosshair
-    const hLine = new NewRect({
+    const hLine = new Rect({
       width: 40,
       height: 1,
       style: { fill: "#27ae60", stroke: "none" },
@@ -247,7 +247,7 @@ if (roots.length > 1) {
 
     artboard.addElement(hLine);
 
-    const vLine = new NewRect({
+    const vLine = new Rect({
       width: 1,
       height: 40,
       style: { fill: "#27ae60", stroke: "none" },
@@ -262,7 +262,7 @@ if (roots.length > 1) {
 
     artboard.addElement(vLine);
 
-    const label = new NewText({
+    const label = new Text({
       content: "Root 1",
       fontSize: 10,
       style: { fill: "#27ae60" },
@@ -286,7 +286,7 @@ if (yIntercept.length > 0) {
   console.log("Y-intercept position from getRemarkablePoint:", pos);
 
   if (pos) {
-    const bbox = new NewRect({
+    const bbox = new Rect({
       width: 30,
       height: 30,
       style: {
@@ -308,7 +308,7 @@ if (yIntercept.length > 0) {
     artboard.addElement(bbox);
 
     // Add crosshair
-    const hLine = new NewRect({
+    const hLine = new Rect({
       width: 40,
       height: 1,
       style: { fill: "#3498db", stroke: "none" },
@@ -323,7 +323,7 @@ if (yIntercept.length > 0) {
 
     artboard.addElement(hLine);
 
-    const vLine = new NewRect({
+    const vLine = new Rect({
       width: 1,
       height: 40,
       style: { fill: "#3498db", stroke: "none" },
@@ -338,7 +338,7 @@ if (yIntercept.length > 0) {
 
     artboard.addElement(vLine);
 
-    const label = new NewText({
+    const label = new Text({
       content: "Y-intercept",
       fontSize: 10,
       style: { fill: "#3498db" },
@@ -356,7 +356,7 @@ if (yIntercept.length > 0) {
 }
 
 // Add note
-const note = new NewText({
+const note = new Text({
   content:
     "Graph is in Columns layout column [1] (second column) - red dashed border shows column boundary. If working correctly: crosshairs and boxes should be centered on the red dots",
   fontSize: 11,

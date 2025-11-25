@@ -5,9 +5,9 @@
  * arranged in a grid to verify geometry calculations.
  */
 
-import { NewArtboard, NewTriangle, Grid, NewCircle } from "w2l";
+import { Artboard, Triangle, Grid, Circle } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#2c3e50",
@@ -39,7 +39,7 @@ grid.container.position({
 artboard.addElement(grid.container);
 
 // Cell (0, 0): Right triangle - bottom left orientation
-const rightTriangle1 = new NewTriangle({
+const rightTriangle1 = new Triangle({
   type: "right",
   a: 150,
   b: 200,
@@ -61,7 +61,7 @@ rightTriangle1.position({
 grid.getCell(0, 0).addElement(rightTriangle1);
 
 // Add center marker
-const marker1 = new NewCircle({
+const marker1 = new Circle({
   radius: 6,
   style: { fill: "#e74c3c" },
 });
@@ -74,7 +74,7 @@ marker1.position({
 grid.getCell(0, 0).addElement(marker1);
 
 // Cell (0, 1): Right triangle - top right orientation
-const rightTriangle2 = new NewTriangle({
+const rightTriangle2 = new Triangle({
   type: "right",
   a: 180,
   b: 180,
@@ -95,7 +95,7 @@ rightTriangle2.position({
 
 grid.getCell(0, 1).addElement(rightTriangle2);
 
-const marker2 = new NewCircle({
+const marker2 = new Circle({
   radius: 6,
   style: { fill: "#e74c3c" },
 });
@@ -108,7 +108,7 @@ marker2.position({
 grid.getCell(0, 1).addElement(marker2);
 
 // Cell (1, 0): Equilateral triangle
-const equilateralTriangle = new NewTriangle({
+const equilateralTriangle = new Triangle({
   type: "equilateral",
   a: 200,
   style: {
@@ -127,7 +127,7 @@ equilateralTriangle.position({
 
 grid.getCell(1, 0).addElement(equilateralTriangle);
 
-const marker3 = new NewCircle({
+const marker3 = new Circle({
   radius: 6,
   style: { fill: "#e74c3c" },
 });
@@ -140,7 +140,7 @@ marker3.position({
 grid.getCell(1, 0).addElement(marker3);
 
 // Cell (1, 1): Isosceles triangle
-const isoscelesTriangle = new NewTriangle({
+const isoscelesTriangle = new Triangle({
   type: "isosceles",
   a: 180,
   b: 220,
@@ -160,7 +160,7 @@ isoscelesTriangle.position({
 
 grid.getCell(1, 1).addElement(isoscelesTriangle);
 
-const marker4 = new NewCircle({
+const marker4 = new Circle({
   radius: 6,
   style: { fill: "#e74c3c" },
 });

@@ -1,86 +1,18 @@
 /**
- * Elements module exports.
- *
- * This module contains visual elements including geometric shapes, text, and graphs:
- * - {@link Side}: Generic side/edge with inward and outward normals
- * - {@link Line}: Line connecting two points
- * - {@link Triangle}: Triangular shapes with various configurations
- * - {@link Circle}: Circular shapes with radius or diameter
- * - {@link Rectangle}: Rectangular shapes with rounded corners and squircle support
- * - {@link Square}: Square shapes (specialized rectangles)
- * - {@link RegularPolygon}: Regular polygons (pentagon, hexagon, octagon, etc.)
- * - {@link Text}: Text elements with word wrapping and typography support
- * - {@link LatexText}: LaTeX/mathematical notation rendering with measurement support
- * - {@link MixedText}: Text with embedded LaTeX formulas
- * - {@link Image}: Raster image elements (PNG, JPG, etc.)
- * - {@link BezierCurve}: Quadratic and cubic bezier curves for smooth paths
- * - {@link FunctionGraph}: Mathematical function plotting with remarkable points
- *
- * @module elements
+ * New layout system - Element types
  */
 
-export { Side } from "./Side.js";
-export type { SideConfig } from "./Side.js";
+export { Artboard, type ArtboardConfig } from "./Artboard.js";
+export { Circle, type CircleConfig } from "./Circle.js";
+export { Rect, type RectConfig } from "./Rect.js";
+export { Square, type SquareConfig } from "./Square.js";
+export { Triangle, type TriangleConfig, type TriangleType, type TriangleOrientation, type TriangleSide } from "./Triangle.js";
+export { Line, type LineConfig } from "./Line.js";
+export { RegularPolygon, type RegularPolygonConfig } from "./RegularPolygon.js";
+export { Text, type TextConfig, type AnnotatedTextElement, type MixedTextPartBoundingBox } from "./Text.js";
+export { Latex, type LatexConfig, type AnnotatedLatexElement, type LatexPartBoundingBox } from "./Latex.js";
+export { FunctionGraph, type FunctionGraphConfig, type PlottedFunction, type RemarkablePoint, type RemarkablePointType, type GraphAxis } from "./FunctionGraph.js";
+export { Side, type SideConfig } from "./Side.js";
+export { Image, type ImageConfig } from "./Image.js";
+export { BezierCurve, type BezierCurveConfig } from "./BezierCurve.js";
 
-export { Line } from "./Line.js";
-export type { LineConfig } from "./Line.js";
-
-export { Triangle } from "./Triangle.js";
-export type { TriangleConfig, TriangleSide } from "./Triangle.js";
-
-export { Circle } from "./Circle.js";
-export type { CircleConfig } from "./Circle.js";
-
-export { Rectangle } from "./Rectangle.js";
-export type {
-  RectangleSize,
-  RectangleConfig,
-  RectangleSide,
-  CornerStyle,
-} from "./Rectangle.js";
-
-export { Square } from "./Square.js";
-export type { SquareConfig } from "./Square.js";
-
-export { RegularPolygon } from "./RegularPolygon.js";
-export type { RegularPolygonConfig, PolygonSide } from "./RegularPolygon.js";
-
-export { Text } from "./Text.js";
-export type {
-  TextConfig,
-  TextAlign,
-  TextVerticalAlign,
-  WordBoundingBox,
-  TextMatch,
-} from "./Text.js";
-
-export { LatexText } from "./LatexText.js";
-export type {
-  LatexTextConfig,
-  LatexPartBoundingBox,
-  LatexMatch,
-  AnnotatedLatexElement,
-} from "./LatexText.js";
-
-export { MixedText } from "./MixedText.js";
-export type {
-  MixedTextConfig,
-  MixedTextPartBoundingBox,
-  MixedTextMatch,
-  AnnotatedMixedElement,
-} from "./MixedText.js";
-
-export { Image } from "./Image.js";
-export type { ImageConfig } from "./Image.js";
-
-export { BezierCurve } from "./BezierCurve.js";
-export type { BezierCurveConfig } from "./BezierCurve.js";
-
-export { FunctionGraph } from "./FunctionGraph.js";
-export type {
-  FunctionGraphConfig,
-  PlottedFunction,
-  RemarkablePoint,
-  RemarkablePointType,
-  GraphAxis,
-} from "./FunctionGraph.js";

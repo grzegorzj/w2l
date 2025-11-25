@@ -1,17 +1,14 @@
 /**
- * Elements module - FunctionGraph implementation.
+ * New layout system - FunctionGraph implementation
  *
  * Provides mathematical function plotting with remarkable points detection,
  * covering K-12 mathematics and first-year university level topics.
- *
- * @module elements
  */
 
-import { Shape } from "../core/Shape.js";
-import type { Point } from "../core/Artboard.js";
-import { parseUnit } from "../core/units.js";
-import type { Style } from "../core/Stylable.js";
-import { styleToSVGAttributes } from "../core/Stylable.js";
+import { Rectangle } from "../core/Rectangle.js";
+import { type Position } from "../core/Element.js";
+import { type Style, styleToSVGAttributes } from "../core/Stylable.js";
+import { type BoxModel } from "../utils/BoxModel.js";
 
 /**
  * Types of remarkable points that can be detected on a function or its graph.
@@ -40,7 +37,7 @@ export interface RemarkablePoint {
   /** Human-readable description */
   description: string;
   /** SVG coordinate of the point on the graph */
-  svgPoint?: Point;
+  svgPoint?: { x: number; y: number };
 }
 
 /**
@@ -66,14 +63,14 @@ export interface GraphAxis {
   /** The value where this axis is drawn (e.g., y=0 for x-axis) */
   value: number;
   /** SVG coordinates for the axis line */
-  start: Point;
-  end: Point;
+  start: { x: number; y: number };
+  end: { x: number; y: number };
   /** Label for the axis */
   label?: string;
   /** Tick marks along the axis */
   ticks: Array<{
     value: number;
-    position: Point;
+    position: { x: number; y: number };
     label: string;
   }>;
 }
@@ -88,14 +85,14 @@ export interface FunctionGraphConfig {
   functions: PlottedFunction | PlottedFunction[];
 
   /**
-   * Width of the graph area in pixels (or with units).
+   * Width of the graph area in pixels.
    */
-  width: string | number;
+  width: number;
 
   /**
-   * Height of the graph area in pixels (or with units).
+   * Height of the graph area in pixels.
    */
-  height: string | number;
+  height: number;
 
   /**
    * Domain (x-axis range) to plot.
@@ -172,11 +169,6 @@ export interface FunctionGraphConfig {
   remarkablePointStyle?: Partial<Style>;
 
   /**
-   * Optional name for debugging and SVG comments.
-   */
-  name?: string;
-
-  /**
    * Visual styling properties for the graph container.
    */
   style?: Partial<Style>;
@@ -190,6 +182,16 @@ export interface FunctionGraphConfig {
    * Style for the grid.
    */
   gridStyle?: Partial<Style>;
+
+  /**
+   * Box model (padding, margin, border)
+   */
+  boxModel?: BoxModel;
+
+  /**
+   * Debug mode - shows bounding box
+   */
+  debug?: boolean;
 }
 
 /**
@@ -205,37 +207,16 @@ export interface FunctionGraphConfig {
  * const graph = new FunctionGraph({
  *   functions: {
  *     fn: (x) => x * x - 4,
- *     label: "f(x) = x² - 4",
  *     color: "#e74c3c"
  *   },
  *   width: 600,
  *   height: 400,
  *   domain: [-5, 5],
  * });
- *
- * // Access remarkable points
- * const roots = graph.getRemarkablePoints("root");
- * const extrema = graph.getRemarkablePoints("local-minimum");
- * ```
- *
- * @example
- * ```typescript
- * // Plot multiple functions
- * const graph = new FunctionGraph({
- *   functions: [
- *     { fn: (x) => Math.sin(x), label: "sin(x)", color: "#3498db" },
- *     { fn: (x) => Math.cos(x), label: "cos(x)", color: "#e74c3c" }
- *   ],
- *   width: 800,
- *   height: 400,
- *   domain: [-2 * Math.PI, 2 * Math.PI],
- * });
  * ```
  */
-export class FunctionGraph extends Shape {
+export class FunctionGraph extends Rectangle {
   private config: FunctionGraphConfig;
-  private width: number;
-  private height: number;
   private functions: PlottedFunction[];
   private domain: [number, number];
   private range: [number, number];
@@ -254,14 +235,11 @@ export class FunctionGraph extends Shape {
   private remarkablePointsCache: Map<string, RemarkablePoint[]>;
   private xAxis?: GraphAxis;
   private yAxis?: GraphAxis;
+  private debug: boolean;
 
   constructor(config: FunctionGraphConfig) {
-    super(config.name);
+    super(config.width, config.height, config.boxModel, config.style);
     this.config = config;
-
-    // Parse dimensions
-    this.width = parseUnit(config.width);
-    this.height = parseUnit(config.height);
 
     // Normalize functions to array
     this.functions = Array.isArray(config.functions)
@@ -283,6 +261,7 @@ export class FunctionGraph extends Shape {
     this.title = config.title;
     this.detectRemarkablePoints = config.detectRemarkablePoints !== false;
     this.showRemarkablePoints = config.showRemarkablePoints || false;
+    this.debug = config.debug || false;
 
     // Styles
     this.remarkablePointStyle = config.remarkablePointStyle || {
@@ -397,24 +376,13 @@ export class FunctionGraph extends Shape {
   /**
    * Convert mathematical coordinates to SVG coordinates (relative to graph origin).
    */
-  private mathToSVG(x: number, y: number): Point {
+  private mathToSVG(x: number, y: number): { x: number; y: number } {
     const svgX =
       ((x - this.domain[0]) / (this.domain[1] - this.domain[0])) * this.width;
     const svgY =
       this.height -
       ((y - this.range[0]) / (this.range[1] - this.range[0])) * this.height;
     return { x: svgX, y: svgY };
-  }
-
-  /**
-   * Convert SVG coordinates to mathematical coordinates.
-   */
-  private svgToMath(svgX: number, svgY: number): { x: number; y: number } {
-    const x =
-      (svgX / this.width) * (this.domain[1] - this.domain[0]) + this.domain[0];
-    const y =
-      this.range[1] - (svgY / this.height) * (this.range[1] - this.range[0]);
-    return { x, y };
   }
 
   /**
@@ -792,16 +760,6 @@ export class FunctionGraph extends Shape {
 
   /**
    * Get all remarkable points of a specific type.
-   *
-   * @param type - The type of remarkable point to retrieve
-   * @param functionIndex - Optional index of specific function (if multiple functions plotted)
-   * @returns Array of remarkable points matching the type
-   *
-   * @example
-   * ```typescript
-   * const roots = graph.getRemarkablePoints("root");
-   * const maxima = graph.getRemarkablePoints("local-maximum");
-   * ```
    */
   public getRemarkablePoints(
     type?: RemarkablePointType,
@@ -828,308 +786,26 @@ export class FunctionGraph extends Shape {
   }
 
   /**
-   * Get the x-axis information.
-   */
-  public get xAxisInfo(): GraphAxis | undefined {
-    return this.xAxis;
-  }
-
-  /**
-   * Get the y-axis information.
-   */
-  public get yAxisInfo(): GraphAxis | undefined {
-    return this.yAxis;
-  }
-
-  /**
    * Get a specific remarkable point location by type and index.
    * Returns absolute position on the artboard.
-   * Useful for positioning labels or other elements relative to remarkable points.
-   *
-   * @example
-   * ```typescript
-   * const firstRoot = graph.getRemarkablePoint("root", 0);
-   * label.position({
-   *   relativeFrom: label.topCenter,
-   *   relativeTo: firstRoot,
-   *   x: 0,
-   *   y: 20
-   * });
-   * ```
    */
   public getRemarkablePoint(
     type: RemarkablePointType,
     index: number = 0
-  ): Point | undefined {
-    // IMPORTANT: Ensure parent layouts are arranged before querying positions
-    // This ensures getAbsolutePosition() returns the correct position
-    this.ensureParentLayoutsArranged();
-
+  ): Position | undefined {
     const points = this.getRemarkablePoints(type);
     const point = points[index];
 
     if (!point?.svgPoint) return undefined;
 
-    // Calculate the global index for this point across all cached remarkable points
-    let globalIndex = 0;
-    let found = false;
-
-    for (const cachedPoints of this.remarkablePointsCache.values()) {
-      for (let i = 0; i < cachedPoints.length; i++) {
-        const cachedPoint = cachedPoints[i];
-        if (cachedPoint.svgPoint) {
-          if (cachedPoint.type === type && cachedPoint === point) {
-            found = true;
-            break;
-          }
-          globalIndex++;
-        }
-      }
-      if (found) break;
-    }
-
-    // Render to DOM temporarily and query position
-    const pointId = `${this.name}-remarkable-${type}-${globalIndex}`;
-    const position = this.getRemarkablePointPositionFromDOM(pointId);
-
-    console.log(
-      `[getRemarkablePoint] type=${type}, index=${index}, globalIndex=${globalIndex}`
-    );
-    console.log(`[getRemarkablePoint] Point ID: ${pointId}`);
-    console.log(`[getRemarkablePoint] Position from DOM:`, position);
-
-    return position;
-  }
-
-  /**
-   * Ensures all parent layouts in the hierarchy are arranged.
-   * This guarantees getAbsolutePosition() returns correct values.
-   * @private
-   */
-  private ensureParentLayoutsArranged(): void {
-    let current: any = this._parent;
-    const parents: any[] = [];
-
-    // Collect all parents up to the root
-    while (current) {
-      parents.unshift(current); // Add to front so we arrange from root down
-      current = current._parent;
-    }
-
-    // Arrange from root down, forcing re-arrangement if needed
-    parents.forEach((parent) => {
-      if (typeof parent.arrangeElements === "function") {
-        // Reset isArranged flag to force re-arrangement
-        if ("isArranged" in parent) {
-          parent.isArranged = false;
-        }
-        parent.arrangeElements();
-      }
-    });
-  }
-
-  /**
-   * Render the graph temporarily to the DOM and query the position of a remarkable point
-   * relative to the graph's internal coordinate space.
-   * @private
-   */
-  private getRemarkablePointPositionFromDOM(
-    pointId: string
-  ): Point | undefined {
-    // Create a temporary container
-    const container = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg"
-    );
-    container.setAttribute("width", "10000");
-    container.setAttribute("height", "10000");
-    container.style.position = "absolute";
-    container.style.left = "-10000px";
-    container.style.top = "-10000px";
-    container.style.visibility = "hidden";
-
-    // Render the graph WITHOUT the outer transform (just a plain group at 0,0)
-    // This way we get positions relative to the graph's internal coordinate space
-    const graphContent = this.renderGraphContent();
-    container.innerHTML = `<g>${graphContent}</g>`;
-    document.body.appendChild(container);
-
-    // Find the remarkable point circle
-    const pointElement = container.querySelector(`#${CSS.escape(pointId)}`);
-
-    if (pointElement && pointElement instanceof SVGElement) {
-      const bbox = pointElement.getBoundingClientRect();
-      const containerBbox = container.getBoundingClientRect();
-
-      // Get center of the circle relative to the container (which is at 0,0 in the graph's space)
-      const graphRelativeX = bbox.left - containerBbox.left + bbox.width / 2;
-      const graphRelativeY = bbox.top - containerBbox.top + bbox.height / 2;
-
-      console.log(`[getRemarkablePointPositionFromDOM] Found point ${pointId}`);
-      console.log(
-        `[getRemarkablePointPositionFromDOM] Graph-relative position: (${graphRelativeX}, ${graphRelativeY})`
-      );
-
-      // Now add the graph's current absolute position to get the final absolute position
-      const absPos = this.getAbsolutePosition();
-      const finalX = absPos.x + graphRelativeX;
-      const finalY = absPos.y + graphRelativeY;
-
-      console.log(
-        `[getRemarkablePointPositionFromDOM] Graph absolute position: (${absPos.x}, ${absPos.y})`
-      );
-      console.log(
-        `[getRemarkablePointPositionFromDOM] Final absolute position: (${finalX}, ${finalY})`
-      );
-
-      document.body.removeChild(container);
-
-      return {
-        x: `${finalX}px`,
-        y: `${finalY}px`,
-      };
-    }
-
-    console.log(
-      `[getRemarkablePointPositionFromDOM] Point ${pointId} not found in DOM`
-    );
-    document.body.removeChild(container);
-    return undefined;
-  }
-
-  /**
-   * Get the absolute position of a specific axis label by its value.
-   * Returns absolute coordinates on the artboard.
-   *
-   * @param axis - Which axis to search ('x' or 'y')
-   * @param value - The numeric value to find on the axis
-   * @returns The absolute SVG position of the label tick mark, or undefined if not found
-   *
-   * @example
-   * ```typescript
-   * // Get position of x=2 label
-   * const pos = graph.getLabelPosition('x', 2);
-   * if (pos) {
-   *   marker.position({ relativeFrom: marker.center, relativeTo: pos });
-   * }
-   * ```
-   */
-  public getLabelPosition(axis: "x" | "y", value: number): Point | undefined {
-    // Ensure parent layouts are arranged before querying positions
-    this.ensureParentLayoutsArranged();
-
-    const axisInfo = axis === "x" ? this.xAxis : this.yAxis;
-    console.log(`[getLabelPosition] axis=${axis}, value=${value}`);
-
-    if (!axisInfo) {
-      console.log(`[getLabelPosition] No axis info found!`);
-      return undefined;
-    }
-
-    console.log(
-      `[getLabelPosition] Available ticks:`,
-      axisInfo.ticks.map((t) => ({ value: t.value, position: t.position }))
-    );
-    const tick = axisInfo.ticks.find((t) => Math.abs(t.value - value) < 1e-6);
-
-    if (!tick) {
-      console.log(`[getLabelPosition] No tick found for value ${value}`);
-      return undefined;
-    }
-
-    // Return absolute position as a proper Point (strings with px units)
+    // Get absolute position by adding graph's position to relative point
     const absPos = this.getAbsolutePosition();
-    const absX = Number(absPos.x) + Number(tick.position.x);
-    const absY = Number(absPos.y) + Number(tick.position.y);
-
-    console.log(
-      `[getLabelPosition] Relative: (${tick.position.x}, ${tick.position.y}), Graph absolute: (${absPos.x}, ${absPos.y}), Result: (${absX}, ${absY})`
-    );
+    const absX = absPos.x + point.svgPoint.x;
+    const absY = absPos.y + point.svgPoint.y;
 
     return {
-      x: `${absX}px`,
-      y: `${absY}px`,
-    };
-  }
-
-  /**
-   * Get all label positions for an axis.
-   * Returns an array of {value, position, label} objects with absolute positions.
-   *
-   * @param axis - Which axis to get labels from ('x' or 'y')
-   * @returns Array of label information including absolute positions
-   *
-   * @example
-   * ```typescript
-   * const xLabels = graph.getAllLabelPositions('x');
-   * xLabels.forEach(label => {
-   *   console.log(`Label "${label.label}" at value ${label.value}: ${label.position.x}, ${label.position.y}`);
-   * });
-   * ```
-   */
-  public getAllLabelPositions(
-    axis: "x" | "y"
-  ): Array<{ value: number; position: Point; label: string }> {
-    // Ensure parent layouts are arranged before querying positions
-    this.ensureParentLayoutsArranged();
-
-    const axisInfo = axis === "x" ? this.xAxis : this.yAxis;
-    if (!axisInfo) return [];
-
-    const absPos = this.getAbsolutePosition();
-
-    return axisInfo.ticks.map((tick) => {
-      const absX = Number(absPos.x) + Number(tick.position.x);
-      const absY = Number(absPos.y) + Number(tick.position.y);
-
-      return {
-        value: tick.value,
-        position: {
-          x: `${absX}px`,
-          y: `${absY}px`,
-        },
-        label: tick.label,
-      };
-    });
-  }
-
-  /**
-   * Convert a mathematical coordinate to absolute SVG coordinate.
-   * Returns absolute coordinates on the artboard.
-   *
-   * @param x - Mathematical x coordinate
-   * @param y - Mathematical y coordinate
-   * @returns Absolute SVG position
-   *
-   * @example
-   * ```typescript
-   * // Position an annotation at mathematical point (2, 3)
-   * const pos = graph.coordinateToPosition(2, 3);
-   * annotation.position({ relativeFrom: annotation.center, relativeTo: pos });
-   * ```
-   */
-  public coordinateToPosition(x: number, y: number): Point {
-    // Ensure parent layouts are arranged before querying positions
-    this.ensureParentLayoutsArranged();
-
-    const relPos = this.mathToSVG(x, y);
-    const absPos = this.getAbsolutePosition();
-    const absX = Number(absPos.x) + Number(relPos.x);
-    const absY = Number(absPos.y) + Number(relPos.y);
-
-    console.log(
-      `[coordinateToPosition] Math (${x}, ${y}) -> Relative (${relPos.x}, ${relPos.y}) -> Absolute (${absX}, ${absY})`
-    );
-    console.log(
-      `[coordinateToPosition] Domain: [${this.domain[0]}, ${this.domain[1]}], Range: [${this.range[0]}, ${this.range[1]}]`
-    );
-    console.log(
-      `[coordinateToPosition] Graph size: ${this.width} x ${this.height}`
-    );
-
-    return {
-      x: `${absX}px`,
-      y: `${absY}px`,
+      x: absX,
+      y: absY,
     };
   }
 
@@ -1145,7 +821,7 @@ export class FunctionGraph extends Shape {
     for (let x = this.domain[0]; x <= this.domain[1]; x += step) {
       const y = func.fn(x);
       if (isFinite(y) && y >= this.range[0] && y <= this.range[1]) {
-        points.push(this.mathToSVG(x, y) as { x: number; y: number });
+        points.push(this.mathToSVG(x, y));
       } else if (points.length > 0) {
         // Break path at discontinuities
         points.push({ x: NaN, y: NaN });
@@ -1180,49 +856,19 @@ export class FunctionGraph extends Shape {
     return path.trim();
   }
 
-  get center(): Point {
-    return this.toAbsolutePoint(this.width / 2, this.height / 2, "center");
-  }
+  // Position getters inherited from Rectangle (topLeft, center, etc.)
 
-  get topLeft(): Point {
-    return this.toAbsolutePoint(0, 0, "topLeft");
-  }
-
-  get topRight(): Point {
-    return this.toAbsolutePoint(this.width, 0, "topRight");
-  }
-
-  get bottomLeft(): Point {
-    return this.toAbsolutePoint(0, this.height, "bottomLeft");
-  }
-
-  get bottomRight(): Point {
-    return this.toAbsolutePoint(this.width, this.height, "bottomRight");
-  }
-
-  get topCenter(): Point {
-    return this.toAbsolutePoint(this.width / 2, 0, "topCenter");
-  }
-
-  get bottomCenter(): Point {
-    return this.toAbsolutePoint(this.width / 2, this.height, "bottomCenter");
-  }
-
-  get leftCenter(): Point {
-    return this.toAbsolutePoint(0, this.height / 2, "leftCenter");
-  }
-
-  get rightCenter(): Point {
-    return this.toAbsolutePoint(this.width, this.height / 2, "rightCenter");
-  }
-
-  /**
-   * Render the internal graph content without the outer transform group.
-   * Used for DOM-based position queries.
-   * @private
-   */
-  private renderGraphContent(): string {
+  render(): string {
     let svg = "";
+    const absPos = this.getAbsolutePosition();
+
+    // Create container group with transform
+    svg += `<g transform="translate(${Number(absPos.x).toFixed(2)}, ${Number(absPos.y).toFixed(2)})">\n`;
+
+    // Add debug border if enabled
+    if (this.debug) {
+      svg += `  <rect x="0" y="0" width="${this.width}" height="${this.height}" fill="none" stroke="#ff0000" stroke-width="2" stroke-dasharray="5,5" />\n`;
+    }
 
     // Add title if provided
     if (this.title) {
@@ -1270,8 +916,8 @@ export class FunctionGraph extends Shape {
       // X-axis ticks and labels
       if (this.showLabels) {
         this.xAxis.ticks.forEach((tick) => {
-          const px = Number(tick.position.x);
-          const py = Number(tick.position.y);
+          const px = tick.position.x;
+          const py = tick.position.y;
           svg += `    <line x1="${px.toFixed(2)}" y1="${(py - 5).toFixed(2)}" x2="${px.toFixed(2)}" y2="${(py + 5).toFixed(2)}" ${axisAttrs} />\n`;
           svg += `    <text x="${px.toFixed(2)}" y="${(py + 20).toFixed(2)}" text-anchor="middle" font-size="12">${tick.label}</text>\n`;
         });
@@ -1285,8 +931,8 @@ export class FunctionGraph extends Shape {
       // Y-axis ticks and labels
       if (this.showLabels) {
         this.yAxis.ticks.forEach((tick) => {
-          const px = Number(tick.position.x);
-          const py = Number(tick.position.y);
+          const px = tick.position.x;
+          const py = tick.position.y;
           svg += `    <line x1="${(px - 5).toFixed(2)}" y1="${py.toFixed(2)}" x2="${(px + 5).toFixed(2)}" y2="${py.toFixed(2)}" ${axisAttrs} />\n`;
           svg += `    <text x="${(px - 10).toFixed(2)}" y="${(py + 4).toFixed(2)}" text-anchor="end" font-size="12">${tick.label}</text>\n`;
         });
@@ -1334,10 +980,10 @@ export class FunctionGraph extends Shape {
       this.remarkablePointsCache.forEach((points) => {
         points.forEach((point) => {
           if (point.svgPoint) {
-            const px = Number(point.svgPoint.x);
-            const py = Number(point.svgPoint.y);
+            const px = point.svgPoint.x;
+            const py = point.svgPoint.y;
             if (!isNaN(px) && !isNaN(py)) {
-              const pointId = `${this.name}-remarkable-${point.type}-${pointIndex}`;
+              const pointId = `func-graph-remarkable-${point.type}-${pointIndex}`;
               svg += `    <circle id="${pointId}" cx="${px.toFixed(2)}" cy="${py.toFixed(2)}" r="4" ${rpAttrs} />\n`;
               pointIndex++;
             }
@@ -1348,24 +994,15 @@ export class FunctionGraph extends Shape {
       svg += `  </g>\n`;
     }
 
-    return svg;
-  }
-
-  render(): string {
-    let svg = "";
-    const absPos = this.getAbsolutePosition();
-
-    // Add comment
-    svg += `<!-- ${this.name} -->\n`;
-
-    // Create container group with transform
-    svg += `<g transform="translate(${absPos.x.toFixed(2)}, ${absPos.y.toFixed(2)})">\n`;
-
-    // Render the graph content
-    svg += this.renderGraphContent();
+    // Render children
+    if (this.children.length > 0) {
+      const childrenSVG = this.children.map((child) => child.render()).join("\n");
+      svg += childrenSVG;
+    }
 
     svg += `</g>\n`;
 
     return svg;
   }
 }
+

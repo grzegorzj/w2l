@@ -7,14 +7,14 @@
  */
 
 import {
-  NewArtboard,
-  NewContainer,
-  NewRect,
-  NewText,
-  NewLatex,
+  Artboard,
+  Container,
+  Rect,
+  Text,
+  Latex,
 } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#f8f9fa",
@@ -22,7 +22,7 @@ const artboard = new NewArtboard({
 });
 
 // Create a main horizontal container for the 3 columns
-const mainContainer = new NewContainer({
+const mainContainer = new Container({
   width: "auto",
   height: "auto",
   direction: "horizontal",
@@ -51,7 +51,7 @@ artboard.addElement(mainContainer);
 // COLUMN 1
 // ========================================
 
-const column1 = new NewContainer({
+const column1 = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -69,7 +69,7 @@ const column1 = new NewContainer({
 mainContainer.addElement(column1);
 
 // Add pure LaTeX directly to column 1
-const latex1 = new NewLatex({
+const latex1 = new Latex({
   content: "\\cssId{energy}{E} = \\cssId{mass}{m}\\cssId{speed}{c}^2",
   fontSize: 32,
   displayMode: true,
@@ -79,7 +79,7 @@ const latex1 = new NewLatex({
 });
 column1.addElement(latex1);
 
-const latex2 = new NewLatex({
+const latex2 = new Latex({
   content: "\\frac{-\\cssId{coef-b}{b} \\pm \\sqrt{\\cssId{discriminant}{b^2-4ac}}}{\\cssId{denominator}{2a}}",
   fontSize: 28,
   displayMode: true,
@@ -89,7 +89,7 @@ const latex2 = new NewLatex({
 });
 column1.addElement(latex2);
 
-const latex3 = new NewLatex({
+const latex3 = new Latex({
   content: "\\class{euler-const}{e}^{\\class{euler-const}{i\\pi}} + \\class{euler-const}{1} = \\class{euler-const}{0}",
   fontSize: 30,
   displayMode: true,
@@ -103,7 +103,7 @@ column1.addElement(latex3);
 // COLUMN 2
 // ========================================
 
-const column2 = new NewContainer({
+const column2 = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -121,7 +121,7 @@ const column2 = new NewContainer({
 mainContainer.addElement(column2);
 
 // Add mixed text with inline LaTeX directly to column 2
-const mixedText1 = new NewText({
+const mixedText1 = new Text({
   content: "Einstein's equation $\\cssId{mass-energy}{E = mc^2}$ is famous.",
   fontSize: 20,
   fontFamily: "Georgia",
@@ -131,7 +131,7 @@ const mixedText1 = new NewText({
 });
 column2.addElement(mixedText1);
 
-const mixedText2 = new NewText({
+const mixedText2 = new Text({
   content: "The theorem $\\class{pyth-var}{a}^2 + \\class{pyth-var}{b}^2 = \\class{pyth-var}{c}^2$ for right triangles.",
   fontSize: 20,
   fontFamily: "Georgia",
@@ -141,7 +141,7 @@ const mixedText2 = new NewText({
 });
 column2.addElement(mixedText2);
 
-const mixedText3 = new NewText({
+const mixedText3 = new Text({
   content: "Calculate $\\cssId{derivative}{\\frac{df}{dx}}$ for any function $\\cssId{func}{f(x)}$.",
   fontSize: 20,
   fontFamily: "Georgia",
@@ -151,7 +151,7 @@ const mixedText3 = new NewText({
 });
 column2.addElement(mixedText3);
 
-const mixedText4 = new NewText({
+const mixedText4 = new Text({
   content: "Complex: $\\class{complex-part}{a} + \\class{complex-part}{b}\\class{complex-part}{i}$ where $i^2 = -1$.",
   fontSize: 20,
   fontFamily: "Georgia",
@@ -165,7 +165,7 @@ column2.addElement(mixedText4);
 // COLUMN 3
 // ========================================
 
-const column3 = new NewContainer({
+const column3 = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -183,14 +183,14 @@ const column3 = new NewContainer({
 mainContainer.addElement(column3);
 
 // Add pure text to column 3 - wrapped in container to test padding
-const textContainer3 = new NewContainer({
+const textContainer3 = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
   spacing: 12,
 });
 
-const text1 = new NewText({
+const text1 = new Text({
   content: "Pure text elements are simple and clean.",
   fontSize: 18,
   fontFamily: "Georgia",
@@ -200,7 +200,7 @@ const text1 = new NewText({
 });
 textContainer3.addElement(text1);
 
-const text2 = new NewText({
+const text2 = new Text({
   content: "They support multiple lines and different font sizes.",
   fontSize: 18,
   fontFamily: "Georgia",
@@ -210,7 +210,7 @@ const text2 = new NewText({
 });
 textContainer3.addElement(text2);
 
-const text3 = new NewText({
+const text3 = new Text({
   content: "Containers auto-size to fit their content.",
   fontSize: 18,
   fontFamily: "Georgia",
@@ -220,7 +220,7 @@ const text3 = new NewText({
 });
 textContainer3.addElement(text3);
 
-const text4 = new NewText({
+const text4 = new Text({
   content: "This creates flexible layouts.",
   fontSize: 18,
   fontFamily: "Georgia",
@@ -230,7 +230,7 @@ const text4 = new NewText({
 });
 textContainer3.addElement(text4);
 
-const text5 = new NewText({
+const text5 = new Text({
   content: "Perfect for documents and diagrams!",
   fontSize: 18,
   fontFamily: "Georgia",
@@ -249,7 +249,7 @@ column3.addElement(textContainer3);
 
 // Helper function to add a highlight
 function addHighlight(element, color) {
-  const highlight = new NewRect({
+  const highlight = new Rect({
     width: element.bbox.width,
     height: element.bbox.height,
     style: {

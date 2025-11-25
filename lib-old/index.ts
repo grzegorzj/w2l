@@ -1,0 +1,264 @@
+/**
+ * W2L - Write to Layout
+ *
+ * An imperative library for LLM-driven structured image generation.
+ *
+ *
+ * ## Overview
+ *
+ * W2L provides a high-level, declarative API for creating structured visual compositions
+ * such as infographics, diagrams, graphs, and posters. It's specifically designed to be
+ * easy for Large Language Models (LLMs) to use, allowing them to express visual intent
+ * without dealing with low-level SVG geometry.
+ *
+ * ## Core Concepts
+ *
+ * ### Artboard
+ * The {@link Artboard} is the canvas where all visual elements are placed. It defines
+ * the coordinate system and boundaries for your composition.
+ *
+ * ### Shapes
+ * All visual elements inherit from the {@link Shape} base class, which provides
+ * positioning, rotation, and translation capabilities.
+ *
+ * ### Positioning
+ * The library uses a relative positioning system where elements can be positioned
+ * relative to other elements or to reference points, making it intuitive to create
+ * aligned and structured layouts.
+ *
+ * ## Quick Start
+ *
+ * ```typescript
+ * import { Artboard, Triangle } from 'w2l';
+ *
+ * // Create an artboard
+ * const artboard = new Artboard({
+ *   size: { width: 800, height: 600 },
+ *   padding: "20px"
+ * });
+ *
+ * // Create a triangle
+ * const triangle = new Triangle({
+ *   type: "right",
+ *   a: 300,
+ *   b: 400
+ * });
+ *
+ * // Position it at the center
+ * triangle.position({
+ *   relativeFrom: triangle.center,
+ *   relativeTo: artboard.center,
+ *   x: 0,
+ *   y: 0
+ * });
+ * ```
+ *
+ * ## Philosophy
+ *
+ * This library is built on the principle that LLMs should express *what* should appear
+ * on screen and *where* it should be positioned, rather than dealing with precise
+ * geometric calculations. The library handles the mathematics while providing an
+ * intuitive API for spatial reasoning.
+ *
+ * @packageDocumentation
+ */
+
+/**
+ * Core classes and utilities
+ * @category API Reference
+ */
+export {
+  Artboard,
+  Element,
+  Bounded,
+  Shape,
+  styleToSVGAttributes,
+} from "./core/index.js";
+
+/**
+ * Core types and interfaces
+ * @category API Reference
+ */
+export type {
+  Point,
+  ArtboardConfig,
+  BoundingBox,
+  PositionReference,
+  RotateConfig,
+  TranslateConfig,
+  Spacing,
+  ParsedSpacing,
+  Style,
+  Stylable,
+} from "./core/index.js";
+
+/**
+ * Visual elements (shapes, text, graphs, etc.)
+ * @category API Reference
+ */
+export {
+  Side,
+  Line,
+  Triangle,
+  Circle,
+  Rectangle,
+  Square,
+  RegularPolygon,
+  Text,
+  LatexText,
+  MixedText,
+  Image,
+  BezierCurve,
+  FunctionGraph,
+} from "./elements/index.js";
+
+/**
+ * Element types and interfaces
+ * @category API Reference
+ */
+export type {
+  RectangleSize,
+  SideConfig,
+  LineConfig,
+  TriangleConfig,
+  TriangleSide,
+  CircleConfig,
+  RectangleConfig,
+  RectangleSide,
+  CornerStyle,
+  SquareConfig,
+  RegularPolygonConfig,
+  PolygonSide,
+  TextConfig,
+  TextAlign,
+  TextVerticalAlign,
+  WordBoundingBox,
+  TextMatch,
+  LatexTextConfig,
+  LatexPartBoundingBox,
+  LatexMatch,
+  AnnotatedLatexElement,
+  MixedTextConfig,
+  MixedTextPartBoundingBox,
+  MixedTextMatch,
+  AnnotatedMixedElement,
+  ImageConfig,
+  BezierCurveConfig,
+  FunctionGraphConfig,
+  PlottedFunction,
+  RemarkablePoint,
+  RemarkablePointType,
+  GraphAxis,
+} from "./elements/index.js";
+
+/**
+ * Layout and container classes
+ * @category API Reference
+ */
+export {
+  Container,
+  Layout,
+  ColumnsLayout,
+  Column,
+  SpreadLayout,
+  VStack,
+  HStack,
+  HStackFixed,
+  ZStack,
+  GridLayout,
+} from "./layout/index.js";
+
+/**
+ * Layout types and interfaces
+ * @category API Reference
+ */
+export type {
+  ContainerConfig,
+  LayoutConfig,
+  ColumnsLayoutConfig,
+  SpreadLayoutConfig,
+  VStackConfig,
+  HStackConfig,
+  HStackFixedConfig,
+  ZStackConfig,
+  GridLayoutConfig,
+} from "./layout/index.js";
+
+/**
+ * Composite components
+ * @category API Reference
+ */
+export { Arrow } from "./components/index.js";
+
+/**
+ * Component types and interfaces
+ * @category API Reference
+ */
+export type { ArrowConfig, ArrowHeadStyle } from "./components/index.js";
+
+/**
+ * New layout system (experimental)
+ * @category API Reference
+ */
+export {
+  NewElement,
+  NewShape,
+  NewRectangle,
+  NewArtboard,
+  NewCircle,
+  NewRect,
+  NewSquare,
+  NewTriangle,
+  NewLine,
+  NewRegularPolygon,
+  NewText,
+  NewLatex,
+  NewFunctionGraph,
+  NewSide,
+  NewImage,
+  NewBezierCurve,
+  NewArrow,
+  NewContainer,
+  BoxAccessor,
+  Grid,
+  Columns,
+} from "./new/index.js";
+
+/**
+ * New layout system types
+ * @category API Reference
+ */
+export type {
+  Position,
+  PositionConfig,
+  NewArtboardConfig,
+  NewCircleConfig,
+  NewRectConfig,
+  NewSquareConfig,
+  NewTriangleConfig,
+  TriangleType,
+  TriangleOrientation,
+  NewLineConfig,
+  NewRegularPolygonConfig,
+  NewTextConfig,
+  NewLatexConfig,
+  NewAnnotatedTextElement,
+  NewAnnotatedLatexElement,
+  NewFunctionGraphConfig,
+  NewSideConfig,
+  NewImageConfig,
+  NewBezierCurveConfig,
+  NewArrowConfig,
+  NewContainerConfig,
+  ContainerDirection,
+  HorizontalAlignment,
+  VerticalAlignment,
+  SizeMode,
+  BoxModel,
+  ParsedBoxModel,
+  BoxReference,
+  GridConfig,
+  GridCell,
+  ColumnsConfig,
+  ColumnContainer,
+} from "./new/index.js";

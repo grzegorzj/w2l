@@ -8,10 +8,10 @@
  * - Various shapes inside
  */
 
-import { NewArtboard, NewContainer, NewRect, NewCircle } from "w2l";
+import { Artboard, Container, Rect, Circle } from "w2l";
 
 // Auto-sized artboard with padding
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#1a1a2e",
@@ -19,7 +19,7 @@ const artboard = new NewArtboard({
 });
 
 // Auto-sized main container (horizontal layout)
-const mainContainer = new NewContainer({
+const mainContainer = new Container({
   width: "auto",
   height: "auto",
   direction: "horizontal",
@@ -38,7 +38,7 @@ const mainContainer = new NewContainer({
 
 artboard.addElement(mainContainer);
 
-const column1 = new NewContainer({
+const column1 = new Container({
   width: "auto", // Auto-size to content
   height: "auto", // Auto-size to content
   direction: "vertical",
@@ -57,7 +57,7 @@ const column1 = new NewContainer({
 
 mainContainer.addElement(column1);
 
-const column2 = new NewContainer({
+const column2 = new Container({
   width: "auto", // Auto-size to content
   height: "auto", // Auto-size to content
   direction: "vertical",
@@ -76,7 +76,7 @@ const column2 = new NewContainer({
 
 mainContainer.addElement(column2);
 
-const column3 = new NewContainer({
+const column3 = new Container({
   width: "auto", // Auto-size to content
   height: "auto", // Auto-size to content
   direction: "vertical",

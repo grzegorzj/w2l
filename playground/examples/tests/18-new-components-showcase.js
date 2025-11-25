@@ -1,18 +1,18 @@
 /**
  * New Components Showcase
  * 
- * Demonstrates NewBezierCurve and NewArrow
+ * Demonstrates BezierCurve and Arrow
  */
 
 import {
-  NewArtboard,
-  NewBezierCurve,
-  NewArrow,
-  NewCircle,
-  NewRect,
+  Artboard,
+  BezierCurve,
+  Arrow,
+  Circle,
+  Rect,
 } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: 900,
   height: 500,
   backgroundColor: "#f8f9fa",
@@ -20,7 +20,7 @@ const artboard = new NewArtboard({
 });
 
 // Three simple shapes
-const circle1 = new NewCircle({
+const circle1 = new Circle({
   radius: 50,
   style: { fill: "#3498db", stroke: "#2980b9", strokeWidth: 2 },
 });
@@ -35,7 +35,7 @@ circle1.position({
 
 artboard.addElement(circle1);
 
-const circle2 = new NewCircle({
+const circle2 = new Circle({
   radius: 50,
   style: { fill: "#e74c3c", stroke: "#c0392b", strokeWidth: 2 },
 });
@@ -50,7 +50,7 @@ circle2.position({
 
 artboard.addElement(circle2);
 
-const circle3 = new NewCircle({
+const circle3 = new Circle({
   radius: 50,
   style: { fill: "#2ecc71", stroke: "#27ae60", strokeWidth: 2 },
 });
@@ -70,7 +70,7 @@ const c1 = circle1.center;
 const c2 = circle2.center;
 const c3 = circle3.center;
 
-const curve1 = new NewBezierCurve({
+const curve1 = new BezierCurve({
   start: { x: c1.x + 50, y: c1.y },
   end: { x: c2.x - 50, y: c2.y },
   controlPoint1: { x: c1.x + 100, y: c1.y - 60 },
@@ -85,7 +85,7 @@ const curve1 = new NewBezierCurve({
 
 artboard.addElement(curve1);
 
-const curve2 = new NewBezierCurve({
+const curve2 = new BezierCurve({
   start: { x: c2.x + 50, y: c2.y },
   end: { x: c3.x - 50, y: c3.y },
   controlPoint1: { x: c2.x + 100, y: c2.y + 60 },
@@ -100,7 +100,7 @@ const curve2 = new NewBezierCurve({
 artboard.addElement(curve2);
 
 // Arrows
-const arrow1 = new NewArrow({
+const arrow1 = new Arrow({
   start: { x: c1.x, y: c1.y - 50 },
   end: { x: c2.x, y: c2.y - 50 },
   headStyle: "triangle",
@@ -114,7 +114,7 @@ const arrow1 = new NewArrow({
 
 artboard.addElement(arrow1);
 
-const arrow2 = new NewArrow({
+const arrow2 = new Arrow({
   start: { x: c2.x, y: c2.y + 50 },
   end: { x: c3.x, y: c3.y + 50 },
   headStyle: "line",
@@ -133,7 +133,7 @@ for (let i = 0; i <= 8; i++) {
   const t = i / 8;
   const point = curve1.pointAt(t);
   
-  const dot = new NewCircle({
+  const dot = new Circle({
     radius: 3,
     style: { fill: "#9b59b6", opacity: 0.7 },
   });

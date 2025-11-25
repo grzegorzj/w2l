@@ -1,20 +1,20 @@
 import {
-  NewArtboard,
-  NewContainer,
+  Artboard,
+  Container,
   Columns,
   Grid,
-  NewRect,
-  NewCircle,
+  Rect,
+  Circle,
 } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#1a1a2e",
   boxModel: { padding: 40 },
 });
 
-const mainContainer = new NewContainer({
+const mainContainer = new Container({
   width: "auto",
   height: "auto",
   direction: "horizontal",
@@ -31,7 +31,7 @@ const mainContainer = new NewContainer({
   },
 });
 
-const leftSection = new NewContainer({
+const leftSection = new Container({
   width: "auto", // Auto-size to content
   height: "auto", // Auto-size to content
   direction: "vertical",
@@ -50,7 +50,7 @@ const leftSection = new NewContainer({
 
 mainContainer.addElement(leftSection);
 
-const middleSection = new NewContainer({
+const middleSection = new Container({
   width: "auto", // Auto-size to content
   height: "auto", // Auto-size to content
   direction: "vertical",
@@ -69,7 +69,7 @@ const middleSection = new NewContainer({
 
 mainContainer.addElement(middleSection);
 
-const rightSection = new NewContainer({
+const rightSection = new Container({
   width: "auto", // Auto-size to content
   height: "auto", // Auto-size to content
   direction: "vertical",

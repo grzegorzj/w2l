@@ -1,5 +1,5 @@
 /**
- * Geometric side (edge) module.
+ * Geometric side (edge) module for the new layout system.
  *
  * Provides a generic Side class that represents an edge of a shape with
  * geometric properties useful for positioning adjacent elements.
@@ -7,22 +7,20 @@
  * @module elements
  */
 
-import type { Point } from "../core/Artboard.js";
+import type { Position } from "../core/Element.js";
 
 /**
  * Configuration for creating a Side.
  */
 export interface SideConfig {
   /** Starting point of the side */
-  start: { x: number; y: number };
+  start: Position;
   /** Ending point of the side */
-  end: { x: number; y: number };
-  /** Current position offset to apply to all coordinates */
-  positionOffset?: { x: number; y: number };
+  end: Position;
 }
 
 /**
- * Represents a side (edge) of a geometric shape.
+ * Represents a side (edge) of a geometric shape in the new layout system.
  *
  * The Side class encapsulates the geometric properties of a line segment,
  * providing convenient access to normals, centers, and other properties
@@ -45,14 +43,13 @@ export interface SideConfig {
  * });
  *
  * console.log(side.length);          // 100
- * console.log(side.outwardNormal);   // { x: "0px", y: "-1px" } - points up
- * console.log(side.inwardNormal);    // { x: "0px", y: "1px" } - points down
+ * console.log(side.outwardNormal);   // { x: 0, y: -1 } - points up
+ * console.log(side.inwardNormal);    // { x: 0, y: 1 } - points down
  * ```
  */
 export class Side {
-  private _start: { x: number; y: number };
-  private _end: { x: number; y: number };
-  private _positionOffset: { x: number; y: number };
+  private _start: Position;
+  private _end: Position;
 
   /**
    * Creates a new Side instance.
@@ -62,7 +59,6 @@ export class Side {
   constructor(config: SideConfig) {
     this._start = config.start;
     this._end = config.end;
-    this._positionOffset = config.positionOffset || { x: 0, y: 0 };
   }
 
   /**
@@ -79,25 +75,19 @@ export class Side {
   /**
    * Gets the starting point of the side.
    *
-   * @returns The start point with position offset applied
+   * @returns The start point
    */
-  get start(): Point {
-    return {
-      x: `${this._start.x + this._positionOffset.x}px`,
-      y: `${this._start.y + this._positionOffset.y}px`,
-    };
+  get start(): Position {
+    return { ...this._start };
   }
 
   /**
    * Gets the ending point of the side.
    *
-   * @returns The end point with position offset applied
+   * @returns The end point
    */
-  get end(): Point {
-    return {
-      x: `${this._end.x + this._positionOffset.x}px`,
-      y: `${this._end.y + this._positionOffset.y}px`,
-    };
+  get end(): Position {
+    return { ...this._end };
   }
 
   /**
@@ -105,10 +95,10 @@ export class Side {
    *
    * @returns The midpoint of the side
    */
-  get center(): Point {
+  get center(): Position {
     return {
-      x: `${(this._start.x + this._end.x) / 2 + this._positionOffset.x}px`,
-      y: `${(this._start.y + this._end.y) / 2 + this._positionOffset.y}px`,
+      x: (this._start.x + this._end.x) / 2,
+      y: (this._start.y + this._end.y) / 2,
     };
   }
 
@@ -127,21 +117,22 @@ export class Side {
    * @example
    * Position an element outward from a side
    * ```typescript
-   * element.translate({
-   *   along: side.outwardNormal,
-   *   distance: "50px"
-   * });
+   * const offset = {
+   *   x: side.outwardNormal.x * 50,
+   *   y: side.outwardNormal.y * 50
+   * };
+   * element.setPosition({ x: side.center.x + offset.x, y: side.center.y + offset.y });
    * ```
    */
-  get outwardNormal(): Point {
+  get outwardNormal(): Position {
     const dx = this._end.x - this._start.x;
     const dy = this._end.y - this._start.y;
     const length = this.length;
 
     // Perpendicular vector (rotated 90° clockwise from edge direction)
     return {
-      x: `${-dy / length}px`,
-      y: `${dx / length}px`,
+      x: -dy / length,
+      y: dx / length,
     };
   }
 
@@ -160,21 +151,22 @@ export class Side {
    * @example
    * Position an element inward from a side
    * ```typescript
-   * element.translate({
-   *   along: side.inwardNormal,
-   *   distance: "20px"
-   * });
+   * const offset = {
+   *   x: side.inwardNormal.x * 20,
+   *   y: side.inwardNormal.y * 20
+   * };
+   * element.setPosition({ x: side.center.x + offset.x, y: side.center.y + offset.y });
    * ```
    */
-  get inwardNormal(): Point {
+  get inwardNormal(): Position {
     const dx = this._end.x - this._start.x;
     const dy = this._end.y - this._start.y;
     const length = this.length;
 
     // Perpendicular vector (rotated 90° counter-clockwise from edge direction)
     return {
-      x: `${dy / length}px`,
-      y: `${-dx / length}px`,
+      x: dy / length,
+      y: -dx / length,
     };
   }
 
@@ -186,20 +178,21 @@ export class Side {
    * @example
    * Move along a side's direction
    * ```typescript
-   * element.translate({
-   *   along: side.direction,
-   *   distance: "30px"
-   * });
+   * const offset = {
+   *   x: side.direction.x * 30,
+   *   y: side.direction.y * 30
+   * };
+   * element.setPosition({ x: side.start.x + offset.x, y: side.start.y + offset.y });
    * ```
    */
-  get direction(): Point {
+  get direction(): Position {
     const dx = this._end.x - this._start.x;
     const dy = this._end.y - this._start.y;
     const length = this.length;
 
     return {
-      x: `${dx / length}px`,
-      y: `${dy / length}px`,
+      x: dx / length,
+      y: dy / length,
     };
   }
 

@@ -5,9 +5,9 @@
  * arranged in columns.
  */
 
-import { NewArtboard, NewRegularPolygon, Columns, NewCircle } from "w2l";
+import { Artboard, RegularPolygon, Columns, Circle } from "w2l";
 
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#ecf0f1",
@@ -51,7 +51,7 @@ const colors = [
 // Create polygons from pentagon (5) to nonagon (9)
 for (let i = 0; i < 5; i++) {
   const sides = 5 + i;
-  const polygon = new NewRegularPolygon({
+  const polygon = new RegularPolygon({
     sides: sides,
     radius: 90,
     rotation: sides % 2 === 0 ? 22.5 : 0, // Rotate even-sided polygons for flat bottom
@@ -72,7 +72,7 @@ for (let i = 0; i < 5; i++) {
   columns.getColumn(i).addElement(polygon);
 
   // Add center marker
-  const marker = new NewCircle({
+  const marker = new Circle({
     radius: 5,
     style: { fill: "#34495e" },
   });
@@ -86,7 +86,7 @@ for (let i = 0; i < 5; i++) {
   artboard.addElement(marker);
 
   // Add circumscribed circle for reference
-  const circumCircle = new NewCircle({
+  const circumCircle = new Circle({
     radius: 90,
     style: {
       fill: "none",

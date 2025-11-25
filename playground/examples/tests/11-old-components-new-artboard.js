@@ -1,15 +1,15 @@
 /**
  * Old Components with New Artboard (Debugging Test)
  *
- * Tests whether the old API components (LatexText, MixedText) work correctly
+ * Tests whether the old API components (Latex, Text) work correctly
  * when used with the new artboard system. This helps isolate whether rendering
  * issues are in the components themselves or the artboard/coordinate system.
  */
 
-import { NewArtboard, LatexText, MixedText, NewRect } from "w2l";
+import { Artboard, Latex, Text, Rect } from "w2l";
 
 // Create new artboard
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: 900,
   height: 1200,
   backgroundColor: "#f8f9fa",
@@ -19,11 +19,11 @@ const artboard = new NewArtboard({
 let currentY = 50;
 
 // ============================================================================
-// SECTION 1: Pure LatexText (Old API) with New Artboard
+// SECTION 1: Pure Latex (Old API) with New Artboard
 // ============================================================================
 
-const sectionTitle1 = new MixedText({
-  content: "1. Old LatexText with New Artboard",
+const sectionTitle1 = new Text({
+  content: "1. Old Latex with New Artboard",
   fontSize: 20,
   fontFamily: "Arial",
   fontWeight: "bold",
@@ -43,7 +43,7 @@ artboard.addElement(sectionTitle1);
 currentY += 40;
 
 // Example 1a: Simple formula with ID annotation
-const latex1 = new LatexText({
+const latex1 = new Latex({
   content: "E = \\cssId{mass-energy}{mc^2}",
   fontSize: "28px",
   displayMode: "inline",
@@ -60,7 +60,7 @@ artboard.addElement(latex1);
 
 const elem1 = latex1.getElementById("mass-energy");
 if (elem1) {
-  const highlight1 = new NewRect({
+  const highlight1 = new Rect({
     width: elem1.bbox.width,
     height: elem1.bbox.height,
     style: {
@@ -82,7 +82,7 @@ if (elem1) {
 currentY += 50;
 
 // Example 1b: Pythagorean theorem with class annotations
-const latex2 = new LatexText({
+const latex2 = new Latex({
   content: "\\class{variable}{x}^2 + \\class{variable}{y}^2 = \\class{variable}{z}^2",
   fontSize: "26px",
   displayMode: "inline",
@@ -100,7 +100,7 @@ artboard.addElement(latex2);
 const vars2 = latex2.getElementsByClass("variable");
 
 vars2.forEach((v, idx) => {
-  const highlight = new NewRect({
+  const highlight = new Rect({
     width: v.bbox.width,
     height: v.bbox.height,
     style: {
@@ -122,7 +122,7 @@ vars2.forEach((v, idx) => {
 currentY += 50;
 
 // Example 1c: Quadratic formula with multiple ID annotations
-const latex3 = new LatexText({
+const latex3 = new Latex({
   content: "x = \\frac{-\\cssId{coef-b}{b} \\pm \\sqrt{\\cssId{discriminant}{b^2-4ac}}}{\\cssId{denominator}{2a}}",
   fontSize: "36px",
   displayMode: "display",
@@ -146,7 +146,7 @@ const annotations = [
 annotations.forEach(({ id, color }) => {
   const elem = latex3.getElementById(id);
   if (elem) {
-    const highlight = new NewRect({
+    const highlight = new Rect({
       width: elem.bbox.width,
       height: elem.bbox.height,
       style: {
@@ -169,11 +169,11 @@ annotations.forEach(({ id, color }) => {
 currentY += 80;
 
 // ============================================================================
-// SECTION 2: MixedText (Old API) with New Artboard
+// SECTION 2: Text (Old API) with New Artboard
 // ============================================================================
 
-const sectionTitle2 = new MixedText({
-  content: "2. Old MixedText with New Artboard",
+const sectionTitle2 = new Text({
+  content: "2. Old Text with New Artboard",
   fontSize: 20,
   fontFamily: "Arial",
   fontWeight: "bold",
@@ -193,7 +193,7 @@ artboard.addElement(sectionTitle2);
 currentY += 40;
 
 // Example 2a: Mixed text with ID annotation
-const text1 = new MixedText({
+const text1 = new Text({
   content: "Einstein's equation $E = \\cssId{mass-energy-2}{mc^2}$ is famous.",
   fontSize: "24px",
   fontFamily: "Georgia",
@@ -213,7 +213,7 @@ artboard.addElement(text1);
 
 const elem2 = text1.getElementById("mass-energy-2");
 if (elem2) {
-  const highlight2 = new NewRect({
+  const highlight2 = new Rect({
     width: elem2.bbox.width,
     height: elem2.bbox.height,
     style: {
@@ -235,7 +235,7 @@ if (elem2) {
 currentY += 50;
 
 // Example 2b: Mixed text with class annotations
-const text2 = new MixedText({
+const text2 = new Text({
   content: "Pythagorean theorem: $\\class{variable2}{x}^2 + \\class{variable2}{y}^2 = \\class{variable2}{z}^2$",
   fontSize: "22px",
   fontFamily: "Georgia",
@@ -256,7 +256,7 @@ artboard.addElement(text2);
 const vars3 = text2.getElementsByClass("variable2");
 
 vars3.forEach((v, idx) => {
-  const highlight = new NewRect({
+  const highlight = new Rect({
     width: v.bbox.width,
     height: v.bbox.height,
     style: {
@@ -278,7 +278,7 @@ vars3.forEach((v, idx) => {
 currentY += 50;
 
 // Example 2c: Mixed text with multiple ID annotations
-const text3 = new MixedText({
+const text3 = new Text({
   content: "Quadratic formula: $x = \\frac{-\\cssId{coef-b-2}{b} \\pm \\sqrt{\\cssId{discriminant-2}{b^2-4ac}}}{\\cssId{denominator-2}{2a}}$",
   fontSize: "22px",
   fontFamily: "Georgia",
@@ -305,7 +305,7 @@ const annotations2 = [
 annotations2.forEach(({ id, color }) => {
   const elem = text3.getElementById(id);
   if (elem) {
-    const highlight = new NewRect({
+    const highlight = new Rect({
       width: elem.bbox.width,
       height: elem.bbox.height,
       style: {

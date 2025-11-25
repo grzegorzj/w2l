@@ -1,22 +1,22 @@
 /**
  * Example 15: Function Graphs (New System)
  *
- * Demonstrates the NewFunctionGraph component with various mathematical functions,
+ * Demonstrates the FunctionGraph component with various mathematical functions,
  * remarkable points detection, and comprehensive graphing features.
  * Uses Columns layout for organized presentation.
  */
 
 import {
-  NewArtboard,
-  NewFunctionGraph,
-  NewText,
-  NewCircle,
+  Artboard,
+  FunctionGraph,
+  Text,
+  Circle,
   Columns,
-  NewContainer,
+  Container,
 } from "w2l";
 
 // Create auto-sizing artboard that fits to content
-const artboard = new NewArtboard({
+const artboard = new Artboard({
   width: "auto",
   height: "auto",
   backgroundColor: "#ffffff",
@@ -24,7 +24,7 @@ const artboard = new NewArtboard({
 });
 
 // Main title
-const mainTitle = new NewText({
+const mainTitle = new Text({
   content: "Function Graph Examples - K-12 & University Mathematics",
   fontSize: 24,
   fontWeight: "bold",
@@ -41,7 +41,7 @@ mainTitle.position({
 artboard.addElement(mainTitle);
 
 // Description
-const description = new NewText({
+const description = new Text({
   content:
     "Demonstrating function plotting with automatic remarkable point detection (roots, extrema, inflection points, asymptotes)",
   fontSize: 12,
@@ -81,14 +81,14 @@ columns.container.position({
 artboard.addElement(columns.container);
 
 // Example 1: Quadratic Function
-const quadraticTitle = new NewText({
+const quadraticTitle = new Text({
   content: "Quadratic Function",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
 });
 
-const quadraticGraph = new NewFunctionGraph({
+const quadraticGraph = new FunctionGraph({
   functions: {
     fn: (x) => x * x - 4,
     color: "#e74c3c",
@@ -100,7 +100,7 @@ const quadraticGraph = new NewFunctionGraph({
 });
 
 const quadRoots = quadraticGraph.getRemarkablePoints("root");
-const quadNote = new NewText({
+const quadNote = new Text({
   content: quadRoots.length > 0 
     ? `Roots: x = ${quadRoots.map(r => r.x.toFixed(2)).join(", ")}`
     : "No roots found",
@@ -109,7 +109,7 @@ const quadNote = new NewText({
 });
 
 // Create vertical container for column 1
-const col1Container = new NewContainer({
+const col1Container = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -123,14 +123,14 @@ col1Container.addElement(quadNote);
 columns.getColumn(0).addElement(col1Container);
 
 // Example 2: Trigonometric Functions
-const trigTitle = new NewText({
+const trigTitle = new Text({
   content: "Trigonometric Functions",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
 });
 
-const trigGraph = new NewFunctionGraph({
+const trigGraph = new FunctionGraph({
   functions: [
     {
       fn: (x) => Math.sin(x),
@@ -148,7 +148,7 @@ const trigGraph = new NewFunctionGraph({
   debug: false,
 });
 
-const col2Container = new NewContainer({
+const col2Container = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -161,14 +161,14 @@ col2Container.addElement(trigGraph);
 columns.getColumn(1).addElement(col2Container);
 
 // Example 3: Cubic Polynomial
-const cubicTitle = new NewText({
+const cubicTitle = new Text({
   content: "Cubic Polynomial",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
 });
 
-const cubicGraph = new NewFunctionGraph({
+const cubicGraph = new FunctionGraph({
   functions: {
     fn: (x) => (x + 3) * (x - 1) * (x - 4) / 4,
     color: "#e67e22",
@@ -182,13 +182,13 @@ const cubicGraph = new NewFunctionGraph({
 // Add extrema info
 const maxima = cubicGraph.getRemarkablePoints("local-maximum");
 const minima = cubicGraph.getRemarkablePoints("local-minimum");
-const extremaNote = new NewText({
+const extremaNote = new Text({
   content: `Extrema detected: ${maxima.length} max, ${minima.length} min`,
   fontSize: 11,
   style: { fill: "#e67e22" },
 });
 
-const col3Container = new NewContainer({
+const col3Container = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -204,14 +204,14 @@ columns.getColumn(2).addElement(col3Container);
 // Row 2: More examples
 
 // Example 4: Exponential and Logarithmic
-const expLogTitle = new NewText({
+const expLogTitle = new Text({
   content: "Exponential & Logarithmic",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
 });
 
-const expLogGraph = new NewFunctionGraph({
+const expLogGraph = new FunctionGraph({
   functions: [
     {
       fn: (x) => Math.exp(x / 2),
@@ -229,7 +229,7 @@ const expLogGraph = new NewFunctionGraph({
   debug: false,
 });
 
-const col4Container = new NewContainer({
+const col4Container = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -242,14 +242,14 @@ col4Container.addElement(expLogGraph);
 columns.getColumn(0).addElement(col4Container);
 
 // Example 5: Rational Function
-const rationalTitle = new NewText({
+const rationalTitle = new Text({
   content: "Rational Function",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
 });
 
-const rationalGraph = new NewFunctionGraph({
+const rationalGraph = new FunctionGraph({
   functions: {
     fn: (x) => 1 / (x - 2),
     color: "#e84393",
@@ -263,7 +263,7 @@ const rationalGraph = new NewFunctionGraph({
 
 // Add asymptote info
 const asymptotes = rationalGraph.getRemarkablePoints("vertical-asymptote");
-const asymNote = new NewText({
+const asymNote = new Text({
   content: asymptotes.length > 0 
     ? `Asymptote at x = ${asymptotes[0].x.toFixed(1)}`
     : "No asymptotes found",
@@ -271,7 +271,7 @@ const asymNote = new NewText({
   style: { fill: "#d63031" },
 });
 
-const col5Container = new NewContainer({
+const col5Container = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -285,14 +285,14 @@ col5Container.addElement(asymNote);
 columns.getColumn(1).addElement(col5Container);
 
 // Example 6: Piecewise Function
-const piecewiseTitle = new NewText({
+const piecewiseTitle = new Text({
   content: "Piecewise Function",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
 });
 
-const piecewiseGraph = new NewFunctionGraph({
+const piecewiseGraph = new FunctionGraph({
   functions: {
     fn: (x) => {
       if (x < -1) return x + 2;
@@ -307,7 +307,7 @@ const piecewiseGraph = new NewFunctionGraph({
   debug: false,
 });
 
-const col6Container = new NewContainer({
+const col6Container = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -322,14 +322,14 @@ columns.getColumn(2).addElement(col6Container);
 // Row 3: Final examples
 
 // Example 7: Absolute Value
-const absValueTitle = new NewText({
+const absValueTitle = new Text({
   content: "Absolute Value Functions",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
 });
 
-const absValueGraph = new NewFunctionGraph({
+const absValueGraph = new FunctionGraph({
   functions: [
     {
       fn: (x) => Math.abs(x),
@@ -346,7 +346,7 @@ const absValueGraph = new NewFunctionGraph({
   debug: false,
 });
 
-const col7Container = new NewContainer({
+const col7Container = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -359,14 +359,14 @@ col7Container.addElement(absValueGraph);
 columns.getColumn(0).addElement(col7Container);
 
 // Example 8: Quintic Polynomial
-const quinticTitle = new NewText({
+const quinticTitle = new Text({
   content: "Quintic Polynomial",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
 });
 
-const quinticGraph = new NewFunctionGraph({
+const quinticGraph = new FunctionGraph({
   functions: {
     fn: (x) => 0.01 * x ** 5 - 0.1 * x ** 3 + x,
     color: "#fd79a8",
@@ -379,13 +379,13 @@ const quinticGraph = new NewFunctionGraph({
 
 // Add inflection point info
 const inflectionPoints = quinticGraph.getRemarkablePoints("inflection-point");
-const inflectionNote = new NewText({
+const inflectionNote = new Text({
   content: `${inflectionPoints.length} inflection points detected`,
   fontSize: 11,
   style: { fill: "#fd79a8" },
 });
 
-const col8Container = new NewContainer({
+const col8Container = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
@@ -399,14 +399,14 @@ col8Container.addElement(inflectionNote);
 columns.getColumn(1).addElement(col8Container);
 
 // Example 9: Damped Oscillation
-const sineWaveTitle = new NewText({
+const sineWaveTitle = new Text({
   content: "Damped Oscillation",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
 });
 
-const sineWaveGraph = new NewFunctionGraph({
+const sineWaveGraph = new FunctionGraph({
   functions: {
     fn: (x) => Math.sin(2 * x) * Math.exp(-x / 5),
     color: "#a29bfe",
@@ -417,13 +417,13 @@ const sineWaveGraph = new NewFunctionGraph({
   debug: false,
 });
 
-const dampedNote = new NewText({
+const dampedNote = new Text({
   content: "Exponentially damped sine wave",
   fontSize: 11,
   style: { fill: "#6c5ce7" },
 });
 
-const col9Container = new NewContainer({
+const col9Container = new Container({
   width: "auto",
   height: "auto",
   direction: "vertical",
