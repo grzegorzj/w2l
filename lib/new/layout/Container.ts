@@ -9,7 +9,7 @@
 import { NewRectangle } from "../core/Rectangle.js";
 import { type BoxModel } from "../utils/BoxModel.js";
 import { type Style } from "../../core/Stylable.js";
-import { NewElement, type Position } from "../core/Element.js";
+import { NewElement, type Position, type PositionConfig } from "../core/Element.js";
 
 /**
  * Container direction - how children are laid out
@@ -79,6 +79,7 @@ export class NewContainer extends NewRectangle {
   private _autoHeight: boolean;
   private _needsBoundsNormalization: boolean = false;
   private _isUpdatingAutoSize: boolean = false;  // Guard against recursion
+  private _freeformFinalized: boolean = false;  // Track if freeform layout has been finalized
 
   constructor(config: NewContainerConfig) {
     // Determine fixed vs auto sizing
@@ -119,6 +120,8 @@ export class NewContainer extends NewRectangle {
     // Children position themselves freely, container stays at 0x0
     // This avoids the chicken-egg problem of incremental normalization
     if (this.direction === "freeform") {
+      // Reset finalization flag so it re-finalizes on next access
+      this._freeformFinalized = false;
       // Do nothing here - layout happens in finalizeFreeformLayout()
       return;
     }
@@ -534,6 +537,9 @@ export class NewContainer extends NewRectangle {
         this._boxModel.padding.top + this._boxModel.padding.bottom +
         this._boxModel.border.top + this._boxModel.border.bottom;
     }
+    
+    // Mark as finalized
+    this._freeformFinalized = true;
   }
 
   /**
@@ -905,6 +911,65 @@ export class NewContainer extends NewRectangle {
           return availableHeight; // Bottom edge of content area
       }
     }
+  }
+
+  /**
+   * Ensure freeform layout is finalized before any positioning operations.
+   * This is called automatically before accessing position properties or positioning the container.
+   */
+  private ensureFreeformFinalized(): void {
+    if (this.direction === "freeform" && (this._autoWidth || this._autoHeight) && this.children.length > 0) {
+      // Only finalize once - check if we've already finalized by seeing if size is non-zero
+      // This is a simple heuristic: if we have children and auto-size, we should have been finalized
+      // We'll track this more explicitly with a flag
+      if (!this._freeformFinalized) {
+        this.finalizeFreeformLayout();
+        this._freeformFinalized = true;
+      }
+    }
+  }
+
+  /**
+   * Override position getters to auto-finalize freeform layouts.
+   * This ensures that when users access container.center (or other position properties),
+   * they get the correct value after finalization.
+   */
+  get center(): Position {
+    this.ensureFreeformFinalized();
+    return super.center;
+  }
+
+  get topLeft(): Position {
+    this.ensureFreeformFinalized();
+    return super.topLeft;
+  }
+
+  get topRight(): Position {
+    this.ensureFreeformFinalized();
+    return super.topRight;
+  }
+
+  get bottomLeft(): Position {
+    this.ensureFreeformFinalized();
+    return super.bottomLeft;
+  }
+
+  get bottomRight(): Position {
+    this.ensureFreeformFinalized();
+    return super.bottomRight;
+  }
+
+  /**
+   * Override position() to automatically finalize freeform layouts.
+   * This ensures freeform containers are properly sized and normalized
+   * before being positioned, without requiring explicit finalizeFreeformLayout() calls.
+   */
+  position(config: PositionConfig): void {
+    // Finalize freeform layout before positioning
+    this.ensureFreeformFinalized();
+    
+    // Call parent's position method
+    super.position(config);
   }
 
   render(): string {

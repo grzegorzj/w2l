@@ -1,10 +1,10 @@
 /**
  * Pythagorean Theorem Visualization (New Layout)
- * 
+ *
  * Demonstrates the Pythagorean theorem (a² + b² = c²) by placing squares
  * on each side of a right triangle. The areas of the two smaller squares
  * equal the area of the largest square.
- * 
+ *
  * Uses the new layout system with geometric transforms:
  * - NewTriangle with sides property (length, center, angle, outward normal)
  * - NewRect with geometric transforms (rotate, translate)
@@ -12,7 +12,13 @@
  * - Fixed-size NewArtboard as the canvas
  */
 
-import { NewArtboard, NewContainer, NewTriangle, NewRect, NewCircle } from "w2l";
+import {
+  NewArtboard,
+  NewContainer,
+  NewTriangle,
+  NewRect,
+  NewCircle,
+} from "w2l";
 
 // Fixed-size artboard as the canvas
 const artboard = new NewArtboard({
@@ -40,7 +46,7 @@ const container = new NewContainer({
 const triangle = new NewTriangle({
   type: "right",
   a: 120, // Base = 3 units
-  b: 90,  // Height = 4 units  
+  b: 90, // Height = 4 units
   // Hypotenuse will be 5 units (150px)
   orientation: "bottomLeft",
   style: {
@@ -68,10 +74,12 @@ console.log("=== PYTHAGOREAN THEOREM ===");
 console.log("Side a:", Math.round(sides[0].length));
 console.log("Side b:", Math.round(sides[1].length));
 console.log("Side c (hypotenuse):", Math.round(sides[2].length));
-console.log("a² + b² = c²?", 
-  Math.round(sides[0].length ** 2 + sides[1].length ** 2), 
-  "≈", 
-  Math.round(sides[2].length ** 2));
+console.log(
+  "a² + b² = c²?",
+  Math.round(sides[0].length ** 2 + sides[1].length ** 2),
+  "≈",
+  Math.round(sides[2].length ** 2)
+);
 
 // Place a square on each side
 const squares = [];
@@ -119,7 +127,7 @@ squares.forEach((square, index) => {
         strokeWidth: 2,
       },
     });
-    
+
     debugCircle.position({
       relativeFrom: debugCircle.center,
       relativeTo: corner,
@@ -127,7 +135,7 @@ squares.forEach((square, index) => {
       y: 0,
       boxReference: "contentBox",
     });
-    
+
     container.addElement(debugCircle);
   });
 });
@@ -157,5 +165,3 @@ console.log("\n=== ARTBOARD ===");
 console.log("Final size:", artboard.width, "x", artboard.height);
 
 return artboard.render();
-
-

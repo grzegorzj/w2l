@@ -4,10 +4,10 @@
  * Demonstrates NewLine connecting different shapes
  * to verify line positioning works correctly.
  * 
- * Uses a freeform container to auto-size and normalize positions.
+ * NO CONTAINER - positioning directly on artboard to test artboard positioning.
  */
 
-import { NewArtboard, NewContainer, NewCircle, NewSquare, NewTriangle, NewLine } from "w2l";
+import { NewArtboard, NewCircle, NewSquare, NewTriangle, NewLine } from "w2l";
 
 const artboard = new NewArtboard({
   width: "auto",
@@ -16,21 +16,7 @@ const artboard = new NewArtboard({
   boxModel: { padding: 50 },
 });
 
-// Container with auto-sizing to hold all shapes
-const container = new NewContainer({
-  width: "auto",
-  height: "auto",
-  direction: "freeform", // Freeform mode with normalization
-  boxModel: { padding: 20 },
-  style: {
-    fill: "none",
-    stroke: "#95a5a6",
-    strokeWidth: 2,
-    strokeDasharray: "5,5",
-  },
-});
-
-// Center circle
+// Center circle - position at artboard center
 const centerCircle = new NewCircle({
   radius: 60,
   style: {
@@ -42,15 +28,15 @@ const centerCircle = new NewCircle({
 
 centerCircle.position({
   relativeFrom: centerCircle.center,
-  relativeTo: container.contentBox.center,
+  relativeTo: artboard.contentBox.center,
   x: 0,
   y: 0,
   boxReference: "contentBox",
 });
 
-container.addElement(centerCircle);
+artboard.addElement(centerCircle);
 
-// Top square
+// Top square - position above center circle
 const topSquare = new NewSquare({
   size: 100,
   style: {
@@ -62,15 +48,15 @@ const topSquare = new NewSquare({
 
 topSquare.position({
   relativeFrom: topSquare.center,
-  relativeTo: container.contentBox.center,
+  relativeTo: artboard.contentBox.center,
   x: 0,
   y: -250,
   boxReference: "contentBox",
 });
 
-container.addElement(topSquare);
+artboard.addElement(topSquare);
 
-// Right triangle
+// Right triangle - position to the right
 const rightTriangle = new NewTriangle({
   type: "equilateral",
   a: 120,
@@ -83,15 +69,15 @@ const rightTriangle = new NewTriangle({
 
 rightTriangle.position({
   relativeFrom: rightTriangle.center,
-  relativeTo: container.contentBox.center,
+  relativeTo: artboard.contentBox.center,
   x: 250,
   y: 0,
   boxReference: "contentBox",
 });
 
-container.addElement(rightTriangle);
+artboard.addElement(rightTriangle);
 
-// Bottom circle
+// Bottom circle - position below
 const bottomCircle = new NewCircle({
   radius: 70,
   style: {
@@ -103,15 +89,15 @@ const bottomCircle = new NewCircle({
 
 bottomCircle.position({
   relativeFrom: bottomCircle.center,
-  relativeTo: container.contentBox.center,
+  relativeTo: artboard.contentBox.center,
   x: 0,
   y: 250,
   boxReference: "contentBox",
 });
 
-container.addElement(bottomCircle);
+artboard.addElement(bottomCircle);
 
-// Left triangle
+// Left triangle - position to the left
 const leftTriangle = new NewTriangle({
   type: "right",
   a: 100,
@@ -126,27 +112,35 @@ const leftTriangle = new NewTriangle({
 
 leftTriangle.position({
   relativeFrom: leftTriangle.center,
-  relativeTo: container.contentBox.center,
+  relativeTo: artboard.contentBox.center,
   x: -250,
   y: 0,
   boxReference: "contentBox",
 });
 
-container.addElement(leftTriangle);
+artboard.addElement(leftTriangle);
 
 // Draw lines from center circle to each shape
 // Using the NEW positioning-aware NewLine API
 const lineTargets = [
-  { shape: topSquare, color: "#3498db" },
-  { shape: rightTriangle, color: "#2ecc71" },
-  { shape: bottomCircle, color: "#f39c12" },
-  { shape: leftTriangle, color: "#9b59b6" },
+  { shape: topSquare, color: "#3498db", name: "topSquare" },
+  { shape: rightTriangle, color: "#2ecc71", name: "rightTriangle" },
+  { shape: bottomCircle, color: "#f39c12", name: "bottomCircle" },
+  { shape: leftTriangle, color: "#9b59b6", name: "leftTriangle" },
 ];
+
+console.log("=== BEFORE LINE CREATION ===");
+console.log("centerCircle.center:", centerCircle.center);
+lineTargets.forEach((t) => {
+  console.log(`${t.name}.center:`, t.shape.center);
+});
 
 lineTargets.forEach((target) => {
   // Calculate the relative offset from center circle to target shape
   const dx = target.shape.center.x - centerCircle.center.x;
   const dy = target.shape.center.y - centerCircle.center.y;
+  
+  console.log(`${target.name}: dx=${dx}, dy=${dy}`);
   
   // Create a line with start at (0,0) and end at the relative offset
   const line = new NewLine({
@@ -160,7 +154,6 @@ lineTargets.forEach((target) => {
   });
 
   // Position the line's start at the center circle's center
-  // This now works because NewLine.render() calls getAbsolutePosition()!
   line.position({
     relativeFrom: line.start,
     relativeTo: centerCircle.center,
@@ -169,24 +162,7 @@ lineTargets.forEach((target) => {
     boxReference: "contentBox",
   });
 
-  container.addElement(line);
+  artboard.addElement(line);
 });
-
-// FINALIZE the freeform layout (calculate size and normalize children)
-// This must be called after all children are added but before positioning the container
-container.finalizeFreeformLayout();
-
-// Now position the container at the center of the artboard
-// (after it has been finalized)
-container.position({
-  relativeFrom: container.center,
-  relativeTo: artboard.contentBox.center,
-    x: 0,
-    y: 0,
-  boxReference: "contentBox",
-});
-
-// Add the container to the artboard
-artboard.addElement(container);
 
 return artboard.render();

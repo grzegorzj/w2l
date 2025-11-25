@@ -43,7 +43,7 @@ export interface NewArtboardConfig {
  * - Children must be positioned manually (no automatic layout)
  * - Can use 'auto' for width/height to fit children bounds
  * - Bounds are normalized (children shifted to positive coordinates)
- * 
+ *
  * All layout logic is handled by the parent NewContainer class.
  */
 export class NewArtboard extends NewContainer {
