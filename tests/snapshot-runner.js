@@ -227,7 +227,7 @@ async function prompt(question, oldContent = null, newContent = null) {
             resolve(answer2.trim().toLowerCase());
           });
         } else {
-          rl.close();
+      rl.close();
           resolve(choice);
         }
       });

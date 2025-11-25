@@ -45,6 +45,7 @@ export {
   type TriangleOrientation,
   type TriangleSide,
   type LineConfig,
+  type LineLabelConfig,
   type RegularPolygonConfig,
   type TextConfig,
   type LatexConfig,
@@ -56,6 +57,7 @@ export {
   type RemarkablePointType,
   type GraphAxis,
   type SideConfig,
+  type SideLabelConfig,
   type ImageConfig,
   type BezierCurveConfig,
 } from "./elements/index.js";
@@ -63,7 +65,9 @@ export {
 // Components
 export {
   Arrow,
+  Angle,
   type ArrowConfig,
+  type AngleConfig,
 } from "./components/index.js";
 
 // Utils

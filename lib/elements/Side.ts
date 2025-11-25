@@ -8,6 +8,7 @@
  */
 
 import type { Position } from "../core/Element.js";
+import { Text } from "./Text.js";
 
 /**
  * Configuration for creating a Side.
@@ -17,6 +18,18 @@ export interface SideConfig {
   start: Position;
   /** Ending point of the side */
   end: Position;
+}
+
+/**
+ * Configuration for creating a side label.
+ */
+export interface SideLabelConfig {
+  /** Distance from the side's center (in pixels). Defaults to 10 */
+  offset?: number;
+  /** Font size for the label. Defaults to 16 */
+  fontSize?: number;
+  /** Whether to position the label inward instead of outward. Defaults to false */
+  inward?: boolean;
 }
 
 /**
@@ -205,6 +218,50 @@ export class Side {
     const dx = this._end.x - this._start.x;
     const dy = this._end.y - this._start.y;
     return (Math.atan2(dy, dx) * 180) / Math.PI;
+  }
+
+  /**
+   * Creates a Text label for this side, positioned outward from the center.
+   * 
+   * @param text - The label text (can include LaTeX, e.g., "$a$")
+   * @param config - Optional configuration for the label positioning and styling
+   * @returns A Text element positioned at the side's center with outward offset
+   * 
+   * @example
+   * Create a labeled triangle side
+   * ```typescript
+   * const triangle = new Triangle({ type: "right", a: 100, b: 100 });
+   * const [side1, side2, side3] = triangle.sides;
+   * 
+   * const label = side1.createLabel("$a$", { offset: 25, fontSize: 18 });
+   * artboard.addElement(label);
+   * ```
+   */
+  createLabel(text: string, config?: SideLabelConfig): Text {
+    const offset = config?.offset ?? 10;
+    const fontSize = config?.fontSize ?? 16;
+    const normal = config?.inward ? this.inwardNormal : this.outwardNormal;
+    const center = this.center;
+    
+    const label = new Text({
+      content: text,
+      fontSize,
+    });
+    
+    // Calculate target position
+    const targetX = center.x + normal.x * offset;
+    const targetY = center.y + normal.y * offset;
+    
+    // Position the label at the side's center with outward/inward offset
+    label.position({
+      relativeTo: { x: targetX, y: targetY },
+      relativeFrom: label.center,
+      x: 0,
+      y: 0,
+      boxReference: "contentBox",
+    });
+    
+    return label;
   }
 }
 

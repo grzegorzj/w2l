@@ -10,6 +10,7 @@ import { Shape } from "../core/Shape.js";
 import { type Style } from "../core/Stylable.js";
 import { styleToSVGAttributes } from "../core/Stylable.js";
 import { type Position } from "../core/Element.js";
+import { Text } from "./Text.js";
 
 export interface LineConfig {
   /**
@@ -28,6 +29,22 @@ export interface LineConfig {
    * Visual styling properties
    */
   style?: Partial<Style>;
+}
+
+/**
+ * Configuration for creating a line label.
+ */
+export interface LineLabelConfig {
+  /** Distance from the line's center (in pixels). Defaults to 10 */
+  offset?: number;
+  /** Font size for the label. Defaults to 16 */
+  fontSize?: number;
+  /** 
+   * Side of the line to position the label: 'left', 'right', 'above', or 'below'.
+   * 'left' and 'right' are relative to the line's direction (start → end).
+   * Defaults to 'right'.
+   */
+  side?: 'left' | 'right' | 'above' | 'below';
 }
 
 /**
@@ -142,6 +159,82 @@ export class Line extends Shape {
   getCorners(): { x: number; y: number }[] {
     // For a line, return start and end points
     return [this.start, this.end];
+  }
+
+  /**
+   * Creates a Text label for this line, positioned at the center with offset.
+   * 
+   * @param text - The label text (can include LaTeX, e.g., "$d$")
+   * @param config - Optional configuration for the label positioning and styling
+   * @returns A Text element positioned at the line's center with perpendicular offset
+   * 
+   * @example
+   * Create a labeled line
+   * ```typescript
+   * const line = new Line({
+   *   start: { x: 0, y: 0 },
+   *   end: { x: 100, y: 0 },
+   *   style: { stroke: "black", strokeWidth: 2 }
+   * });
+   * 
+   * const label = line.createLabel("$d$", { offset: 20, side: 'above' });
+   * artboard.addElement(line);
+   * artboard.addElement(label);
+   * ```
+   */
+  createLabel(text: string, config?: LineLabelConfig): Text {
+    const offset = config?.offset ?? 10;
+    const fontSize = config?.fontSize ?? 16;
+    const side = config?.side ?? 'right';
+    const center = this.center;
+    const dir = this.direction;
+    
+    // Calculate perpendicular offset based on side
+    let offsetX = 0;
+    let offsetY = 0;
+    
+    switch (side) {
+      case 'left':
+        // Perpendicular to the left (rotate direction 90° CCW)
+        offsetX = -dir.y * offset;
+        offsetY = dir.x * offset;
+        break;
+      case 'right':
+        // Perpendicular to the right (rotate direction 90° CW)
+        offsetX = dir.y * offset;
+        offsetY = -dir.x * offset;
+        break;
+      case 'above':
+        // Always upward
+        offsetX = 0;
+        offsetY = -offset;
+        break;
+      case 'below':
+        // Always downward
+        offsetX = 0;
+        offsetY = offset;
+        break;
+    }
+    
+    const label = new Text({
+      content: text,
+      fontSize,
+    });
+    
+    // Calculate target position
+    const targetX = center.x + offsetX;
+    const targetY = center.y + offsetY;
+    
+    // Position the label at the line's center with offset
+    label.position({
+      relativeTo: { x: targetX, y: targetY },
+      relativeFrom: label.center,
+      x: 0,
+      y: 0,
+      boxReference: "contentBox",
+    });
+    
+    return label;
   }
 
   render(): string {
