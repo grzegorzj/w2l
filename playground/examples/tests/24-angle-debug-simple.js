@@ -76,8 +76,8 @@ if (intersections.length > 0) {
     between: [line1, line2],
     type: 'inward',
     radius: 50,
-    label: "inward",
-    labelFontSize: 14,
+    label: "α",
+    labelFontSize: 16,
     style: { stroke: "#2ecc71", strokeWidth: "2" },
     debug: true, // Show start/end points
   });
@@ -88,8 +88,8 @@ if (intersections.length > 0) {
     between: [line1, line2],
     type: 'outward',
     radius: 70,
-    label: "outward",
-    labelFontSize: 14,
+    label: "β",
+    labelFontSize: 16,
     style: { stroke: "#9b59b6", strokeWidth: "2", strokeDasharray: "5,5" },
     debug: true, // Show start/end points
   });
@@ -98,7 +98,7 @@ if (intersections.length > 0) {
 
 // Legend
 const legend = new Text({
-  content: "🔵 Blue line  🔴 Red line  ⚫ Intersection  🟢 Inward (<180°)  🟣 Outward (>180°)  🔴 Arc start  🔵 Arc end",
+  content: "Debug: 🔴 Arc start  🔵 Arc end  🟢 Bisector & label position",
   fontSize: 14,
 });
 legend.position({

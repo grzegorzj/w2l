@@ -349,10 +349,10 @@ export class Angle extends Element {
     if (span < 0) span += 360;
     const midAngle = startAngle + span / 2;
 
-    // Convert to radians (negate for SVG's inverted Y-axis)
-    const midRad = (-midAngle * Math.PI) / 180;
+    // Convert to radians using the same 180° correction as the arc rendering
+    const midRad = (-(180 - midAngle) * Math.PI) / 180;
 
-    // Calculate label position
+    // Calculate label position along the bisector
     const labelRadius = radius * labelDistance;
     const labelX = vertex.x + labelRadius * Math.cos(midRad);
     const labelY = vertex.y + labelRadius * Math.sin(midRad);
@@ -485,7 +485,7 @@ export class Angle extends Element {
       }
     }
 
-    // Debug mode: Show start and end points of the arc
+    // Debug mode: Show start and end points of the arc, and bisector line
     if (this.config.debug) {
       // Start point (red)
       svg += `<circle cx="${x1}" cy="${y1}" r="4" fill="#ff0000" stroke="none"/>`;
@@ -495,6 +495,21 @@ export class Angle extends Element {
       svg += `<line x1="${vx}" y1="${vy}" x2="${x1}" y2="${y1}" stroke="#ff0000" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>`;
       // Line from vertex to end (blue, dashed)
       svg += `<line x1="${vx}" y1="${vy}" x2="${x2}" y2="${y2}" stroke="#0000ff" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>`;
+      
+      // Show bisector line where label is positioned (green)
+      const { startAngle, endAngle, radius: r, labelDistance } = this.resolved;
+      let span = endAngle - startAngle;
+      if (span < 0) span += 360;
+      const midAngle = startAngle + span / 2;
+      const midRad = (-(180 - midAngle) * Math.PI) / 180;
+      
+      const bisectorEndX = vx + r * 1.5 * Math.cos(midRad);
+      const bisectorEndY = vy + r * 1.5 * Math.sin(midRad);
+      const labelX = vx + r * labelDistance * Math.cos(midRad);
+      const labelY = vy + r * labelDistance * Math.sin(midRad);
+      
+      svg += `<line x1="${vx}" y1="${vy}" x2="${bisectorEndX}" y2="${bisectorEndY}" stroke="#00ff00" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>`;
+      svg += `<circle cx="${labelX}" cy="${labelY}" r="3" fill="#00ff00" stroke="none" opacity="0.7"/>`;
     }
 
     // Render label if present
