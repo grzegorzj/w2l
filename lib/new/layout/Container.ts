@@ -98,7 +98,12 @@ export class NewContainer extends NewRectangle {
     // Initialize auto-sized empty containers with padding+border size
     // This ensures empty containers are still visible with their padding/border
     if (this._autoWidth || this._autoHeight) {
-      this.updateAutoSize();
+      if (this.direction === "none") {
+        // For direction "none" (Artboard), use normalizeBounds instead of updateAutoSize
+        this.normalizeBounds();
+      } else {
+        this.updateAutoSize();
+      }
     }
   }
 
@@ -137,6 +142,7 @@ export class NewContainer extends NewRectangle {
       // For direction "none" with auto-sizing, normalize bounds reactively
       if (this._autoWidth || this._autoHeight) {
         this.normalizeBounds();
+        this.notifyParentOfSizeChange(); // Notify parent so auto-sizing cascades upwards
       }
       return;
     }
@@ -212,7 +218,12 @@ export class NewContainer extends NewRectangle {
       const parentContainer = this._parent as NewContainer;
       if ((parentContainer as any)._autoWidth || (parentContainer as any)._autoHeight) {
         // Parent is auto-sizing - notify it to recalculate
-        (parentContainer as any).updateAutoSize();
+        // For direction "none" (Artboard), use normalizeBounds instead of updateAutoSize
+        if ((parentContainer as any).direction === "none") {
+          (parentContainer as any).normalizeBounds();
+        } else {
+          (parentContainer as any).updateAutoSize();
+        }
         (parentContainer as any).notifyParentOfSizeChange();
       }
     }
