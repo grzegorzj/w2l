@@ -34,6 +34,8 @@ export {
   NewLatex,
   NewFunctionGraph,
   NewSide,
+  NewImage,
+  NewBezierCurve,
   type NewArtboardConfig,
   type NewCircleConfig,
   type NewRectConfig,
@@ -54,7 +56,15 @@ export {
   type RemarkablePointType,
   type GraphAxis,
   type NewSideConfig,
+  type NewImageConfig,
+  type NewBezierCurveConfig,
 } from "./elements/index.js";
+
+// Components
+export {
+  NewArrow,
+  type NewArrowConfig,
+} from "./components/index.js";
 
 // Utils
 export {

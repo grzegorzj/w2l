@@ -13,4 +13,6 @@ export { NewText, type NewTextConfig, type NewAnnotatedTextElement, type MixedTe
 export { NewLatex, type NewLatexConfig, type NewAnnotatedLatexElement, type LatexPartBoundingBox } from "./Latex.js";
 export { NewFunctionGraph, type NewFunctionGraphConfig, type PlottedFunction, type RemarkablePoint, type RemarkablePointType, type GraphAxis } from "./FunctionGraph.js";
 export { NewSide, type NewSideConfig } from "./Side.js";
+export { NewImage, type NewImageConfig } from "./Image.js";
+export { NewBezierCurve, type NewBezierCurveConfig } from "./BezierCurve.js";
 
