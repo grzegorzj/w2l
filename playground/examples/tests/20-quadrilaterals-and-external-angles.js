@@ -36,8 +36,9 @@ const paraExtAngle0 = new Angle({
   figure: parallelogram,
   vertexIndex: 0,
   type: 'outward',
-  radius: 35,
-  label: `${parallelogram.getExternalAngleAt(0).toFixed(0)}°`,
+  radius: 40,
+  label: "α",
+  labelFontSize: 16,
   style: { stroke: "#d32f2f", strokeWidth: "2" },
 });
 
@@ -45,8 +46,9 @@ const paraExtAngle1 = new Angle({
   figure: parallelogram,
   vertexIndex: 1,
   type: 'outward',
-  radius: 35,
-  label: `${parallelogram.getExternalAngleAt(1).toFixed(0)}°`,
+  radius: 40,
+  label: "β",
+  labelFontSize: 16,
   style: { stroke: "#d32f2f", strokeWidth: "2" },
 });
 
@@ -78,13 +80,15 @@ const trapVertexLabels = trapezoid.createVertexLabels(["$P$", "$Q$", "$R$", "$S$
 const trapSideLabels = trapezoid.createSideLabels(["$p$", "$q$", "$r$", "$s$"]);
 
 // External angles at all four vertices
+const trapAngleLabels = ["γ", "δ", "ε", "ζ"];
 for (let i = 0; i < 4; i++) {
   const angle = new Angle({
     figure: trapezoid,
     vertexIndex: i,
     type: 'outward',
-    radius: 30,
-    label: `${trapezoid.getExternalAngleAt(i).toFixed(0)}°`,
+    radius: 35,
+    label: trapAngleLabels[i],
+    labelFontSize: 16,
     style: { stroke: "#f57c00", strokeWidth: "1.5" },
   });
   artboard.addElement(angle);
@@ -119,8 +123,9 @@ const rhombusExtAngle1 = new Angle({
   figure: rhombus,
   vertexIndex: 1,
   type: 'outward',
-  radius: 35,
-  label: `${rhombus.getExternalAngleAt(1).toFixed(0)}°`,
+  radius: 40,
+  label: "η",
+  labelFontSize: 16,
   style: { stroke: "#7b1fa2", strokeWidth: "2" },
 });
 
@@ -128,8 +133,9 @@ const rhombusExtAngle3 = new Angle({
   figure: rhombus,
   vertexIndex: 3,
   type: 'outward',
-  radius: 35,
-  label: `${rhombus.getExternalAngleAt(3).toFixed(0)}°`,
+  radius: 40,
+  label: "θ",
+  labelFontSize: 16,
   style: { stroke: "#7b1fa2", strokeWidth: "2" },
 });
 

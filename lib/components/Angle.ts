@@ -12,10 +12,18 @@ import { Line } from "../elements/Line.js";
 import { Side } from "../elements/Side.js";
 
 /**
+ * Ray direction: "+" is the line's direction vector, "-" is its opposite
+ */
+export type RayDirection = "+" | "-";
+
+/**
  * Base interface for figures that support angle queries.
  */
 export interface AngleFigure {
-  getAngleMarkerAt(vertexIndex: number, external: boolean): {
+  getAngleMarkerAt(
+    vertexIndex: number,
+    external: boolean
+  ): {
     vertex: Position;
     startAngle: number;
     endAngle: number;
@@ -40,19 +48,33 @@ export interface AngleConfig {
   vertexIndex?: number;
 
   /**
-   * Type of angle to draw:
+   * Type of angle to draw (only used with figure):
    * - 'inward': Internal angle (inside the figure)
    * - 'outward': External angle (outside the figure)
    * @defaultValue 'inward'
+   * @deprecated Use ray-based selection with `between` instead
    */
-  type?: 'inward' | 'outward';
+  type?: "inward" | "outward";
 
   /**
    * Two lines/sides forming the angle.
    * Required if figure and vertexIndex are not provided.
-   * The angle is measured from line1 to line2 in counter-clockwise direction.
    */
   between?: [Line | Side, Line | Side];
+
+  /**
+   * Ray direction for the first line.
+   * "+" uses the line's direction vector, "-" uses its opposite.
+   * Required when using `between`.
+   */
+  ray1?: RayDirection;
+
+  /**
+   * Ray direction for the second line.
+   * "+" uses the line's direction vector, "-" uses its opposite.
+   * Required when using `between`.
+   */
+  ray2?: RayDirection;
 
   /**
    * Explicit vertex position (used with between, or for manual placement)
@@ -101,7 +123,7 @@ export interface AngleConfig {
    * Style for marking right angles (90°)
    * @defaultValue 'square'
    */
-  rightAngleMarker?: 'square' | 'dot' | 'arc';
+  rightAngleMarker?: "square" | "dot" | "arc";
 
   /**
    * Debug mode: Show start and end points of the arc
@@ -122,7 +144,7 @@ interface ResolvedAngleConfig {
   labelFontSize: number;
   labelDistance: number;
   style?: Partial<Style>;
-  rightAngleMarker: 'square' | 'dot' | 'arc';
+  rightAngleMarker: "square" | "dot" | "arc";
 }
 
 /**
@@ -157,9 +179,9 @@ export class Angle extends Element {
 
   constructor(config: AngleConfig) {
     super();
-    
+
     this.config = config;
-    
+
     // Resolve the configuration
     this.resolved = this.resolveConfig(config);
 
@@ -169,9 +191,10 @@ export class Angle extends Element {
     const isRightAngle = Math.abs(angleDiff - 90) < 1;
 
     // Create label if specified (but skip for square marker on right angles)
-    const shouldShowLabel = this.resolved.label && 
-      !(isRightAngle && this.resolved.rightAngleMarker === 'square');
-    
+    const shouldShowLabel =
+      this.resolved.label &&
+      !(isRightAngle && this.resolved.rightAngleMarker === "square");
+
     if (shouldShowLabel) {
       this._label = this.createLabelElement();
       this.addElement(this._label);
@@ -185,14 +208,14 @@ export class Angle extends Element {
     const radius = config.radius ?? 40;
     const labelFontSize = config.labelFontSize ?? 14;
     const labelDistance = config.labelDistance ?? 0.6;
-    const rightAngleMarker = config.rightAngleMarker ?? 'square';
-    const type = config.type ?? 'inward';
+    const rightAngleMarker = config.rightAngleMarker ?? "square";
+    const type = config.type ?? "inward";
 
     // Mode 1: Figure + vertex index
     if (config.figure && config.vertexIndex !== undefined) {
       const angleInfo = config.figure.getAngleMarkerAt(
         config.vertexIndex,
-        type === 'outward'
+        type === "outward"
       );
 
       return {
@@ -210,7 +233,12 @@ export class Angle extends Element {
 
     // Mode 2: Between two lines/sides
     if (config.between) {
-      return this.resolveFromLines(config.between, type, {
+      if (!config.ray1 || !config.ray2) {
+        throw new Error(
+          'Angle: ray1 and ray2 are required when using "between"'
+        );
+      }
+      return this.resolveFromLines(config.between, config.ray1, config.ray2, {
         radius,
         label: config.label,
         labelFontSize,
@@ -221,7 +249,11 @@ export class Angle extends Element {
     }
 
     // Mode 3: Explicit angles
-    if (config.vertex && config.startAngle !== undefined && config.endAngle !== undefined) {
+    if (
+      config.vertex &&
+      config.startAngle !== undefined &&
+      config.endAngle !== undefined
+    ) {
       return {
         vertex: config.vertex,
         startAngle: config.startAngle,
@@ -236,7 +268,7 @@ export class Angle extends Element {
     }
 
     // Fallback
-    console.warn('Angle: Invalid configuration, using default');
+    console.warn("Angle: Invalid configuration, using default");
     return {
       vertex: { x: 0, y: 0 },
       startAngle: 0,
@@ -251,15 +283,24 @@ export class Angle extends Element {
   }
 
   /**
-   * Resolves angle from two lines/sides.
-   * 
-   * When two lines cross, there are 4 possible angles to draw.
-   * We need to identify which quadrant to draw based on 'type'.
+   * Resolves angle from two lines/sides using ray-based selection.
+   *
+   * A ray is one of two possible directions along a line:
+   * - "+" : the line's direction vector (from start to end)
+   * - "-" : the opposite direction (from end to start)
+   *
+   * The angle is formed by selecting one ray from each line.
+   * For crossing lines, this chooses which of the 4 angles to draw:
+   * - (+,+) = angle in the direction both rays point
+   * - (-,+) = angle where ray1 is flipped
+   * - (-,-) = angle where both rays are flipped
+   * - (+,-) = angle where ray2 is flipped
    */
   private resolveFromLines(
     between: [Line | Side, Line | Side],
-    type: 'inward' | 'outward',
-    opts: Omit<ResolvedAngleConfig, 'vertex' | 'startAngle' | 'endAngle'>
+    ray1: RayDirection,
+    ray2: RayDirection,
+    opts: Omit<ResolvedAngleConfig, "vertex" | "startAngle" | "endAngle">
   ): ResolvedAngleConfig {
     const [line1, line2] = between;
 
@@ -267,7 +308,7 @@ export class Angle extends Element {
     const l1 = { start: line1.start, end: line1.end };
     const l2 = { start: line2.start, end: line2.end };
 
-    // Get the direction vectors of the lines (from their definition, not from intersection)
+    // Get the direction vectors of the lines
     const dir1 = { x: l1.end.x - l1.start.x, y: l1.end.y - l1.start.y };
     const dir2 = { x: l2.end.x - l2.start.x, y: l2.end.y - l2.start.y };
 
@@ -277,63 +318,46 @@ export class Angle extends Element {
     const intersections = side1.getIntersections(side2, true);
 
     if (intersections.length === 0) {
-      console.warn('Angle: Lines are parallel');
+      console.warn("Angle: Lines are parallel");
       return { vertex: l1.start, startAngle: 0, endAngle: 90, ...opts };
     }
 
     const intersection = intersections[0];
 
-    // Calculate angles of the direction vectors
-    // These are the angles of the lines themselves, not to specific endpoints
-    const angle1 = (Math.atan2(dir1.y, dir1.x) * 180) / Math.PI;
-    const angle2 = (Math.atan2(dir2.y, dir2.x) * 180) / Math.PI;
+    // Calculate base angles of the direction vectors
+    const baseAngle1 = (Math.atan2(dir1.y, dir1.x) * 180) / Math.PI;
+    const baseAngle2 = (Math.atan2(dir2.y, dir2.x) * 180) / Math.PI;
+
+    // Apply ray direction: "-" adds 180° to flip the direction
+    const angle1 = ray1 === "+" ? baseAngle1 : baseAngle1 + 270;
+    const angle2 = ray2 === "+" ? baseAngle2 : baseAngle2 + 270;
+
+    console.log("angle1", angle1);
+    console.log("angle2", angle2);
+    console.log("baseAngle1", baseAngle1);
+    console.log("baseAngle2", baseAngle2);
+    console.log("dir1", dir1);
+    console.log("dir2", dir2);
 
     // Normalize to 0-360
-    const norm1 = (angle1 + 360) % 360;
-    const norm2 = (angle2 + 360) % 360;
+    let norm1 = (180 - angle1 + 360) % 360;
+    let norm2 = (180 - angle2 + 360) % 360;
 
-    // When lines cross, we have 4 possible angles (4 quadrants)
-    // Each line defines two rays from the intersection (forward and backward)
-    // We have: line1-forward, line1-backward, line2-forward, line2-backward
-    
-    // The 4 angles are between:
-    // 1. line1-forward to line2-forward (CCW)
-    // 2. line2-forward to line1-backward (CCW) = 180° - angle1
-    // 3. line1-backward to line2-backward (CCW) = same as angle1
-    // 4. line2-backward to line1-forward (CCW) = 360° - angle1
+    // Calculate angle difference
+    let angleDiff = norm2 - norm1;
+    if (angleDiff < 0) angleDiff += 360;
 
-    // Calculate all 4 possible angle configurations
-    const configs = [
-      { start: norm1, end: norm2, desc: 'line1→ to line2→' },
-      { start: norm2, end: (norm1 + 180) % 360, desc: 'line2→ to line1←' },
-      { start: (norm1 + 180) % 360, end: (norm2 + 180) % 360, desc: 'line1← to line2←' },
-      { start: (norm2 + 180) % 360, end: norm1, desc: 'line2← to line1→' },
-    ];
-
-    // Calculate the size of each angle (going CCW from start to end)
-    const angleSizes = configs.map(cfg => {
-      let diff = cfg.end - cfg.start;
-      if (diff < 0) diff += 360;
-      return { ...cfg, size: diff };
-    });
-
-    // For 'inward', we typically want the smaller angle (< 180°)
-    // For 'outward', we want the larger angle (> 180°)
-    // BUT: Due to the 180° correction in rendering, the logic is flipped
-    
-    let chosenConfig;
-    if (type === 'inward') {
-      // Choose the largest angle (flipped due to 180° correction)
-      chosenConfig = angleSizes.reduce((max, cfg) => cfg.size > max.size ? cfg : max);
-    } else {
-      // Choose the smallest angle (flipped due to 180° correction)
-      chosenConfig = angleSizes.reduce((min, cfg) => cfg.size < min.size ? cfg : min);
+    // If the angle is > 180°, we should go the other way (swap start and end)
+    // This ensures mixed ray directions (+,-) and (-,+) draw the intended angle
+    if (angleDiff > 180) {
+      [norm1, norm2] = [norm2, norm1];
     }
 
+    // The angle is from ray1 to ray2, choosing the shorter path
     return {
       vertex: intersection,
-      startAngle: chosenConfig.start,
-      endAngle: chosenConfig.end,
+      startAngle: norm1,
+      endAngle: norm2,
       ...opts,
     };
   }
@@ -342,15 +366,22 @@ export class Angle extends Element {
    * Creates the label element positioned at the angle's bisector.
    */
   private createLabelElement(): Text {
-    const { vertex, startAngle, endAngle, radius, labelDistance, labelFontSize } = this.resolved;
+    const {
+      vertex,
+      startAngle,
+      endAngle,
+      radius,
+      labelDistance,
+      labelFontSize,
+    } = this.resolved;
 
     // Calculate the bisector angle
     let span = endAngle - startAngle;
     if (span < 0) span += 360;
     const midAngle = startAngle + span / 2;
 
-    // Convert to radians using the same 180° correction as the arc rendering
-    const midRad = (-(180 - midAngle) * Math.PI) / 180;
+    // Convert to radians (negate for SVG's inverted Y-axis)
+    const midRad = (-midAngle * Math.PI) / 180;
 
     // Calculate label position along the bisector
     const labelRadius = radius * labelDistance;
@@ -404,7 +435,8 @@ export class Angle extends Element {
   }
 
   render(): string {
-    const { vertex, startAngle, endAngle, radius, style, rightAngleMarker } = this.resolved;
+    const { vertex, startAngle, endAngle, radius, style, rightAngleMarker } =
+      this.resolved;
     const absPos = this.getAbsolutePosition();
 
     // Absolute vertex position
@@ -414,7 +446,7 @@ export class Angle extends Element {
     // Check angle difference
     let angleDiff = endAngle - startAngle;
     if (angleDiff < 0) angleDiff += 360;
-    
+
     const isRightAngle = Math.abs(angleDiff - 90) < 1;
     const isFullCircle = Math.abs(angleDiff - 360) < 1;
 
@@ -427,7 +459,7 @@ export class Angle extends Element {
     const finalStyle = { ...defaultStyle, ...style };
     const attrs = styleToSVGAttributes(finalStyle);
 
-    let svg = '';
+    let svg = "";
 
     // Handle full circle (360°)
     if (isFullCircle) {
@@ -438,10 +470,9 @@ export class Angle extends Element {
       return svg;
     }
 
-    // Convert angles to radians (negate for SVG coordinate system)
-    // Fix: Use 180 - angle to get the correct position on the circle
-    const startRad = (-(180 - startAngle) * Math.PI) / 180;
-    const endRad = (-(180 - endAngle) * Math.PI) / 180;
+    // Convert angles to radians (negate for SVG's inverted Y-axis)
+    const startRad = (-startAngle * Math.PI) / 180;
+    const endRad = (-endAngle * Math.PI) / 180;
 
     // Calculate arc start and end points (for debugging and rendering)
     const x1 = vx + radius * Math.cos(startRad);
@@ -450,7 +481,7 @@ export class Angle extends Element {
     const y2 = vy + radius * Math.sin(endRad);
 
     // Render right angle marker (square)
-    if (isRightAngle && rightAngleMarker === 'square') {
+    if (isRightAngle && rightAngleMarker === "square") {
       const markerSize = radius * 0.4;
 
       const p1x = vx + markerSize * Math.cos(startRad);
@@ -458,24 +489,26 @@ export class Angle extends Element {
       const p2x = vx + markerSize * Math.cos(endRad);
       const p2y = vy + markerSize * Math.sin(endRad);
 
-      const p3x = vx + markerSize * Math.cos(startRad) + markerSize * Math.cos(endRad);
-      const p3y = vy + markerSize * Math.sin(startRad) + markerSize * Math.sin(endRad);
+      const p3x =
+        vx + markerSize * Math.cos(startRad) + markerSize * Math.cos(endRad);
+      const p3y =
+        vy + markerSize * Math.sin(startRad) + markerSize * Math.sin(endRad);
 
       const squarePath = `M ${vx} ${vy} L ${p1x} ${p1y} L ${p3x} ${p3y} L ${p2x} ${p2y} Z`;
       svg = `<path d="${squarePath}" ${attrs}/>`;
     } else {
       // Render normal arc
       const largeArcFlag = angleDiff > 180 ? 1 : 0;
-      const sweepFlag = 1; // Clockwise (to match the corrected arc endpoints)
+      const sweepFlag = 0; // Counter-clockwise (SVG default)
 
       const pathData = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${x2} ${y2}`;
       svg = `<path d="${pathData}" ${attrs}/>`;
 
       // Add dot marker for right angles if specified
-      if (isRightAngle && rightAngleMarker === 'dot') {
+      if (isRightAngle && rightAngleMarker === "dot") {
         const midAngle = startAngle + angleDiff / 2;
         const midRad = (-midAngle * Math.PI) / 180;
-        
+
         const dotDistance = radius * 0.5;
         const dotX = vx + dotDistance * Math.cos(midRad);
         const dotY = vy + dotDistance * Math.sin(midRad);
@@ -495,19 +528,19 @@ export class Angle extends Element {
       svg += `<line x1="${vx}" y1="${vy}" x2="${x1}" y2="${y1}" stroke="#ff0000" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>`;
       // Line from vertex to end (blue, dashed)
       svg += `<line x1="${vx}" y1="${vy}" x2="${x2}" y2="${y2}" stroke="#0000ff" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>`;
-      
+
       // Show bisector line where label is positioned (green)
       const { startAngle, endAngle, radius: r, labelDistance } = this.resolved;
       let span = endAngle - startAngle;
       if (span < 0) span += 360;
       const midAngle = startAngle + span / 2;
-      const midRad = (-(180 - midAngle) * Math.PI) / 180;
-      
+      const midRad = (-midAngle * Math.PI) / 180;
+
       const bisectorEndX = vx + r * 1.5 * Math.cos(midRad);
       const bisectorEndY = vy + r * 1.5 * Math.sin(midRad);
       const labelX = vx + r * labelDistance * Math.cos(midRad);
       const labelY = vy + r * labelDistance * Math.sin(midRad);
-      
+
       svg += `<line x1="${vx}" y1="${vy}" x2="${bisectorEndX}" y2="${bisectorEndY}" stroke="#00ff00" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>`;
       svg += `<circle cx="${labelX}" cy="${labelY}" r="3" fill="#00ff00" stroke="none" opacity="0.7"/>`;
     }

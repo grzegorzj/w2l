@@ -1,8 +1,8 @@
 /**
- * Test: Angles from Lines
+ * Test: Angles from Lines - Ray-Based Selection
  * 
- * Demonstrates creating angle annotations from Line and Side objects,
- * automatically detecting intersection points and angle measures.
+ * Demonstrates creating angle annotations from Line and Side objects using ray selection.
+ * A ray is one direction along a line: "+" (forward) or "-" (backward/opposite).
  */
 
 import { Artboard, Line, Triangle, Angle, Text } from "w2l";
@@ -16,7 +16,7 @@ const artboard = new Artboard({
 
 // Main title
 const mainTitle = new Text({
-  content: "Angles from Lines - Automatic Intersection & Angle Detection",
+  content: "Angles from Lines - Ray-Based Selection (+,+ or +,- etc.)",
   fontSize: 20,
   fontWeight: "bold",
 });
@@ -28,10 +28,10 @@ mainTitle.position({
 });
 artboard.addElement(mainTitle);
 
-// Example 1: Simple angle between two lines (inward)
+// Example 1: Angle at vertex using (+,+) rays
 {
   const title = new Text({
-    content: "Inward Angle (smaller)",
+    content: "Vertex Angle (+,+)",
     fontSize: 16,
     fontWeight: "bold",
   });
@@ -60,7 +60,8 @@ artboard.addElement(mainTitle);
 
   const angle = new Angle({
     between: [line1, line2],
-    type: 'inward',
+    ray1: "+",
+    ray2: "+",
     label: "$\\alpha$",
     radius: 50,
     style: { stroke: "#2ecc71", strokeWidth: "1.5" },
@@ -68,10 +69,10 @@ artboard.addElement(mainTitle);
   artboard.addElement(angle);
 }
 
-// Example 2: Outward angle
+// Example 2: Reflex angle using (-,-) rays
 {
   const title = new Text({
-    content: "Outward Angle (larger)",
+    content: "Reflex Angle (-,-)",
     fontSize: 16,
     fontWeight: "bold",
   });
@@ -100,7 +101,8 @@ artboard.addElement(mainTitle);
 
   const angle = new Angle({
     between: [line1, line2],
-    type: 'outward',
+    ray1: "-",
+    ray2: "-",
     label: "$\\beta$",
     radius: 50,
     style: { stroke: "#9b59b6", strokeWidth: "1.5" },
@@ -108,10 +110,10 @@ artboard.addElement(mainTitle);
   artboard.addElement(angle);
 }
 
-// Example 3: Right angle
+// Example 3: Right angle with (+,-)
 {
   const title = new Text({
-    content: "Right Angle (Square)",
+    content: "Crossing Lines (+,-)",
     fontSize: 16,
     fontWeight: "bold",
   });
@@ -140,7 +142,8 @@ artboard.addElement(mainTitle);
 
   const angle = new Angle({
     between: [line1, line2],
-    type: 'inward',
+    ray1: "+",
+    ray2: "-",
     radius: 20,
     style: { stroke: "#000000", strokeWidth: "1.5" },
   });
@@ -179,7 +182,8 @@ artboard.addElement(mainTitle);
 
   const angle = new Angle({
     between: [line1, line2],
-    type: 'inward',
+    ray1: "+",
+    ray2: "-",
     label: "90°",
     radius: 35,
     rightAngleMarker: 'dot',
@@ -188,7 +192,7 @@ artboard.addElement(mainTitle);
   artboard.addElement(angle);
 }
 
-// Example 5: Triangle with angles using figure API
+// Example 5: Triangle with angles using figure API (still supported)
 {
   const title = new Text({
     content: "Triangle Internal Angles (using figure API)",
@@ -253,10 +257,10 @@ artboard.addElement(mainTitle);
   artboard.addElement(angle2);
 }
 
-// Example 6: Acute angle with precise measurement
+// Example 6: 45° angle
 {
   const title = new Text({
-    content: "45° Angle",
+    content: "45° Angle (+,+)",
     fontSize: 16,
     fontWeight: "bold",
   });
@@ -285,7 +289,8 @@ artboard.addElement(mainTitle);
 
   const angle = new Angle({
     between: [line1, line2],
-    type: 'inward',
+    ray1: "+",
+    ray2: "+",
     label: "45°",
     radius: 60,
     style: { stroke: "#9b59b6", strokeWidth: "1.5" },

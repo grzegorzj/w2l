@@ -1,6 +1,6 @@
 /**
  * Test: Simple Angle Debug
- * 
+ *
  * Minimal example with two crossing lines and angle markers.
  * Adjust the line coordinates below to test different configurations.
  */
@@ -17,11 +17,11 @@ const artboard = new Artboard({
 // ==========================================
 // ADJUST THESE PARAMETERS TO TEST
 // ==========================================
-const line1Start = { x: 100, y: 300 };
-const line1End = { x: 500, y: 300 };
+const line1Start = { x: 120, y: 350 };
+const line1End = { x: 500, y: 390 };
 
-const line2Start = { x: 300, y: 150 };
-const line2End = { x: 300, y: 450 };
+const line2Start = { x: 310, y: 150 };
+const line2End = { x: 350, y: 420 };
 // ==========================================
 
 // Title
@@ -58,7 +58,7 @@ artboard.addElement(line2);
 const intersections = line1.getIntersections(line2, true);
 if (intersections.length > 0) {
   const intersection = intersections[0];
-  
+
   const marker = new Circle({
     radius: 5,
     style: { fill: "#000000", stroke: "none" },
@@ -71,35 +71,25 @@ if (intersections.length > 0) {
     y: 0,
   });
 
-  // Draw INWARD angle (smaller, < 180°)
-  const angleInward = new Angle({
+  // Top-right angle: (+,+)
+  const anglePP = new Angle({
     between: [line1, line2],
-    type: 'inward',
+    ray1: "+",
+    ray2: "+",
     radius: 50,
-    label: "α",
-    labelFontSize: 16,
-    style: { stroke: "#2ecc71", strokeWidth: "2" },
-    debug: true, // Show start/end points
+    label: "(+,+)",
+    labelFontSize: 14,
+    style: { stroke: "#e74c3c", strokeWidth: "2" },
+    debug: true,
   });
-  artboard.addElement(angleInward);
-
-  // Draw OUTWARD angle (larger, > 180°)
-  const angleOutward = new Angle({
-    between: [line1, line2],
-    type: 'outward',
-    radius: 70,
-    label: "β",
-    labelFontSize: 16,
-    style: { stroke: "#9b59b6", strokeWidth: "2", strokeDasharray: "5,5" },
-    debug: true, // Show start/end points
-  });
-  artboard.addElement(angleOutward);
+  artboard.addElement(anglePP);
 }
 
 // Legend
 const legend = new Text({
-  content: "Debug: 🔴 Arc start  🔵 Arc end  🟢 Bisector & label position",
-  fontSize: 14,
+  content:
+    "Ray Selection: (+,+)=top-right  (-,+)=top-left  (-,-)=bottom-left  (+,-)=bottom-right",
+  fontSize: 13,
 });
 legend.position({
   relativeFrom: legend.topLeft,
@@ -108,6 +98,19 @@ legend.position({
   y: 520,
 });
 artboard.addElement(legend);
+
+const debugLegend = new Text({
+  content: "Debug: 🔴 Arc start  🔵 Arc end  🟢 Bisector",
+  fontSize: 12,
+  style: { fill: "#666" },
+});
+debugLegend.position({
+  relativeFrom: debugLegend.topLeft,
+  relativeTo: artboard.contentBox.topLeft,
+  x: 0,
+  y: 540,
+});
+artboard.addElement(debugLegend);
 
 // Info box showing coordinates
 const info = new Text({
