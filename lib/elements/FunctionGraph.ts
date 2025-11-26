@@ -848,6 +848,35 @@ export class FunctionGraph extends Rectangle {
   }
 
   /**
+   * Convert mathematical coordinates to absolute artboard coordinates.
+   * This is useful for marking arbitrary points on the graph (e.g., intersections).
+   * 
+   * @param x - Mathematical x-coordinate
+   * @param y - Mathematical y-coordinate
+   * @returns Absolute position on the artboard
+   * 
+   * @example
+   * ```typescript
+   * // Mark an intersection point at math coordinates (2, 3)
+   * const pos = graph.mathToAbsolutePosition(2, 3);
+   * const marker = new Circle({ radius: 5 });
+   * marker.position({ relativeTo: pos, x: 0, y: 0 });
+   * ```
+   */
+  public mathToAbsolutePosition(x: number, y: number): Position {
+    // Convert to local SVG coordinates
+    const svgPoint = this.mathToSVG(x, y);
+    
+    // Get absolute position by adding graph's position to relative point
+    const absPos = this.getAbsolutePosition();
+    
+    return {
+      x: absPos.x + svgPoint.x,
+      y: absPos.y + svgPoint.y,
+    };
+  }
+
+  /**
    * Sample a function and return path data points.
    */
   private sampleFunction(

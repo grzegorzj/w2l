@@ -555,30 +555,10 @@ const intersectionPoints = [
 
 console.log("Marking intersection points:", intersectionPoints);
 
-// Helper function to convert math coordinates to screen coordinates
-// Based on the graph's domain [-4, 4] and range [-5, 5]
-function mathToScreen(mathX, mathY) {
-  const domain = [-4, 4];
-  const range = [-5, 5];
-  const graphWidth = 500;
-  const graphHeight = 450;
-  
-  // Convert math coordinates to local graph coordinates
-  const localX = ((mathX - domain[0]) / (domain[1] - domain[0])) * graphWidth;
-  const localY = graphHeight - ((mathY - range[0]) / (range[1] - range[0])) * graphHeight;
-  
-  // Get the graph's absolute position and add the local offset
-  const graphPos = functionGraph.getAbsolutePosition();
-  
-  return {
-    x: graphPos.x + localX,
-    y: graphPos.y + localY,
-  };
-}
-
 // Create markers for each intersection point
 intersectionPoints.forEach((point, idx) => {
-  const screenPos = mathToScreen(point.x, point.y);
+  // Use FunctionGraph's API to convert math coordinates to absolute position
+  const screenPos = functionGraph.mathToAbsolutePosition(point.x, point.y);
   
   console.log(`Intersection ${idx} at math coords (${point.x}, ${point.y}) -> screen coords`, screenPos);
   
