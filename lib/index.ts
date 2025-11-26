@@ -60,6 +60,7 @@ export {
   type RemarkablePoint,
   type RemarkablePointType,
   type GraphAxis,
+  type ShadedRegion,
   type SideConfig,
   type SideLabelConfig,
   type ImageConfig,

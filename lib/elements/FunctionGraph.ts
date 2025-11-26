@@ -76,6 +76,34 @@ export interface GraphAxis {
 }
 
 /**
+ * Configuration for a shaded region between curves.
+ */
+export interface ShadedRegion {
+  /**
+   * Index of the top bounding function (from functions array).
+   * If undefined, uses the top of the graph range.
+   */
+  topFunction?: number;
+  
+  /**
+   * Index of the bottom bounding function (from functions array).
+   * If undefined, uses y=0 (x-axis) or bottom of range.
+   */
+  bottomFunction?: number;
+  
+  /**
+   * X-range for the shaded region.
+   * If undefined, uses the entire domain.
+   */
+  domain?: [number, number];
+  
+  /**
+   * Style for the shaded region.
+   */
+  style?: Partial<Style>;
+}
+
+/**
  * Configuration for creating a FunctionGraph.
  */
 export interface FunctionGraphConfig {
@@ -184,6 +212,12 @@ export interface FunctionGraphConfig {
   gridStyle?: Partial<Style>;
 
   /**
+   * Shaded regions between curves.
+   * Allows shading areas bounded by functions.
+   */
+  shadedRegions?: ShadedRegion[];
+
+  /**
    * Box model (padding, margin, border)
    */
   boxModel?: BoxModel;
@@ -232,6 +266,7 @@ export class FunctionGraph extends Rectangle {
   private remarkablePointStyle: Partial<Style>;
   private axisStyle: Partial<Style>;
   private gridStyle: Partial<Style>;
+  private shadedRegions: ShadedRegion[];
   private remarkablePointsCache: Map<string, RemarkablePoint[]>;
   private xAxis?: GraphAxis;
   private yAxis?: GraphAxis;
@@ -277,6 +312,9 @@ export class FunctionGraph extends Rectangle {
       stroke: "#ecf0f1",
       strokeWidth: "1px",
     };
+
+    // Shaded regions
+    this.shadedRegions = config.shadedRegions || [];
 
     // Initialize caches
     this.remarkablePointsCache = new Map();
@@ -856,6 +894,80 @@ export class FunctionGraph extends Rectangle {
     return path.trim();
   }
 
+  /**
+   * Generate a closed path for a shaded region between two curves.
+   */
+  private generateShadedRegionPath(region: ShadedRegion): string {
+    // Determine the domain for this region
+    const regionDomain: [number, number] = region.domain || this.domain;
+    
+    // Get the top and bottom functions
+    const topFn = region.topFunction !== undefined 
+      ? this.functions[region.topFunction]?.fn 
+      : undefined;
+    const bottomFn = region.bottomFunction !== undefined 
+      ? this.functions[region.bottomFunction]?.fn 
+      : undefined;
+    
+    // Sample points along the domain
+    const numSamples = Math.max(100, this.samples);
+    const step = (regionDomain[1] - regionDomain[0]) / numSamples;
+    
+    const topPoints: Array<{ x: number; y: number }> = [];
+    const bottomPoints: Array<{ x: number; y: number }> = [];
+    
+    for (let x = regionDomain[0]; x <= regionDomain[1]; x += step) {
+      // Determine top y value
+      let topY: number;
+      if (topFn) {
+        topY = topFn(x);
+      } else {
+        topY = this.range[1]; // Top of graph
+      }
+      
+      // Determine bottom y value
+      let bottomY: number;
+      if (bottomFn) {
+        bottomY = bottomFn(x);
+      } else {
+        // If no bottom function specified, use y=0 (x-axis) if it's in range, otherwise bottom of range
+        bottomY = (this.range[0] <= 0 && this.range[1] >= 0) ? 0 : this.range[0];
+      }
+      
+      // Only add points if both are finite and within range
+      if (isFinite(topY) && isFinite(bottomY)) {
+        // Clamp to range
+        topY = Math.max(this.range[0], Math.min(this.range[1], topY));
+        bottomY = Math.max(this.range[0], Math.min(this.range[1], bottomY));
+        
+        topPoints.push(this.mathToSVG(x, topY));
+        bottomPoints.push(this.mathToSVG(x, bottomY));
+      }
+    }
+    
+    if (topPoints.length === 0 || bottomPoints.length === 0) {
+      return "";
+    }
+    
+    // Build closed path: go along top, then back along bottom (reversed)
+    let path = `M ${topPoints[0].x.toFixed(2)} ${topPoints[0].y.toFixed(2)} `;
+    
+    // Draw along top curve
+    for (let i = 1; i < topPoints.length; i++) {
+      path += `L ${topPoints[i].x.toFixed(2)} ${topPoints[i].y.toFixed(2)} `;
+    }
+    
+    // Draw along bottom curve (in reverse)
+    for (let i = bottomPoints.length - 1; i >= 0; i--) {
+      path += `L ${bottomPoints[i].x.toFixed(2)} ${bottomPoints[i].y.toFixed(2)} `;
+    }
+    
+    // Close the path
+    path += "Z";
+    
+    return path.trim();
+  }
+
   // Position getters inherited from Rectangle (topLeft, center, etc.)
 
   render(): string {
@@ -900,6 +1012,27 @@ export class FunctionGraph extends Rectangle {
         svg += `    <line x1="0" y1="${svgY.toFixed(2)}" x2="${this.width}" y2="${svgY.toFixed(2)}" ${gridAttrs} />\n`;
       }
 
+      svg += `  </g>\n`;
+    }
+
+    // Draw shaded regions (before functions so they appear behind)
+    if (this.shadedRegions.length > 0) {
+      svg += `  <g class="shaded-regions">\n`;
+      
+      this.shadedRegions.forEach((region, idx) => {
+        const path = this.generateShadedRegionPath(region);
+        if (path) {
+          const regionStyle: Partial<Style> = {
+            fill: "#e0e0e0",
+            fillOpacity: 0.3,
+            stroke: "none",
+            ...region.style,
+          };
+          const regionAttrs = styleToSVGAttributes(regionStyle);
+          svg += `    <path class="shaded-region-${idx}" d="${path}" ${regionAttrs} />\n`;
+        }
+      });
+      
       svg += `  </g>\n`;
     }
 

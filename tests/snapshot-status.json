@@ -114,5 +114,13 @@
   "24-angle-debug-simple.js": {
     "status": "passed",
     "timestamp": "2025-11-25T22:51:54.527Z"
+  },
+  "32-quadratic-intersection-area.js": {
+    "status": "pending",
+    "timestamp": "2025-11-26T09:12:24.553Z"
+  },
+  "33-shaded-regions-simple.js": {
+    "status": "pending",
+    "timestamp": "2025-11-26T09:12:24.558Z"
   }
 }
