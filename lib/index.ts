@@ -71,8 +71,14 @@ export {
 export {
   Arrow,
   Angle,
+  BarChart,
+  Bar,
   type ArrowConfig,
   type AngleConfig,
+  type BarChartConfig,
+  type BarDataPoint,
+  type BarChartRemarkablePoint,
+  type BarChartRemarkablePointType,
 } from "./components/index.js";
 
 // Utils

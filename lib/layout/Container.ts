@@ -759,15 +759,16 @@ export class Container extends Rectangle {
         }
       } else {
         // Horizontal stack: align vertically (top edge, center, or bottom edge)
+        // Use left edge for main axis positioning
         switch (this.verticalAlignment) {
           case "top":
-            return element.topCenter;    // Top edge, horizontally centered
+            return element.topLeft;      // Top-left corner
           case "center":
-            return element.center;       // Horizontally and vertically centered
+            return element.leftCenter;   // Left edge, vertically centered
           case "bottom":
-            return element.bottomCenter; // Bottom edge, horizontally centered
+            return element.bottomLeft;   // Bottom-left corner
           default:
-            return element.topCenter;
+            return element.topLeft;
         }
       }
     } else if ((child as any).borderBox) {
