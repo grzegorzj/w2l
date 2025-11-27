@@ -583,10 +583,18 @@ export class FunctionGraph extends Rectangle {
     for (let x = this.domain[0] + step; x <= this.domain[1]; x += step) {
       const deriv = this.derivative(fn, x);
 
+      // Only consider significant derivatives (filter out numerical noise)
+      const derivMagnitude = Math.abs(deriv);
+      const prevDerivMagnitude = Math.abs(prevDeriv);
+      const minSignificantDerivative = 1e-4; // Derivatives smaller than this are likely noise
+      
       // Sign change in derivative indicates a critical point
+      // But only if both derivatives are significant (not near zero due to noise)
       if (
         isFinite(prevDeriv) &&
         isFinite(deriv) &&
+        derivMagnitude > minSignificantDerivative &&
+        prevDerivMagnitude > minSignificantDerivative &&
         Math.sign(prevDeriv) !== Math.sign(deriv)
       ) {
         // Refine critical point location
@@ -646,10 +654,18 @@ export class FunctionGraph extends Rectangle {
     for (let x = this.domain[0] + step; x <= this.domain[1]; x += step) {
       const secondDeriv = this.secondDerivative(fn, x);
 
+      // Only consider significant second derivatives (filter out numerical noise)
+      const secondDerivMagnitude = Math.abs(secondDeriv);
+      const prevSecondDerivMagnitude = Math.abs(prevSecondDeriv);
+      const minSignificantSecondDerivative = 1e-4; // Second derivatives smaller than this are likely noise
+      
       // Sign change in second derivative indicates inflection point
+      // But only if both second derivatives are significant (not near zero due to noise)
       if (
         isFinite(prevSecondDeriv) &&
         isFinite(secondDeriv) &&
+        secondDerivMagnitude > minSignificantSecondDerivative &&
+        prevSecondDerivMagnitude > minSignificantSecondDerivative &&
         Math.sign(prevSecondDeriv) !== Math.sign(secondDeriv)
       ) {
         const inflectionX = (prevX + x) / 2;

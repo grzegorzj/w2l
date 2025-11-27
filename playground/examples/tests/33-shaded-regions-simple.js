@@ -149,7 +149,7 @@ const graph1 = new FunctionGraph({
   showGrid: true,
   showAxes: true,
   detectRemarkablePoints: true,
-  showRemarkablePoints: true,  // Show auto-rendered remarkable points
+  showRemarkablePoints: true,  // Auto-render remarkable points
   
   // NEW FEATURE: Shaded regions
   shadedRegions: [
@@ -247,8 +247,8 @@ const example2Container = new Container({
   spacing: 15,
   boxModel: { padding: 25 },
   style: {
-    fill: "#e8f5e9",
-    stroke: "#4caf50",
+    fill: "#f5f5f5",
+    stroke: "#e0e0e0",
     strokeWidth: 2,
   },
 });
@@ -259,7 +259,7 @@ const graph2Note = new Text({
   content: "Nested in vertical container with 25px padding on all sides",
   fontSize: 11,
   fontStyle: "italic",
-  style: { fill: "#2e7d32" },
+  style: { fill: "#616161" },
 });
 
 example2Container.addElement(graph2Note);
@@ -284,7 +284,7 @@ const graph2 = new FunctionGraph({
   showGrid: true,
   showAxes: true,
   detectRemarkablePoints: true,
-  showRemarkablePoints: true,
+  showRemarkablePoints: true,  // Auto-render remarkable points
   
   shadedRegions: [
     {
@@ -387,7 +387,7 @@ const graph3 = new FunctionGraph({
   showGrid: true,
   showAxes: true,
   detectRemarkablePoints: true,
-  showRemarkablePoints: true,
+  showRemarkablePoints: true,  // Auto-render remarkable points
   
   // Shade the area between the curve and x-axis
   shadedRegions: [
@@ -471,7 +471,7 @@ const debugNote2 = new Text({
 mainContainer.addElement(debugNote2);
 
 const debugNote3 = new Text({
-  content: "If working correctly: Orange/blue markers should align perfectly with auto-rendered red dots",
+  content: "Red dots = auto-rendered remarkable points. Colored markers = manually positioned using API.",
   fontSize: 11,
   fontStyle: "italic",
   style: { fill: "#7f8c8d" },
