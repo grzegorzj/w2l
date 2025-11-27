@@ -520,14 +520,34 @@ export class Triangle extends Shape {
     }
   ): Angle {
     const mode = options?.mode ?? "internal";
-    const external = mode === "external";
+    const verts = this.absoluteVertices;
     
-    const angleInfo = this.getAngleMarkerAt(vertexIndex, external);
+    // Get the two sides that meet at this vertex
+    // sides[i] goes from vertex i to vertex (i+1)%3
+    // So at vertex i:
+    // - incoming side is sides[(i+2)%3] (from vertex (i+2)%3 to vertex i)
+    // - outgoing side is sides[i] (from vertex i to vertex (i+1)%3)
+    const incomingIdx = (vertexIndex + 2) % 3;
+    const outgoingIdx = vertexIndex;
+    
+    // Create Side objects for the two segments meeting at this vertex
+    const prevVertexIdx = (vertexIndex + 2) % 3;
+    const nextVertexIdx = (vertexIndex + 1) % 3;
+    
+    const incomingSide = new Side({
+      start: verts[prevVertexIdx],
+      end: verts[vertexIndex],
+    });
+    
+    const outgoingSide = new Side({
+      start: verts[vertexIndex],
+      end: verts[nextVertexIdx],
+    });
     
     return new Angle({
-      vertex: angleInfo.vertex,
-      startAngle: angleInfo.startAngle,
-      endAngle: angleInfo.endAngle,
+      from: "vertex",
+      segments: [incomingSide, outgoingSide],
+      mode: mode,
       label: options?.label,
       radius: options?.radius,
       style: options?.style,

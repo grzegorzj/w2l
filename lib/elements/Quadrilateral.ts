@@ -534,14 +534,30 @@ export class Quadrilateral extends Shape {
     }
   ): Angle {
     const mode = options?.mode ?? "internal";
-    const external = mode === "external";
+    const verts = this.absoluteVertices;
     
-    const angleInfo = this.getAngleMarkerAt(vertexIndex, external);
+    // Get the two sides that meet at this vertex
+    // sides[i] goes from vertex i to vertex (i+1)%4
+    // So at vertex i:
+    // - incoming side is from vertex (i+3)%4 to vertex i
+    // - outgoing side is from vertex i to vertex (i+1)%4
+    const prevVertexIdx = (vertexIndex + 3) % 4;
+    const nextVertexIdx = (vertexIndex + 1) % 4;
+    
+    const incomingSide = new Side({
+      start: verts[prevVertexIdx],
+      end: verts[vertexIndex],
+    });
+    
+    const outgoingSide = new Side({
+      start: verts[vertexIndex],
+      end: verts[nextVertexIdx],
+    });
     
     return new Angle({
-      vertex: angleInfo.vertex,
-      startAngle: angleInfo.startAngle,
-      endAngle: angleInfo.endAngle,
+      from: "vertex",
+      segments: [incomingSide, outgoingSide],
+      mode: mode,
       label: options?.label,
       radius: options?.radius,
       style: options?.style,
