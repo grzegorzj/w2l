@@ -9,6 +9,7 @@ import { type Position } from "../core/Element.js";
 import { Side, type SideLabelConfig } from "./Side.js";
 import { Line } from "./Line.js";
 import { Text } from "./Text.js";
+import { Angle, type AngleConfig } from "../components/Angle.js";
 
 export type QuadrilateralType =
   | "rectangle"
@@ -500,6 +501,87 @@ export class Quadrilateral extends Shape {
       createVertexLabel(verts[1], labelTexts[1]),
       createVertexLabel(verts[2], labelTexts[2]),
       createVertexLabel(verts[3], labelTexts[3]),
+    ];
+  }
+
+  /**
+   * Creates an angle marker for a specific vertex of the quadrilateral.
+   *
+   * @param vertexIndex - Index of the vertex (0-3)
+   * @param options - Configuration for the angle marker
+   * @param options.mode - 'internal' for internal angle, 'external' for external angle
+   * @param options.label - Optional label for the angle (e.g., "α", "90°")
+   * @param options.radius - Radius of the angle arc (default: 40)
+   * @param options.style - SVG style for the angle marker
+   * @returns Angle element
+   *
+   * @example
+   * ```typescript
+   * const quad = new Quadrilateral({ type: "rectangle", a: 100, b: 80 });
+   * const angle = quad.showAngle(0, { mode: 'internal', label: "90°" });
+   * artboard.addElement(quad);
+   * artboard.addElement(angle);
+   * ```
+   */
+  showAngle(
+    vertexIndex: number,
+    options?: {
+      mode?: "internal" | "external";
+      label?: string;
+      radius?: number;
+      style?: Partial<Style>;
+      rightAngleMarker?: "square" | "dot" | "arc";
+    }
+  ): Angle {
+    const mode = options?.mode ?? "internal";
+    const external = mode === "external";
+    
+    const angleInfo = this.getAngleMarkerAt(vertexIndex, external);
+    
+    return new Angle({
+      vertex: angleInfo.vertex,
+      startAngle: angleInfo.startAngle,
+      endAngle: angleInfo.endAngle,
+      label: options?.label,
+      radius: options?.radius,
+      style: options?.style,
+      rightAngleMarker: options?.rightAngleMarker,
+    });
+  }
+
+  /**
+   * Creates angle markers for all four vertices of the quadrilateral.
+   *
+   * @param options - Configuration for the angle markers
+   * @param options.mode - 'internal' for internal angles, 'external' for external angles
+   * @param options.labels - Optional labels for each angle (array of 4 strings)
+   * @param options.radius - Radius of the angle arcs (default: 40)
+   * @param options.style - SVG style for the angle markers
+   * @returns Array of four Angle elements
+   *
+   * @example
+   * ```typescript
+   * const quad = new Quadrilateral({ type: "parallelogram", a: 100, b: 60, angle: 60 });
+   * const angles = quad.showAngles({ mode: 'internal', labels: ["α", "β", "γ", "δ"] });
+   * artboard.addElement(quad);
+   * angles.forEach(angle => artboard.addElement(angle));
+   * ```
+   */
+  showAngles(options?: {
+    mode?: "internal" | "external";
+    labels?: [string?, string?, string?, string?];
+    radius?: number;
+    style?: Partial<Style>;
+    rightAngleMarker?: "square" | "dot" | "arc";
+  }): [Angle, Angle, Angle, Angle] {
+    const mode = options?.mode ?? "internal";
+    const labels = options?.labels ?? [undefined, undefined, undefined, undefined];
+    
+    return [
+      this.showAngle(0, { ...options, label: labels[0] }),
+      this.showAngle(1, { ...options, label: labels[1] }),
+      this.showAngle(2, { ...options, label: labels[2] }),
+      this.showAngle(3, { ...options, label: labels[3] }),
     ];
   }
 

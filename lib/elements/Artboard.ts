@@ -9,13 +9,13 @@ import { type BoxModel } from "../utils/BoxModel.js";
 export interface ArtboardConfig {
   /**
    * Width of the artboard in pixels, or 'auto' to fit children.
-   * @defaultValue 800
+   * @defaultValue 'auto'
    */
   width?: SizeMode;
 
   /**
    * Height of the artboard in pixels, or 'auto' to fit children.
-   * @defaultValue 600
+   * @defaultValue 'auto'
    */
   height?: SizeMode;
 
@@ -37,7 +37,7 @@ export interface ArtboardConfig {
 
 /**
  * The Artboard is the canvas where all elements are rendered.
- * By default, creates an 800x600px SVG.
+ * By default, auto-sizes to fit children.
  *
  * Artboard extends Container with direction "freeform", which means:
  * - Children position themselves freely (like CSS absolute positioning)
@@ -49,8 +49,8 @@ export interface ArtboardConfig {
  */
 export class Artboard extends Container {
   constructor(config: ArtboardConfig = {}) {
-    const width = config.width ?? 800;
-    const height = config.height ?? 600;
+    const width = config.width ?? "auto";
+    const height = config.height ?? "auto";
 
     const style: Partial<Style> = { ...config.style };
     if (config.backgroundColor) {

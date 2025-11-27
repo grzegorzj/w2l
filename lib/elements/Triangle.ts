@@ -10,6 +10,7 @@ import { type Position } from "../core/Element.js";
 import { Side, type SideLabelConfig } from "./Side.js";
 import { Line } from "./Line.js";
 import { Text } from "./Text.js";
+import { Angle, type AngleConfig } from "../components/Angle.js";
 
 export type TriangleType = "right" | "equilateral" | "isosceles";
 export type TriangleOrientation =
@@ -486,6 +487,86 @@ export class Triangle extends Shape {
       createVertexLabel(verts[0], labelTexts[0]),
       createVertexLabel(verts[1], labelTexts[1]),
       createVertexLabel(verts[2], labelTexts[2]),
+    ];
+  }
+
+  /**
+   * Creates angle markers for a specific vertex of the triangle.
+   *
+   * @param vertexIndex - Index of the vertex (0-2)
+   * @param options - Configuration for the angle marker
+   * @param options.mode - 'internal' for internal angle, 'external' for external angle
+   * @param options.label - Optional label for the angle (e.g., "α", "60°")
+   * @param options.radius - Radius of the angle arc (default: 40)
+   * @param options.style - SVG style for the angle marker
+   * @returns Angle element
+   *
+   * @example
+   * ```typescript
+   * const triangle = new Triangle({ type: "right", a: 100, b: 100 });
+   * const angle = triangle.showAngle(0, { mode: 'internal', label: "90°" });
+   * artboard.addElement(triangle);
+   * artboard.addElement(angle);
+   * ```
+   */
+  showAngle(
+    vertexIndex: number,
+    options?: {
+      mode?: "internal" | "external";
+      label?: string;
+      radius?: number;
+      style?: Partial<Style>;
+      rightAngleMarker?: "square" | "dot" | "arc";
+    }
+  ): Angle {
+    const mode = options?.mode ?? "internal";
+    const external = mode === "external";
+    
+    const angleInfo = this.getAngleMarkerAt(vertexIndex, external);
+    
+    return new Angle({
+      vertex: angleInfo.vertex,
+      startAngle: angleInfo.startAngle,
+      endAngle: angleInfo.endAngle,
+      label: options?.label,
+      radius: options?.radius,
+      style: options?.style,
+      rightAngleMarker: options?.rightAngleMarker,
+    });
+  }
+
+  /**
+   * Creates angle markers for all three vertices of the triangle.
+   *
+   * @param options - Configuration for the angle markers
+   * @param options.mode - 'internal' for internal angles, 'external' for external angles
+   * @param options.labels - Optional labels for each angle (array of 3 strings)
+   * @param options.radius - Radius of the angle arcs (default: 40)
+   * @param options.style - SVG style for the angle markers
+   * @returns Array of three Angle elements
+   *
+   * @example
+   * ```typescript
+   * const triangle = new Triangle({ type: "right", a: 100, b: 100 });
+   * const angles = triangle.showAngles({ mode: 'internal', labels: ["α", "β", "γ"] });
+   * artboard.addElement(triangle);
+   * angles.forEach(angle => artboard.addElement(angle));
+   * ```
+   */
+  showAngles(options?: {
+    mode?: "internal" | "external";
+    labels?: [string?, string?, string?];
+    radius?: number;
+    style?: Partial<Style>;
+    rightAngleMarker?: "square" | "dot" | "arc";
+  }): [Angle, Angle, Angle] {
+    const mode = options?.mode ?? "internal";
+    const labels = options?.labels ?? [undefined, undefined, undefined];
+    
+    return [
+      this.showAngle(0, { ...options, label: labels[0] }),
+      this.showAngle(1, { ...options, label: labels[1] }),
+      this.showAngle(2, { ...options, label: labels[2] }),
     ];
   }
 

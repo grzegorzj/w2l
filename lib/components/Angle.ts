@@ -12,125 +12,78 @@ import { Line } from "../elements/Line.js";
 import { Side } from "../elements/Side.js";
 
 /**
- * Ray direction: "+" is the line's direction vector, "-" is its opposite
+ * Quadrant selection for crossing lines.
+ * Specifies which of the four angles at an intersection to mark.
  */
-export type RayDirection = "+" | "-";
+export type AngleQuadrant =
+  | "upper-right"
+  | "upper-left"
+  | "lower-left"
+  | "lower-right";
 
 /**
- * Base interface for figures that support angle queries.
+ * Mode selection for angle at a vertex.
+ * - "internal": The smaller angle (< 180°) between the segments
+ * - "external": The larger angle (> 180°) between the segments
  */
-export interface AngleFigure {
-  getAngleMarkerAt(
-    vertexIndex: number,
-    external: boolean
-  ): {
-    vertex: Position;
-    startAngle: number;
-    endAngle: number;
-    angleDegrees: number;
-  };
-}
+export type AngleMode = "internal" | "external";
 
 /**
- * Configuration for creating an Angle annotation.
+ * Configuration for creating an Angle from crossing lines (intersection).
  */
-export interface AngleConfig {
-  /**
-   * Optional figure (Triangle, Quadrilateral, etc.) to get angle from.
-   * If provided with vertexIndex, automatically calculates angle at that vertex.
-   */
-  figure?: AngleFigure;
-
-  /**
-   * Vertex index in the figure (0-based).
-   * Only used when figure is provided.
-   */
-  vertexIndex?: number;
-
-  /**
-   * Type of angle to draw (only used with figure):
-   * - 'inward': Internal angle (inside the figure)
-   * - 'outward': External angle (outside the figure)
-   * @defaultValue 'inward'
-   * @deprecated Use ray-based selection with `between` instead
-   */
-  type?: "inward" | "outward";
-
-  /**
-   * Two lines/sides forming the angle.
-   * Required if figure and vertexIndex are not provided.
-   */
-  between?: [Line | Side, Line | Side];
-
-  /**
-   * Ray direction for the first line.
-   * "+" uses the line's direction vector, "-" uses its opposite.
-   * Required when using `between`.
-   */
-  ray1?: RayDirection;
-
-  /**
-   * Ray direction for the second line.
-   * "+" uses the line's direction vector, "-" uses its opposite.
-   * Required when using `between`.
-   */
-  ray2?: RayDirection;
-
-  /**
-   * Explicit vertex position (used with between, or for manual placement)
-   */
-  vertex?: Position;
-
-  /**
-   * Explicit start angle in degrees (for manual angle specification)
-   */
-  startAngle?: number;
-
-  /**
-   * Explicit end angle in degrees (for manual angle specification)
-   */
-  endAngle?: number;
-
-  /**
-   * Radius of the arc in pixels
-   * @defaultValue 40
-   */
+export interface AngleFromIntersection {
+  from: "intersection";
+  lines: [Line | Side, Line | Side];
+  quadrant: AngleQuadrant;
+  mode?: AngleMode;
   radius?: number;
-
-  /**
-   * Optional label for the angle
-   */
   label?: string;
-
-  /**
-   * Font size for the label
-   * @defaultValue 14
-   */
   labelFontSize?: number;
-
-  /**
-   * Distance from vertex to label (multiplier of radius)
-   * @defaultValue 0.6
-   */
   labelDistance?: number;
-
-  /**
-   * Visual styling for the arc
-   */
   style?: Partial<Style>;
-
-  /**
-   * Style for marking right angles (90°)
-   * @defaultValue 'square'
-   */
   rightAngleMarker?: "square" | "dot" | "arc";
-
-  /**
-   * Debug mode: Show start and end points of the arc
-   * @defaultValue false
-   */
   debug?: boolean;
 }
+
+/**
+ * Configuration for creating an Angle from segments meeting at a vertex.
+ */
+export interface AngleFromVertex {
+  from: "vertex";
+  segments: [Side, Side];
+  mode?: AngleMode;
+  radius?: number;
+  label?: string;
+  labelFontSize?: number;
+  labelDistance?: number;
+  style?: Partial<Style>;
+  rightAngleMarker?: "square" | "dot" | "arc";
+  debug?: boolean;
+}
+
+/**
+ * Configuration for creating an Angle with explicit angles.
+ */
+export interface AngleExplicit {
+  vertex: Position;
+  startAngle: number;
+  endAngle: number;
+  radius?: number;
+  label?: string;
+  labelFontSize?: number;
+  labelDistance?: number;
+  style?: Partial<Style>;
+  rightAngleMarker?: "square" | "dot" | "arc";
+  debug?: boolean;
+}
+
+/**
+ * Union type of all angle configurations.
+ */
+export type AngleConfig =
+  | AngleFromIntersection
+  | AngleFromVertex
+  | AngleExplicit;
 
 /**
  * Internal resolved configuration.
@@ -151,24 +104,35 @@ interface ResolvedAngleConfig {
  * Angle annotation component.
  *
  * @example
- * Using with a figure
+ * Marking an angle at line intersection
  * ```typescript
- * const triangle = new Triangle({ type: "right", a: 100, b: 100 });
  * const angle = new Angle({
- *   figure: triangle,
- *   vertexIndex: 0,
- *   type: 'inward',
- *   label: "$\\alpha$"
+ *   from: "intersection",
+ *   lines: [line1, line2],
+ *   quadrant: "upper-right",
+ *   label: "α"
  * });
  * ```
  *
  * @example
- * Using with two lines
+ * Marking an angle at a vertex between segments
  * ```typescript
  * const angle = new Angle({
- *   between: [line1, line2],
- *   type: 'inward',
- *   label: "45°"
+ *   from: "vertex",
+ *   segments: [segment1, segment2],
+ *   mode: "internal",
+ *   label: "β"
+ * });
+ * ```
+ *
+ * @example
+ * Explicit angle specification
+ * ```typescript
+ * const angle = new Angle({
+ *   vertex: { x: 100, y: 100 },
+ *   startAngle: 0,
+ *   endAngle: 90,
+ *   label: "90°"
  * });
  * ```
  */
@@ -209,51 +173,42 @@ export class Angle extends Element {
     const labelFontSize = config.labelFontSize ?? 14;
     const labelDistance = config.labelDistance ?? 0.6;
     const rightAngleMarker = config.rightAngleMarker ?? "square";
-    const type = config.type ?? "inward";
 
-    // Mode 1: Figure + vertex index
-    if (config.figure && config.vertexIndex !== undefined) {
-      const angleInfo = config.figure.getAngleMarkerAt(
-        config.vertexIndex,
-        type === "outward"
+    // Mode 1: From intersection of two lines
+    if ("from" in config && config.from === "intersection") {
+      return this.resolveFromIntersection(
+        config.lines,
+        config.quadrant,
+        config.mode ?? "internal",
+        {
+          radius,
+          label: config.label,
+          labelFontSize,
+          labelDistance,
+          style: config.style,
+          rightAngleMarker,
+        }
       );
-
-      return {
-        vertex: angleInfo.vertex,
-        startAngle: angleInfo.startAngle,
-        endAngle: angleInfo.endAngle,
-        radius,
-        label: config.label,
-        labelFontSize,
-        labelDistance,
-        style: config.style,
-        rightAngleMarker,
-      };
     }
 
-    // Mode 2: Between two lines/sides
-    if (config.between) {
-      if (!config.ray1 || !config.ray2) {
-        throw new Error(
-          'Angle: ray1 and ray2 are required when using "between"'
-        );
-      }
-      return this.resolveFromLines(config.between, config.ray1, config.ray2, {
-        radius,
-        label: config.label,
-        labelFontSize,
-        labelDistance,
-        style: config.style,
-        rightAngleMarker,
-      });
+    // Mode 2: From segments at a vertex
+    if ("from" in config && config.from === "vertex") {
+      return this.resolveFromVertexSegments(
+        config.segments,
+        config.mode ?? "internal",
+        {
+          radius,
+          label: config.label,
+          labelFontSize,
+          labelDistance,
+          style: config.style,
+          rightAngleMarker,
+        }
+      );
     }
 
     // Mode 3: Explicit angles
-    if (
-      config.vertex &&
-      config.startAngle !== undefined &&
-      config.endAngle !== undefined
-    ) {
+    if ("vertex" in config && "startAngle" in config && "endAngle" in config) {
       return {
         vertex: config.vertex,
         startAngle: config.startAngle,
@@ -274,90 +229,231 @@ export class Angle extends Element {
       startAngle: 0,
       endAngle: 90,
       radius,
-      label: config.label,
+      label: undefined,
       labelFontSize,
       labelDistance,
-      style: config.style,
+      style: undefined,
       rightAngleMarker,
     };
   }
 
   /**
-   * Resolves angle from two lines/sides using ray-based selection.
+   * Resolves angle from two lines at their intersection using quadrant selection.
    *
-   * A ray is one of two possible directions along a line:
-   * - "+" : the line's direction vector (from start to end)
-   * - "-" : the opposite direction (from end to start)
+   * The quadrant determines which of the 4 angles at the intersection to mark:
+   * - "upper-right": Angle in the upper-right region
+   * - "upper-left": Angle in the upper-left region
+   * - "lower-left": Angle in the lower-left region
+   * - "lower-right": Angle in the lower-right region
    *
-   * The angle is formed by selecting one ray from each line.
-   * For crossing lines, this chooses which of the 4 angles to draw:
-   * - (+,+) = angle in the direction both rays point
-   * - (-,+) = angle where ray1 is flipped
-   * - (-,-) = angle where both rays are flipped
-   * - (+,-) = angle where ray2 is flipped
+   * The mode further refines the selection:
+   * - "internal": The acute angle in that quadrant (< 180°)
+   * - "external": The reflex angle in that quadrant (> 180°)
    */
-  private resolveFromLines(
-    between: [Line | Side, Line | Side],
-    ray1: RayDirection,
-    ray2: RayDirection,
+  private resolveFromIntersection(
+    lines: [Line | Side, Line | Side],
+    quadrant: AngleQuadrant,
+    mode: AngleMode,
     opts: Omit<ResolvedAngleConfig, "vertex" | "startAngle" | "endAngle">
   ): ResolvedAngleConfig {
-    const [line1, line2] = between;
+    const [line1, line2] = lines;
 
-    // Get line endpoints and direction vectors
+    // Get line endpoints
     const l1 = { start: line1.start, end: line1.end };
     const l2 = { start: line2.start, end: line2.end };
 
-    // Get the direction vectors of the lines
-    const dir1 = { x: l1.end.x - l1.start.x, y: l1.end.y - l1.start.y };
-    const dir2 = { x: l2.end.x - l2.start.x, y: l2.end.y - l2.start.y };
-
-    // Find intersection
+    // Find intersection (extended lines)
     const side1 = new Side({ start: l1.start, end: l1.end });
     const side2 = new Side({ start: l2.start, end: l2.end });
     const intersections = side1.getIntersections(side2, true);
 
     if (intersections.length === 0) {
-      console.warn("Angle: Lines are parallel");
+      console.warn("Angle: Lines are parallel or do not intersect");
       return { vertex: l1.start, startAngle: 0, endAngle: 90, ...opts };
     }
 
-    const intersection = intersections[0];
+    const vertex = intersections[0];
 
-    // Calculate base angles of the direction vectors
-    const baseAngle1 = (Math.atan2(dir1.y, dir1.x) * 180) / Math.PI;
-    const baseAngle2 = (Math.atan2(dir2.y, dir2.x) * 180) / Math.PI;
+    // Get direction vectors
+    const dir1 = { x: l1.end.x - l1.start.x, y: l1.end.y - l1.start.y };
+    const dir2 = { x: l2.end.x - l2.start.x, y: l2.end.y - l2.start.y };
 
-    // Apply ray direction: "-" adds 180° to flip the direction
-    const angle1 = ray1 === "+" ? baseAngle1 : baseAngle1 + 270;
-    const angle2 = ray2 === "+" ? baseAngle2 : baseAngle2 + 270;
+    // Calculate angles of direction vectors (in degrees, SVG coordinate system)
+    const angle1 = (Math.atan2(dir1.y, dir1.x) * 180) / Math.PI;
+    const angle2 = (Math.atan2(dir2.y, dir2.x) * 180) / Math.PI;
 
-    console.log("angle1", angle1);
-    console.log("angle2", angle2);
-    console.log("baseAngle1", baseAngle1);
-    console.log("baseAngle2", baseAngle2);
-    console.log("dir1", dir1);
-    console.log("dir2", dir2);
+    // Get all 4 angles at the intersection (normalized to 0-360)
+    const angles = [
+      angle1, // Line 1, positive direction
+      (angle1 + 180) % 360, // Line 1, negative direction
+      angle2, // Line 2, positive direction
+      (angle2 + 180) % 360, // Line 2, negative direction
+    ].map((a) => ((a % 360) + 360) % 360);
 
-    // Normalize to 0-360
-    let norm1 = (180 - angle1 + 360) % 360;
-    let norm2 = (180 - angle2 + 360) % 360;
+    // Sort angles
+    const sortedAngles = [...angles].sort((a, b) => a - b);
 
-    // Calculate angle difference
-    let angleDiff = norm2 - norm1;
-    if (angleDiff < 0) angleDiff += 360;
+    // Map quadrant to angle selection strategy
+    const { startAngle, endAngle } = this.selectAngleInQuadrant(
+      vertex,
+      sortedAngles,
+      angles,
+      quadrant,
+      mode
+    );
 
-    // If the angle is > 180°, we should go the other way (swap start and end)
-    // This ensures mixed ray directions (+,-) and (-,+) draw the intended angle
-    if (angleDiff > 180) {
-      [norm1, norm2] = [norm2, norm1];
+    return {
+      vertex,
+      startAngle,
+      endAngle,
+      ...opts,
+    };
+  }
+
+  /**
+   * Selects the appropriate angle based on quadrant and mode.
+   */
+  private selectAngleInQuadrant(
+    vertex: Position,
+    sortedAngles: number[],
+    originalAngles: number[],
+    quadrant: AngleQuadrant,
+    mode: AngleMode
+  ): { startAngle: number; endAngle: number } {
+    // Determine quadrant center direction
+    const quadrantCenters: Record<AngleQuadrant, number> = {
+      "upper-right": 315, // -45° in screen coords (up-right)
+      "upper-left": 225, // -135° in screen coords (up-left)
+      "lower-left": 135, // 135° in screen coords (down-left)
+      "lower-right": 45, // 45° in screen coords (down-right)
+    };
+
+    const targetDirection = quadrantCenters[quadrant];
+
+    // Find the angle pair that contains the target direction
+    // The 4 angles divide the circle into 4 regions
+    for (let i = 0; i < sortedAngles.length; i++) {
+      const start = sortedAngles[i];
+      const end = sortedAngles[(i + 1) % sortedAngles.length];
+
+      // Calculate if targetDirection is in this arc
+      let arcStart = start;
+      let arcEnd = end === 0 && i === sortedAngles.length - 1 ? 360 : end;
+      if (arcEnd < arcStart) arcEnd += 360;
+
+      let target = targetDirection;
+      if (target < arcStart) target += 360;
+
+      if (target >= arcStart && target <= arcEnd) {
+        // This is the angle in the specified quadrant
+        let finalStart = start;
+        let finalEnd = end;
+
+        if (mode === "external") {
+          // Swap to get the reflex angle (go the other way)
+          finalStart = end;
+          finalEnd = start;
+        }
+
+        return { startAngle: finalStart, endAngle: finalEnd };
+      }
     }
 
-    // The angle is from ray1 to ray2, choosing the shorter path
+    // Fallback (shouldn't happen)
+    return { startAngle: sortedAngles[0], endAngle: sortedAngles[1] };
+  }
+
+  /**
+   * Resolves angle from two segments meeting at a shared vertex.
+   *
+   * Automatically finds the shared endpoint and calculates the angle.
+   * - "internal": The smaller angle (< 180°)
+   * - "external": The larger angle (> 180°)
+   */
+  private resolveFromVertexSegments(
+    segments: [Side, Side],
+    mode: AngleMode,
+    opts: Omit<ResolvedAngleConfig, "vertex" | "startAngle" | "endAngle">
+  ): ResolvedAngleConfig {
+    const [seg1, seg2] = segments;
+
+    // Find shared vertex
+    const s1Start = seg1.start;
+    const s1End = seg1.end;
+    const s2Start = seg2.start;
+    const s2End = seg2.end;
+
+    let vertex: Position;
+    let ray1End: Position;
+    let ray2End: Position;
+
+    // Check all possible connections
+    const dist = (p1: Position, p2: Position) =>
+      Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+
+    if (dist(s1Start, s2Start) < 0.01) {
+      vertex = s1Start;
+      ray1End = s1End;
+      ray2End = s2End;
+    } else if (dist(s1Start, s2End) < 0.01) {
+      vertex = s1Start;
+      ray1End = s1End;
+      ray2End = s2Start;
+    } else if (dist(s1End, s2Start) < 0.01) {
+      vertex = s1End;
+      ray1End = s1Start;
+      ray2End = s2End;
+    } else if (dist(s1End, s2End) < 0.01) {
+      vertex = s1End;
+      ray1End = s1Start;
+      ray2End = s2Start;
+    } else {
+      console.warn("Angle: Segments do not share a common vertex");
+      return {
+        vertex: s1Start,
+        startAngle: 0,
+        endAngle: 90,
+        ...opts,
+      };
+    }
+
+    // Calculate direction vectors from vertex to the other endpoints
+    const dir1 = { x: ray1End.x - vertex.x, y: ray1End.y - vertex.y };
+    const dir2 = { x: ray2End.x - vertex.x, y: ray2End.y - vertex.y };
+
+    // Calculate angles
+    const angle1 = (Math.atan2(dir1.y, dir1.x) * 180) / Math.PI;
+    const angle2 = (Math.atan2(dir2.y, dir2.x) * 180) / Math.PI;
+
+    // Normalize to 0-360
+    const norm1 = ((angle1 % 360) + 360) % 360;
+    const norm2 = ((angle2 % 360) + 360) % 360;
+
+    // Calculate the angle between them (always go counterclockwise from angle1 to angle2)
+    let diff = norm2 - norm1;
+    if (diff < 0) diff += 360;
+
+    let startAngle = norm1;
+    let endAngle = norm2;
+
+    // If mode is "internal", ensure we take the smaller angle
+    if (mode === "internal" && diff > 180) {
+      // Swap to get the smaller angle
+      startAngle = norm2;
+      endAngle = norm1;
+    }
+
+    // If mode is "external", ensure we take the larger angle
+    if (mode === "external" && diff <= 180) {
+      // Swap to get the larger angle
+      startAngle = norm2;
+      endAngle = norm1;
+    }
+
     return {
-      vertex: intersection,
-      startAngle: norm1,
-      endAngle: norm2,
+      vertex,
+      startAngle,
+      endAngle,
       ...opts,
     };
   }
@@ -380,8 +476,8 @@ export class Angle extends Element {
     if (span < 0) span += 360;
     const midAngle = startAngle + span / 2;
 
-    // Convert to radians (negate for SVG's inverted Y-axis)
-    const midRad = (-midAngle * Math.PI) / 180;
+    // Convert to radians (negate for SVG's inverted Y-axis... actually no, keep as-is for SVG)
+    const midRad = (midAngle * Math.PI) / 180;
 
     // Calculate label position along the bisector
     const labelRadius = radius * labelDistance;
@@ -470,11 +566,11 @@ export class Angle extends Element {
       return svg;
     }
 
-    // Convert angles to radians (negate for SVG's inverted Y-axis)
-    const startRad = (-startAngle * Math.PI) / 180;
-    const endRad = (-endAngle * Math.PI) / 180;
+    // Convert angles to radians (for SVG coordinate system where +Y is down)
+    const startRad = (startAngle * Math.PI) / 180;
+    const endRad = (endAngle * Math.PI) / 180;
 
-    // Calculate arc start and end points (for debugging and rendering)
+    // Calculate arc start and end points
     const x1 = vx + radius * Math.cos(startRad);
     const y1 = vy + radius * Math.sin(startRad);
     const x2 = vx + radius * Math.cos(endRad);
@@ -499,7 +595,7 @@ export class Angle extends Element {
     } else {
       // Render normal arc
       const largeArcFlag = angleDiff > 180 ? 1 : 0;
-      const sweepFlag = 0; // Counter-clockwise (SVG default)
+      const sweepFlag = 1; // Clockwise in SVG coords (where +Y is down)
 
       const pathData = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${x2} ${y2}`;
       svg = `<path d="${pathData}" ${attrs}/>`;
@@ -507,7 +603,7 @@ export class Angle extends Element {
       // Add dot marker for right angles if specified
       if (isRightAngle && rightAngleMarker === "dot") {
         const midAngle = startAngle + angleDiff / 2;
-        const midRad = (-midAngle * Math.PI) / 180;
+        const midRad = (midAngle * Math.PI) / 180;
 
         const dotDistance = radius * 0.5;
         const dotX = vx + dotDistance * Math.cos(midRad);
@@ -534,7 +630,7 @@ export class Angle extends Element {
       let span = endAngle - startAngle;
       if (span < 0) span += 360;
       const midAngle = startAngle + span / 2;
-      const midRad = (-midAngle * Math.PI) / 180;
+      const midRad = (midAngle * Math.PI) / 180;
 
       const bisectorEndX = vx + r * 1.5 * Math.cos(midRad);
       const bisectorEndY = vy + r * 1.5 * Math.sin(midRad);

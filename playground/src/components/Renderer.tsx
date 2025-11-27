@@ -39,7 +39,13 @@ export function Renderer({ result }: RendererProps) {
 
     if (result.svgs.length === 1) {
       return (
-        <div className="artboard-item">
+        <div
+          className="artboard-item"
+          style={{
+            backgroundColor: "white",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+          }}
+        >
           <div dangerouslySetInnerHTML={{ __html: result.svgs[0] }} />
         </div>
       );
@@ -84,4 +90,3 @@ export function Renderer({ result }: RendererProps) {
     </div>
   );
 }
-

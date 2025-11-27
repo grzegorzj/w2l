@@ -96,24 +96,24 @@
     "timestamp": "2025-11-27T01:36:25.778Z"
   },
   "20-quadrilaterals-and-external-angles.js": {
-    "status": "pending",
-    "timestamp": "2025-11-27T01:36:25.780Z"
+    "status": "passed",
+    "timestamp": "2025-11-27T07:00:23.181Z"
   },
   "21-angle-debugging.js": {
-    "status": "pending",
-    "timestamp": "2025-11-27T01:36:25.782Z"
+    "status": "passed",
+    "timestamp": "2025-11-27T07:00:23.188Z"
   },
   "22-line-intersections.js": {
     "status": "pending",
     "timestamp": "2025-11-27T01:36:25.784Z"
   },
   "23-angles-from-lines.js": {
-    "status": "pending",
-    "timestamp": "2025-11-27T01:36:25.785Z"
+    "status": "passed",
+    "timestamp": "2025-11-27T07:00:23.196Z"
   },
   "24-angle-debug-simple.js": {
-    "status": "pending",
-    "timestamp": "2025-11-27T01:36:25.786Z"
+    "status": "passed",
+    "timestamp": "2025-11-27T07:00:23.203Z"
   },
   "32-quadratic-intersection-area.js": {
     "status": "passed",
@@ -128,12 +128,12 @@
     "timestamp": "2025-11-27T01:36:25.811Z"
   },
   "25-angles-at-vertex.js": {
-    "status": "pending",
-    "timestamp": "2025-11-27T01:36:25.787Z"
+    "status": "passed",
+    "timestamp": "2025-11-27T07:00:23.208Z"
   },
   "31-similar-triangles-altitude.js": {
-    "status": "pending",
-    "timestamp": "2025-11-27T01:36:25.789Z"
+    "status": "passed",
+    "timestamp": "2025-11-27T07:00:23.213Z"
   },
   "36-barchart-horizontal.js": {
     "status": "passed",
@@ -174,5 +174,17 @@
   "44-gauge.js": {
     "status": "pending",
     "timestamp": "2025-11-27T04:09:16.210Z"
+  },
+  "45-angle-refactored.js": {
+    "status": "passed",
+    "timestamp": "2025-11-27T07:00:23.274Z"
+  },
+  "46-show-angles-api.js": {
+    "status": "pending",
+    "timestamp": "2025-11-27T04:50:36.325Z"
+  },
+  "47-artboard-auto-sizing.js": {
+    "status": "pending",
+    "timestamp": "2025-11-27T06:17:42.588Z"
   }
 }
