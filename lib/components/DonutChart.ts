@@ -464,29 +464,29 @@ export class DonutChart extends Rectangle {
     
     // If no corner radius or very small, use sharp corners
     if (cornerRadius < 0.5) {
-      const x1 = centerX + outerRadius * Math.cos(startAngle);
-      const y1 = centerY + outerRadius * Math.sin(startAngle);
-      const x2 = centerX + outerRadius * Math.cos(endAngle);
-      const y2 = centerY + outerRadius * Math.sin(endAngle);
+    const x1 = centerX + outerRadius * Math.cos(startAngle);
+    const y1 = centerY + outerRadius * Math.sin(startAngle);
+    const x2 = centerX + outerRadius * Math.cos(endAngle);
+    const y2 = centerY + outerRadius * Math.sin(endAngle);
+    
+    if (innerRadius === 0) {
+      return [
+        `M ${centerX} ${centerY}`,
+        `L ${x1} ${y1}`,
+        `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
+        `Z`,
+      ].join(" ");
+    } else {
+      const x3 = centerX + innerRadius * Math.cos(endAngle);
+      const y3 = centerY + innerRadius * Math.sin(endAngle);
+      const x4 = centerX + innerRadius * Math.cos(startAngle);
+      const y4 = centerY + innerRadius * Math.sin(startAngle);
       
-      if (innerRadius === 0) {
-        return [
-          `M ${centerX} ${centerY}`,
-          `L ${x1} ${y1}`,
-          `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
-          `Z`,
-        ].join(" ");
-      } else {
-        const x3 = centerX + innerRadius * Math.cos(endAngle);
-        const y3 = centerY + innerRadius * Math.sin(endAngle);
-        const x4 = centerX + innerRadius * Math.cos(startAngle);
-        const y4 = centerY + innerRadius * Math.sin(startAngle);
-        
-        return [
-          `M ${x1} ${y1}`,
-          `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
-          `L ${x3} ${y3}`,
-          `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}`,
+      return [
+        `M ${x1} ${y1}`,
+        `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
+        `L ${x3} ${y3}`,
+        `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}`,
           `Z`,
         ].join(" ");
       }

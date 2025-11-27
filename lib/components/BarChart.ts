@@ -1011,20 +1011,20 @@ export class BarChart extends Rectangle {
         const dataPoint = this.data?.[bar.index];
         if (!dataPoint) return;
         
-        const color = dataPoint.color ?? this.barColor;
-        const style = dataPoint.style ?? this.barStyle;
+      const color = dataPoint.color ?? this.barColor;
+      const style = dataPoint.style ?? this.barStyle;
 
-        const styleAttrs = styleToSVGAttributes({
-          fill: color,
-          stroke: "#424242",
-          strokeWidth: "1",
-          ...style,
-        });
+      const styleAttrs = styleToSVGAttributes({
+        fill: color,
+        stroke: "#424242",
+        strokeWidth: "1",
+        ...style,
+      });
 
-        const bounds = bar.bounds;
-        parts.push(
-          `<rect x="${bounds.x}" y="${bounds.y}" width="${bounds.width}" height="${bounds.height}" ${styleAttrs} />`
-        );
+      const bounds = bar.bounds;
+      parts.push(
+        `<rect x="${bounds.x}" y="${bounds.y}" width="${bounds.width}" height="${bounds.height}" ${styleAttrs} />`
+      );
       }
     });
 

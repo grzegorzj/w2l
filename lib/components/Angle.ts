@@ -37,7 +37,8 @@ export interface AngleFromIntersection {
   quadrant: AngleQuadrant;
   mode?: AngleMode;
   radius?: number;
-  label?: string;
+  label?: string | ((degrees: number) => string);
+  showDegrees?: boolean;
   labelFontSize?: number;
   labelDistance?: number;
   style?: Partial<Style>;
@@ -53,7 +54,8 @@ export interface AngleFromVertex {
   segments: [Side, Side];
   mode?: AngleMode;
   radius?: number;
-  label?: string;
+  label?: string | ((degrees: number) => string);
+  showDegrees?: boolean;
   labelFontSize?: number;
   labelDistance?: number;
   style?: Partial<Style>;
@@ -69,7 +71,8 @@ export interface AngleExplicit {
   startAngle: number;
   endAngle: number;
   radius?: number;
-  label?: string;
+  label?: string | ((degrees: number) => string);
+  showDegrees?: boolean;
   labelFontSize?: number;
   labelDistance?: number;
   style?: Partial<Style>;
@@ -93,7 +96,8 @@ interface ResolvedAngleConfig {
   startAngle: number;
   endAngle: number;
   radius: number;
-  label?: string;
+  label?: string | ((degrees: number) => string);
+  showDegrees?: boolean;
   labelFontSize: number;
   labelDistance: number;
   style?: Partial<Style>;
@@ -154,9 +158,10 @@ export class Angle extends Element {
     if (angleDiff < 0) angleDiff += 360;
     const isRightAngle = Math.abs(angleDiff - 90) < 1;
 
-    // Create label if specified (but skip for square marker on right angles)
+    // Create label if specified or if showDegrees is enabled
+    // (but skip for square marker on right angles)
     const shouldShowLabel =
-      this.resolved.label &&
+      (this.resolved.label || this.resolved.showDegrees !== false) &&
       !(isRightAngle && this.resolved.rightAngleMarker === "square");
 
     if (shouldShowLabel) {
@@ -183,6 +188,7 @@ export class Angle extends Element {
         {
           radius,
           label: config.label,
+          showDegrees: config.showDegrees,
           labelFontSize,
           labelDistance,
           style: config.style,
@@ -199,6 +205,7 @@ export class Angle extends Element {
         {
           radius,
           label: config.label,
+          showDegrees: config.showDegrees,
           labelFontSize,
           labelDistance,
           style: config.style,
@@ -215,6 +222,7 @@ export class Angle extends Element {
         endAngle: config.endAngle,
         radius,
         label: config.label,
+        showDegrees: config.showDegrees,
         labelFontSize,
         labelDistance,
         style: config.style,
@@ -230,6 +238,7 @@ export class Angle extends Element {
       endAngle: 90,
       radius,
       label: undefined,
+      showDegrees: undefined,
       labelFontSize,
       labelDistance,
       style: undefined,
@@ -279,25 +288,33 @@ export class Angle extends Element {
     const dir2 = { x: l2.end.x - l2.start.x, y: l2.end.y - l2.start.y };
 
     // Calculate angles of direction vectors (in degrees, SVG coordinate system)
-    const angle1 = (Math.atan2(dir1.y, dir1.x) * 180) / Math.PI;
-    const angle2 = (Math.atan2(dir2.y, dir2.x) * 180) / Math.PI;
+    let angle1 = (Math.atan2(dir1.y, dir1.x) * 180) / Math.PI;
+    let angle2 = (Math.atan2(dir2.y, dir2.x) * 180) / Math.PI;
 
-    // Get all 4 angles at the intersection (normalized to 0-360)
-    const angles = [
-      angle1, // Line 1, positive direction
-      (angle1 + 180) % 360, // Line 1, negative direction
-      angle2, // Line 2, positive direction
-      (angle2 + 180) % 360, // Line 2, negative direction
-    ].map((a) => ((a % 360) + 360) % 360);
+    // Normalize to 0-360
+    angle1 = ((angle1 % 360) + 360) % 360;
+    angle2 = ((angle2 % 360) + 360) % 360;
 
-    // Sort angles
-    const sortedAngles = [...angles].sort((a, b) => a - b);
+    // Get all 4 ray directions at the intersection
+    const ray1Forward = angle1;
+    const ray1Backward = (angle1 + 180) % 360;
+    const ray2Forward = angle2;
+    const ray2Backward = (angle2 + 180) % 360;
 
-    // Map quadrant to angle selection strategy
+    // Sort all 4 rays to identify the 4 angle regions
+    const sortedRays = [
+      ray1Forward,
+      ray1Backward,
+      ray2Forward,
+      ray2Backward,
+    ].sort((a, b) => a - b);
+
+    // Map each quadrant to a specific pair of adjacent rays
+    // The quadrant determines which of the 4 angles we want
     const { startAngle, endAngle } = this.selectAngleInQuadrant(
       vertex,
-      sortedAngles,
-      angles,
+      sortedRays,
+      { ray1Forward, ray1Backward, ray2Forward, ray2Backward },
       quadrant,
       mode
     );
@@ -312,55 +329,80 @@ export class Angle extends Element {
 
   /**
    * Selects the appropriate angle based on quadrant and mode.
+   *
+   * When two lines cross, they create 4 distinct angles at 4 distinct locations.
+   * We need to map each quadrant name to one of these 4 angles.
    */
   private selectAngleInQuadrant(
     vertex: Position,
-    sortedAngles: number[],
-    originalAngles: number[],
+    sortedRays: number[],
+    rays: {
+      ray1Forward: number;
+      ray1Backward: number;
+      ray2Forward: number;
+      ray2Backward: number;
+    },
     quadrant: AngleQuadrant,
     mode: AngleMode
   ): { startAngle: number; endAngle: number } {
-    // Determine quadrant center direction
-    const quadrantCenters: Record<AngleQuadrant, number> = {
-      "upper-right": 315, // -45° in screen coords (up-right)
-      "upper-left": 225, // -135° in screen coords (up-left)
-      "lower-left": 135, // 135° in screen coords (down-left)
-      "lower-right": 45, // 45° in screen coords (down-right)
+    // The 4 sorted rays create 4 angle regions
+    // We need to map each quadrant to one of these 4 regions
+
+    // Calculate the midpoint of each of the 4 angle regions
+    const regionMidpoints: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      const start = sortedRays[i];
+      const end = sortedRays[(i + 1) % 4];
+
+      let mid: number;
+      if (end > start) {
+        mid = (start + end) / 2;
+      } else {
+        // Wraparound case
+        mid = (start + (end + 360)) / 2;
+        if (mid >= 360) mid -= 360;
+      }
+      regionMidpoints.push(mid);
+    }
+
+    // Define which region each quadrant should use
+    // We map quadrants to the region whose midpoint is closest to the quadrant's ideal direction
+    const quadrantDirections: Record<AngleQuadrant, number> = {
+      "upper-right": 315, // -45° (up-right in screen coords)
+      "upper-left": 225, // -135° (up-left in screen coords)
+      "lower-left": 135, // 135° (down-left in screen coords)
+      "lower-right": 45, // 45° (down-right in screen coords)
     };
 
-    const targetDirection = quadrantCenters[quadrant];
+    const targetDirection = quadrantDirections[quadrant];
 
-    // Find the angle pair that contains the target direction
-    // The 4 angles divide the circle into 4 regions
-    for (let i = 0; i < sortedAngles.length; i++) {
-      const start = sortedAngles[i];
-      const end = sortedAngles[(i + 1) % sortedAngles.length];
+    // Find which region's midpoint is closest to the target direction
+    let bestRegionIndex = 0;
+    let smallestDiff = 360;
 
-      // Calculate if targetDirection is in this arc
-      let arcStart = start;
-      let arcEnd = end === 0 && i === sortedAngles.length - 1 ? 360 : end;
-      if (arcEnd < arcStart) arcEnd += 360;
+    for (let i = 0; i < regionMidpoints.length; i++) {
+      const mid = regionMidpoints[i];
 
-      let target = targetDirection;
-      if (target < arcStart) target += 360;
+      // Calculate angular difference (shortest path)
+      let diff = Math.abs(mid - targetDirection);
+      if (diff > 180) diff = 360 - diff;
 
-      if (target >= arcStart && target <= arcEnd) {
-        // This is the angle in the specified quadrant
-        let finalStart = start;
-        let finalEnd = end;
-
-        if (mode === "external") {
-          // Swap to get the reflex angle (go the other way)
-          finalStart = end;
-          finalEnd = start;
-        }
-
-        return { startAngle: finalStart, endAngle: finalEnd };
+      if (diff < smallestDiff) {
+        smallestDiff = diff;
+        bestRegionIndex = i;
       }
     }
 
-    // Fallback (shouldn't happen)
-    return { startAngle: sortedAngles[0], endAngle: sortedAngles[1] };
+    // Get the start and end rays for the selected region
+    const startAngle = sortedRays[bestRegionIndex];
+    const endAngle = sortedRays[(bestRegionIndex + 1) % 4];
+
+    if (mode === "external") {
+      // Swap to get the reflex angle (go the other way around)
+      return { startAngle: endAngle, endAngle: startAngle };
+    }
+
+    return { startAngle, endAngle };
   }
 
   /**
@@ -469,6 +511,8 @@ export class Angle extends Element {
       radius,
       labelDistance,
       labelFontSize,
+      label,
+      showDegrees,
     } = this.resolved;
 
     // Calculate the bisector angle
@@ -476,7 +520,29 @@ export class Angle extends Element {
     if (span < 0) span += 360;
     const midAngle = startAngle + span / 2;
 
-    // Convert to radians (negate for SVG's inverted Y-axis... actually no, keep as-is for SVG)
+    // Calculate angle in degrees
+    const angleDegrees = Math.round(span * 10) / 10; // Round to 1 decimal
+
+    // Determine label content
+    let labelContent: string;
+    if (typeof label === "function") {
+      const result = label(angleDegrees);
+      labelContent = String(result); // Ensure it's a string
+    } else if (typeof label === "string") {
+      labelContent = label;
+    } else if (showDegrees !== false) {
+      // Default: show degrees
+      labelContent = `${angleDegrees}°`;
+    } else {
+      labelContent = "";
+    }
+
+    // Don't create a label if content is empty
+    if (!labelContent) {
+      return new Text({ content: "", fontSize: labelFontSize });
+    }
+
+    // Convert to radians (for SVG coordinate system where +Y is down)
     const midRad = (midAngle * Math.PI) / 180;
 
     // Calculate label position along the bisector
@@ -484,20 +550,20 @@ export class Angle extends Element {
     const labelX = vertex.x + labelRadius * Math.cos(midRad);
     const labelY = vertex.y + labelRadius * Math.sin(midRad);
 
-    const label = new Text({
-      content: this.resolved.label!,
+    const textLabel = new Text({
+      content: labelContent,
       fontSize: labelFontSize,
     });
 
-    label.position({
+    textLabel.position({
       relativeTo: { x: labelX, y: labelY },
-      relativeFrom: label.center,
+      relativeFrom: textLabel.center,
       x: 0,
       y: 0,
       boxReference: "contentBox",
     });
 
-    return label;
+    return textLabel;
   }
 
   /**

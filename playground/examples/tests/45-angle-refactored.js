@@ -37,30 +37,32 @@ title1.position({
 });
 artboard.addElement(title1);
 
-// Create two crossing lines
+// Create two crossing lines at different angles
+// This creates 4 distinct angles in each quadrant
 const line1 = new Line({
-  start: { x: 150, y: section1Y + 50 },
-  end: { x: 350, y: section1Y + 150 },
+  start: { x: 120, y: section1Y + 100 },
+  end: { x: 380, y: section1Y + 100 },
   style: { stroke: "#333", strokeWidth: "2" },
 });
 
 const line2 = new Line({
-  start: { x: 150, y: section1Y + 150 },
-  end: { x: 350, y: section1Y + 50 },
+  start: { x: 160, y: section1Y + 30 },
+  end: { x: 340, y: section1Y + 170 },
   style: { stroke: "#333", strokeWidth: "2" },
 });
 
 artboard.addElement(line1);
 artboard.addElement(line2);
 
-// Mark all 4 quadrants
+// Mark all 4 quadrants - each will have a distinct angle
+// Using showDegrees: true to display computed angle values
 const angleUR = new Angle({
   from: "intersection",
   lines: [line1, line2],
   quadrant: "upper-right",
   mode: "internal",
-  label: "UR",
-  radius: 35,
+  label: (deg) => `UR: ${deg}°`,
+  radius: 40,
   style: { stroke: "#e74c3c", strokeWidth: "2" },
 });
 
@@ -69,8 +71,8 @@ const angleUL = new Angle({
   lines: [line1, line2],
   quadrant: "upper-left",
   mode: "internal",
-  label: "UL",
-  radius: 35,
+  label: (deg) => `UL: ${deg}°`,
+  radius: 50,
   style: { stroke: "#3498db", strokeWidth: "2" },
 });
 
@@ -79,8 +81,8 @@ const angleLL = new Angle({
   lines: [line1, line2],
   quadrant: "lower-left",
   mode: "internal",
-  label: "LL",
-  radius: 35,
+  label: (deg) => `LL: ${deg}°`,
+  radius: 50,
   style: { stroke: "#2ecc71", strokeWidth: "2" },
 });
 
@@ -89,8 +91,8 @@ const angleLR = new Angle({
   lines: [line1, line2],
   quadrant: "lower-right",
   mode: "internal",
-  label: "LR",
-  radius: 35,
+  label: (deg) => `LR: ${deg}°`,
+  radius: 40,
   style: { stroke: "#f39c12", strokeWidth: "2" },
 });
 
@@ -136,24 +138,24 @@ const line4 = new Line({
 artboard.addElement(line3);
 artboard.addElement(line4);
 
-// Internal angle (acute)
+// Internal angle (acute) - shows computed degrees
 const angleInternal = new Angle({
   from: "intersection",
   lines: [line3, line4],
   quadrant: "upper-right",
   mode: "internal",
-  label: "60°",
+  showDegrees: true, // Will automatically show degrees
   radius: 45,
   style: { stroke: "#9b59b6", strokeWidth: "2" },
 });
 
-// External angle (reflex)
+// External angle (reflex) - shows computed degrees
 const angleExternal = new Angle({
   from: "intersection",
   lines: [line3, line4],
   quadrant: "upper-right",
   mode: "external",
-  label: "300°",
+  showDegrees: true,
   radius: 60,
   style: { stroke: "#e67e22", strokeWidth: "2", strokeDasharray: "5,5" },
 });
