@@ -82,10 +82,13 @@ export {
   LineLayer,
   AreaLayer,
   ScatterLayer,
+  RadarChart,
   type ArrowConfig,
   type AngleConfig,
   type BarChartConfig,
   type BarChartDataPoint,
+  type BarSeries,
+  type BarSegment,
   type BarChartRemarkablePoint,
   type BarChartRemarkablePointType,
   type DonutChartConfig,
@@ -106,6 +109,10 @@ export {
   type ScatterLayerConfig,
   type BarLayerDataPoint,
   type LineLayerDataPoint,
+  type RadarChartConfig,
+  type RadarSeries,
+  type RadarChartRemarkablePoint,
+  type RadarChartRemarkablePointType,
 } from "./components/index.js";
 
 // Utils

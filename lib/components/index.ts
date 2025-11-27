@@ -49,4 +49,11 @@ export {
   type BarDataPoint as BarLayerDataPoint,
   type LineDataPoint as LineLayerDataPoint,
 } from "./ChartLayers.js";
+export {
+  RadarChart,
+  type RadarChartConfig,
+  type RadarSeries,
+  type RadarChartRemarkablePoint,
+  type RadarChartRemarkablePointType,
+} from "./RadarChart.js";
 
