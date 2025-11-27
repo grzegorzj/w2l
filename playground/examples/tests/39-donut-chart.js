@@ -450,8 +450,9 @@ const positionChart = new DonutChart({
   innerRadius: "45%",
   showLabels: false,
   detectRemarkablePoints: false,
-  startAngle: -90, // Start at top
+  startAngle: -135, // Start at -135° so midpoint of first slice is at -90° (top/North)
   colors: ["#e53935", "#fb8c00", "#43a047", "#1e88e5"],
+  cornerRadius: 8, // Add rounded corners
 });
 
 example5Container.addElement(positionChart);
@@ -497,7 +498,7 @@ positionChart.getAllSlices().forEach((slice, index) => {
   artboard.addElement(externalLabel);
   
   // Line from center to outer midpoint
-  const centerPos = positionChart.getCenterPosition();
+  const sliceCenterPos = positionChart.getCenterPosition();
   const line = new Line({
     start: { x: 0, y: 0 },
     end: { x: 0, y: 0 },
@@ -510,16 +511,50 @@ positionChart.getAllSlices().forEach((slice, index) => {
   
   line.position({
     relativeFrom: line.start,
-    relativeTo: centerPos,
+    relativeTo: sliceCenterPos,
     boxReference: "artboard",
     x: 0,
     y: 0,
   });
   
-  line.end.x = slice.outerMidpoint.x - centerPos.x;
-  line.end.y = slice.outerMidpoint.y - centerPos.y;
+  line.end.x = slice.outerMidpoint.x - sliceCenterPos.x;
+  line.end.y = slice.outerMidpoint.y - sliceCenterPos.y;
   
   artboard.addElement(line);
+});
+
+// Add markers at the actual cardinal directions (top, right, bottom, left)
+const chartCenter = positionChart.getCenterPosition();
+const outerRadius = 135; // Approximate outer radius
+
+const cardinalDirections = [
+  { angle: -90, label: "↑ Top", color: "#e53935" },
+  { angle: 0, label: "→ Right", color: "#fb8c00" },
+  { angle: 90, label: "↓ Bottom", color: "#43a047" },
+  { angle: 180, label: "← Left", color: "#1e88e5" },
+];
+
+cardinalDirections.forEach(({ angle, label, color }) => {
+  const angleRad = (angle * Math.PI) / 180;
+  const distance = outerRadius + 35;
+  
+  const marker = new Circle({
+    radius: 3,
+    style: {
+      fill: color,
+      stroke: "none",
+    },
+  });
+  
+  marker.position({
+    relativeFrom: marker.center,
+    relativeTo: chartCenter,
+    boxReference: "artboard",
+    x: distance * Math.cos(angleRad),
+    y: distance * Math.sin(angleRad),
+  });
+  
+  artboard.addElement(marker);
 });
 
 return artboard.render();

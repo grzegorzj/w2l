@@ -205,6 +205,9 @@ export interface DonutChartConfig {
   /** Whether to automatically detect and track remarkable points */
   detectRemarkablePoints?: boolean;
   
+  /** Corner radius for rounded slice corners (0 = sharp corners) */
+  cornerRadius?: number;
+  
   /** Box model configuration */
   boxModel?: BoxModel;
   
@@ -222,8 +225,9 @@ export interface DonutChartConfig {
  * - Retrieve slice data for highlighting
  */
 export class DonutChart extends Rectangle {
-  private config: Required<Omit<DonutChartConfig, "boxModel" | "style" | "innerRadius">> & {
+  private config: Required<Omit<DonutChartConfig, "boxModel" | "style" | "innerRadius" | "cornerRadius">> & {
     innerRadius: number | string;
+    cornerRadius: number;
   };
   private slices: DonutSlice[] = [];
   private remarkablePoints: DonutChartRemarkablePoint[] = [];
@@ -247,6 +251,7 @@ export class DonutChart extends Rectangle {
       sliceStyle = {},
       labelStyle = {},
       detectRemarkablePoints = true,
+      cornerRadius = 0,
     } = config;
 
     super(width, height, boxModel, style);
@@ -263,6 +268,7 @@ export class DonutChart extends Rectangle {
       sliceStyle,
       labelStyle,
       detectRemarkablePoints,
+      cornerRadius,
     };
 
     this.calculateSlices();
@@ -437,12 +443,13 @@ export class DonutChart extends Rectangle {
   }
 
   /**
-   * Generate SVG path for a donut/pie slice.
+   * Generate SVG path for a donut/pie slice with optional rounded corners.
    */
   private generateSlicePath(slice: DonutSlice): string {
     const centerX = this.config.width / 2;
     const centerY = this.config.height / 2;
     const outerRadius = Math.min(centerX, centerY) * 0.9;
+    const cornerRadius = Math.min(this.config.cornerRadius, outerRadius * 0.2); // Cap at 20% of radius
     
     let innerRadius = 0;
     if (typeof this.config.innerRadius === "string" && this.config.innerRadius.endsWith("%")) {
@@ -453,35 +460,121 @@ export class DonutChart extends Rectangle {
     }
 
     const { startAngle, endAngle } = slice;
-    
-    // Calculate points
-    const x1 = centerX + outerRadius * Math.cos(startAngle);
-    const y1 = centerY + outerRadius * Math.sin(startAngle);
-    const x2 = centerX + outerRadius * Math.cos(endAngle);
-    const y2 = centerY + outerRadius * Math.sin(endAngle);
-    
     const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
     
+    // If no corner radius or very small, use sharp corners
+    if (cornerRadius < 0.5) {
+      const x1 = centerX + outerRadius * Math.cos(startAngle);
+      const y1 = centerY + outerRadius * Math.sin(startAngle);
+      const x2 = centerX + outerRadius * Math.cos(endAngle);
+      const y2 = centerY + outerRadius * Math.sin(endAngle);
+      
+      if (innerRadius === 0) {
+        return [
+          `M ${centerX} ${centerY}`,
+          `L ${x1} ${y1}`,
+          `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
+          `Z`,
+        ].join(" ");
+      } else {
+        const x3 = centerX + innerRadius * Math.cos(endAngle);
+        const y3 = centerY + innerRadius * Math.sin(endAngle);
+        const x4 = centerX + innerRadius * Math.cos(startAngle);
+        const y4 = centerY + innerRadius * Math.sin(startAngle);
+        
+        return [
+          `M ${x1} ${y1}`,
+          `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
+          `L ${x3} ${y3}`,
+          `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}`,
+          `Z`,
+        ].join(" ");
+      }
+    }
+    
+    // WITH ROUNDED CORNERS - adjust the path to include rounded corners
+    // For a donut, we have 4 corners to round
+    
     if (innerRadius === 0) {
-      // Pie chart (no hole)
+      // Pie chart - only round the two outer corners
+      // Calculate the angle offset needed for the corner radius
+      const angleOffset = cornerRadius / outerRadius;
+      
+      const x1 = centerX + outerRadius * Math.cos(startAngle + angleOffset);
+      const y1 = centerY + outerRadius * Math.sin(startAngle + angleOffset);
+      const x2 = centerX + outerRadius * Math.cos(endAngle - angleOffset);
+      const y2 = centerY + outerRadius * Math.sin(endAngle - angleOffset);
+      
+      // Corner start point (inset from outer arc start)
+      const cx1 = centerX + (outerRadius - cornerRadius) * Math.cos(startAngle);
+      const cy1 = centerY + (outerRadius - cornerRadius) * Math.sin(startAngle);
+      
+      // Corner end point (inset from outer arc end)
+      const cx2 = centerX + (outerRadius - cornerRadius) * Math.cos(endAngle);
+      const cy2 = centerY + (outerRadius - cornerRadius) * Math.sin(endAngle);
+      
       return [
         `M ${centerX} ${centerY}`,
-        `L ${x1} ${y1}`,
+        `L ${cx1} ${cy1}`,
+        `Q ${centerX + outerRadius * Math.cos(startAngle)} ${centerY + outerRadius * Math.sin(startAngle)} ${x1} ${y1}`,
         `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
+        `Q ${centerX + outerRadius * Math.cos(endAngle)} ${centerY + outerRadius * Math.sin(endAngle)} ${cx2} ${cy2}`,
         `Z`,
       ].join(" ");
     } else {
-      // Donut chart (with hole)
-      const x3 = centerX + innerRadius * Math.cos(endAngle);
-      const y3 = centerY + innerRadius * Math.sin(endAngle);
-      const x4 = centerX + innerRadius * Math.cos(startAngle);
-      const y4 = centerY + innerRadius * Math.sin(startAngle);
+      // Donut chart - round all 4 corners
+      const angleOffset = cornerRadius / outerRadius;
+      const innerAngleOffset = cornerRadius / innerRadius;
+      
+      // Outer arc points (with angle offset for rounding)
+      const ox1 = centerX + outerRadius * Math.cos(startAngle + angleOffset);
+      const oy1 = centerY + outerRadius * Math.sin(startAngle + angleOffset);
+      const ox2 = centerX + outerRadius * Math.cos(endAngle - angleOffset);
+      const oy2 = centerY + outerRadius * Math.sin(endAngle - angleOffset);
+      
+      // Inner arc points (with angle offset for rounding)
+      const ix1 = centerX + innerRadius * Math.cos(startAngle + innerAngleOffset);
+      const iy1 = centerY + innerRadius * Math.sin(startAngle + innerAngleOffset);
+      const ix2 = centerX + innerRadius * Math.cos(endAngle - innerAngleOffset);
+      const iy2 = centerY + innerRadius * Math.sin(endAngle - innerAngleOffset);
+      
+      // Corner control points
+      const outerStartCorner = { 
+        x: centerX + (outerRadius - cornerRadius) * Math.cos(startAngle),
+        y: centerY + (outerRadius - cornerRadius) * Math.sin(startAngle)
+      };
+      const outerEndCorner = { 
+        x: centerX + (outerRadius - cornerRadius) * Math.cos(endAngle),
+        y: centerY + (outerRadius - cornerRadius) * Math.sin(endAngle)
+      };
+      const innerEndCorner = { 
+        x: centerX + (innerRadius + cornerRadius) * Math.cos(endAngle),
+        y: centerY + (innerRadius + cornerRadius) * Math.sin(endAngle)
+      };
+      const innerStartCorner = { 
+        x: centerX + (innerRadius + cornerRadius) * Math.cos(startAngle),
+        y: centerY + (innerRadius + cornerRadius) * Math.sin(startAngle)
+      };
       
       return [
-        `M ${x1} ${y1}`,
-        `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
-        `L ${x3} ${y3}`,
-        `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}`,
+        // Start at outer arc start (after rounding)
+        `M ${ox1} ${oy1}`,
+        // Outer arc
+        `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${ox2} ${oy2}`,
+        // Round corner from outer to side edge
+        `Q ${centerX + outerRadius * Math.cos(endAngle)} ${centerY + outerRadius * Math.sin(endAngle)} ${outerEndCorner.x} ${outerEndCorner.y}`,
+        // Side edge to inner arc
+        `L ${innerEndCorner.x} ${innerEndCorner.y}`,
+        // Round corner onto inner arc
+        `Q ${centerX + innerRadius * Math.cos(endAngle)} ${centerY + innerRadius * Math.sin(endAngle)} ${ix2} ${iy2}`,
+        // Inner arc (reverse direction)
+        `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${ix1} ${iy1}`,
+        // Round corner from inner to side edge
+        `Q ${centerX + innerRadius * Math.cos(startAngle)} ${centerY + innerRadius * Math.sin(startAngle)} ${innerStartCorner.x} ${innerStartCorner.y}`,
+        // Side edge back to outer arc
+        `L ${outerStartCorner.x} ${outerStartCorner.y}`,
+        // Round corner onto outer arc
+        `Q ${centerX + outerRadius * Math.cos(startAngle)} ${centerY + outerRadius * Math.sin(startAngle)} ${ox1} ${oy1}`,
         `Z`,
       ].join(" ");
     }
