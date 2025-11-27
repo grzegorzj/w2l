@@ -8,7 +8,7 @@ export {
   BarChart,
   Bar,
   type BarChartConfig,
-  type BarDataPoint,
+  type BarDataPoint as BarChartDataPoint,
   type BarChartRemarkablePoint,
   type BarChartRemarkablePointType,
 } from "./BarChart.js";
@@ -25,8 +25,26 @@ export {
   DataPoint,
   type LineChartConfig,
   type LineSeries,
-  type LineDataPoint,
+  type LineDataPoint as LineChartDataPoint,
   type LineChartRemarkablePoint,
   type LineChartRemarkablePointType,
 } from "./LineChart.js";
+export {
+  Chart,
+  type ChartConfig,
+  type ChartLayer,
+  type ChartContext,
+} from "./Chart.js";
+export {
+  BarLayer,
+  LineLayer,
+  AreaLayer,
+  ScatterLayer,
+  type BarLayerConfig,
+  type LineLayerConfig,
+  type AreaLayerConfig,
+  type ScatterLayerConfig,
+  type BarDataPoint as BarLayerDataPoint,
+  type LineDataPoint as LineLayerDataPoint,
+} from "./ChartLayers.js";
 
