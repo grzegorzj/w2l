@@ -131,16 +131,35 @@ const function2Text = new Latex({
 
 graphContainer.addElement(function2Text);
 
-// The actual graph with shaded region
+// Define the functions once (DRY principle)
+const parabola = (x) => -x * x + 4;
+const line = (x) => x - 2;
+
+// Create a temporary graph just to find intersections
+const tempGraph = new FunctionGraph({
+  functions: [
+    { fn: parabola },
+    { fn: line },
+  ],
+  width: 1,
+  height: 1,
+  domain: [-4, 4],
+});
+
+// Find intersection points automatically using the library
+const intersections = tempGraph.findIntersections(0, 1);
+const intersectionXs = intersections.map(p => p.x).sort((a, b) => a - b);
+
+// Now create the actual graph with the computed intersection domain
 const functionGraph = new FunctionGraph({
   functions: [
     {
-      fn: (x) => -x * x + 4,  // Function 0: parabola
+      fn: parabola,
       color: "#d32f2f",
       strokeWidth: 3,
     },
     {
-      fn: (x) => x - 2,  // Function 1: line
+      fn: line,
       color: "#1976d2",
       strokeWidth: 3,
     },
@@ -160,21 +179,44 @@ const functionGraph = new FunctionGraph({
     strokeWidth: 1,
   },
   
-  // Shade the region between the two functions
-  shadedRegions: [
+  // Use the automatically computed intersection points for the shaded region
+  shadedRegions: intersectionXs.length >= 2 ? [
     {
       topFunction: 0,  // Parabola is on top
       bottomFunction: 1,  // Line is on bottom
-      domain: [-3, 2],  // Between intersection points
+      domain: [intersectionXs[0], intersectionXs[1]],  // Computed, not hardcoded!
       style: {
         fill: "#ffd54f",
         fillOpacity: 0.25,
       },
     },
-  ],
+  ] : [],
 });
 
 graphContainer.addElement(functionGraph);
+
+// Mark the intersection points on the graph
+intersections.forEach((point, index) => {
+  const marker = new Circle({
+    radius: 6,
+    style: {
+      fill: "#ff5722",
+      stroke: "#d84315",
+      strokeWidth: 2,
+    },
+  });
+  
+  const pos = functionGraph.mathToAbsolutePosition(point.x, point.y);
+  marker.position({
+    relativeFrom: marker.center,
+    relativeTo: pos,
+    boxReference: "artboard",
+    x: 0,
+    y: 0,
+  });
+  
+  artboard.addElement(marker);
+});
 
 // Graph labels
 const graphLabel = new Text({

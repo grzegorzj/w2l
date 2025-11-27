@@ -893,6 +893,133 @@ export class FunctionGraph extends Rectangle {
   }
 
   /**
+   * Find intersection points between two functions.
+   * Uses numerical methods to detect where f1(x) = f2(x).
+   * 
+   * @param functionIndex1 - Index of first function
+   * @param functionIndex2 - Index of second function
+   * @param tolerance - Tolerance for considering two values equal (default: 1e-6)
+   * @returns Array of intersection points with x and y coordinates
+   * 
+   * @example
+   * ```typescript
+   * const graph = new FunctionGraph({
+   *   functions: [
+   *     { fn: (x) => -x * x + 4 },  // Parabola
+   *     { fn: (x) => x - 2 },        // Line
+   *   ],
+   *   // ...
+   * });
+   * 
+   * const intersections = graph.findIntersections(0, 1);
+   * // Returns: [{ x: -3, y: -5 }, { x: 2, y: 0 }]
+   * ```
+   */
+  public findIntersections(
+    functionIndex1: number,
+    functionIndex2: number,
+    tolerance: number = 1e-6
+  ): Array<{ x: number; y: number }> {
+    const funcs = Array.isArray(this.functions) ? this.functions : [this.functions];
+    
+    if (functionIndex1 >= funcs.length || functionIndex2 >= funcs.length) {
+      console.warn(`Function indices out of bounds`);
+      return [];
+    }
+
+    const f1 = funcs[functionIndex1].fn;
+    const f2 = funcs[functionIndex2].fn;
+    
+    const intersections: Array<{ x: number; y: number }> = [];
+    const step = (this.domain[1] - this.domain[0]) / this.samples;
+    
+    // Scan for sign changes in (f1 - f2)
+    let prevX = this.domain[0];
+    let prevDiff = f1(prevX) - f2(prevX);
+    
+    for (let x = this.domain[0] + step; x <= this.domain[1]; x += step) {
+      const diff = f1(x) - f2(x);
+      
+      // Skip if either value is not finite
+      if (!isFinite(diff) || !isFinite(prevDiff)) {
+        prevX = x;
+        prevDiff = diff;
+        continue;
+      }
+      
+      // Check for sign change or very close to zero
+      if (Math.abs(diff) < tolerance) {
+        // Direct hit - functions are very close
+        const y = (f1(x) + f2(x)) / 2; // Average for stability
+        intersections.push({ x, y });
+        // Skip ahead to avoid duplicate detections
+        x += step * 2;
+        prevX = x;
+        prevDiff = f1(x) - f2(x);
+        continue;
+      }
+      
+      if (Math.sign(diff) !== Math.sign(prevDiff)) {
+        // Sign change detected - refine using bisection
+        const refined = this.bisectIntersection(f1, f2, prevX, x, tolerance);
+        if (refined) {
+          // Check if this is not a duplicate (too close to previous intersection)
+          const isDuplicate = intersections.some(
+            (p) => Math.abs(p.x - refined.x) < step / 2
+          );
+          if (!isDuplicate) {
+            intersections.push(refined);
+          }
+        }
+      }
+      
+      prevX = x;
+      prevDiff = diff;
+    }
+    
+    return intersections;
+  }
+
+  /**
+   * Use bisection method to refine an intersection point.
+   * @private
+   */
+  private bisectIntersection(
+    f1: (x: number) => number,
+    f2: (x: number) => number,
+    xLeft: number,
+    xRight: number,
+    tolerance: number,
+    maxIterations: number = 50
+  ): { x: number; y: number } | null {
+    let left = xLeft;
+    let right = xRight;
+    
+    for (let i = 0; i < maxIterations; i++) {
+      const mid = (left + right) / 2;
+      const diff = f1(mid) - f2(mid);
+      
+      if (Math.abs(diff) < tolerance || Math.abs(right - left) < tolerance) {
+        const y = (f1(mid) + f2(mid)) / 2;
+        return { x: mid, y };
+      }
+      
+      const leftDiff = f1(left) - f2(left);
+      
+      if (Math.sign(diff) === Math.sign(leftDiff)) {
+        left = mid;
+      } else {
+        right = mid;
+      }
+    }
+    
+    // Return best estimate even if not converged
+    const x = (left + right) / 2;
+    const y = (f1(x) + f2(x)) / 2;
+    return { x, y };
+  }
+
+  /**
    * Sample a function and return path data points.
    */
   private sampleFunction(
