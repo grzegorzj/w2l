@@ -150,5 +150,13 @@
   "38-text-positioning-debug.js": {
     "status": "passed",
     "timestamp": "2025-11-27T01:58:42.025Z"
+  },
+  "39-donut-chart.js": {
+    "status": "pending",
+    "timestamp": "2025-11-27T02:32:00.425Z"
+  },
+  "40-line-chart.js": {
+    "status": "pending",
+    "timestamp": "2025-11-27T02:32:00.430Z"
   }
 }
