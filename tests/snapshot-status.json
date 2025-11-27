@@ -97,7 +97,7 @@
   },
   "20-quadrilaterals-and-external-angles.js": {
     "status": "passed",
-    "timestamp": "2025-11-27T07:00:23.181Z"
+    "timestamp": "2025-11-27T08:16:24.649Z"
   },
   "21-angle-debugging.js": {
     "status": "passed",
@@ -190,5 +190,13 @@
   "48-debug-angle.js": {
     "status": "pending",
     "timestamp": "2025-11-27T08:11:11.767Z"
+  },
+  "50-textarea-wrapping.js": {
+    "status": "passed",
+    "timestamp": "2025-11-27T09:45:42.242Z"
+  },
+  "51-textarea-highlights-latex.js": {
+    "status": "pending",
+    "timestamp": "2025-11-27T09:45:33.170Z"
   }
 }

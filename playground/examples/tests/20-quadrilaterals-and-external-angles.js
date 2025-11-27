@@ -1,8 +1,9 @@
 /**
  * Example demonstrating quadrilaterals with external angle markings
+ * using the new showAngle() and showAngles() API
  */
 
-import { Artboard, Quadrilateral, Angle, Text } from "w2l";
+import { Artboard, Quadrilateral, Text } from "w2l";
 
 // Create artboard
 const artboard = new Artboard({
@@ -31,21 +32,17 @@ parallelogram.position({
 const paraVertexLabels = parallelogram.createVertexLabels(["$A$", "$B$", "$C$", "$D$"]);
 const paraSideLabels = parallelogram.createSideLabels(["$a$", "$b$", "$c$", "$d$"]);
 
-// External angles using figure API
-const paraExtAngle0 = new Angle({
-  figure: parallelogram,
-  vertexIndex: 0,
-  type: 'outward',
+// External angles using new showAngle() API
+const paraExtAngle0 = parallelogram.showAngle(0, {
+  mode: 'external',
   radius: 40,
   label: "α",
   labelFontSize: 16,
   style: { stroke: "#d32f2f", strokeWidth: "2" },
 });
 
-const paraExtAngle1 = new Angle({
-  figure: parallelogram,
-  vertexIndex: 1,
-  type: 'outward',
+const paraExtAngle1 = parallelogram.showAngle(1, {
+  mode: 'external',
   radius: 40,
   label: "β",
   labelFontSize: 16,
@@ -79,25 +76,20 @@ trapezoid.position({
 const trapVertexLabels = trapezoid.createVertexLabels(["$P$", "$Q$", "$R$", "$S$"]);
 const trapSideLabels = trapezoid.createSideLabels(["$p$", "$q$", "$r$", "$s$"]);
 
-// External angles at all four vertices
-const trapAngleLabels = ["γ", "δ", "ε", "ζ"];
-for (let i = 0; i < 4; i++) {
-  const angle = new Angle({
-    figure: trapezoid,
-    vertexIndex: i,
-    type: 'outward',
-    radius: 35,
-    label: trapAngleLabels[i],
-    labelFontSize: 16,
-    style: { stroke: "#f57c00", strokeWidth: "1.5" },
-  });
-  artboard.addElement(angle);
-}
+// External angles at all four vertices using new showAngles() API
+const trapAngles = trapezoid.showAngles({
+  mode: 'external',
+  labels: ["γ", "δ", "ε", "ζ"],
+  radius: 35,
+  labelFontSize: 16,
+  style: { stroke: "#f57c00", strokeWidth: "1.5" },
+});
 
 // Add other elements
 artboard.addElement(trapezoid);
 trapVertexLabels.forEach((label) => artboard.addElement(label));
 trapSideLabels.forEach((label) => artboard.addElement(label));
+trapAngles.forEach((angle) => artboard.addElement(angle));
 
 // Example 3: Rhombus with acute external angles
 const rhombus = new Quadrilateral({
@@ -118,21 +110,17 @@ rhombus.position({
 const rhombusVertexLabels = rhombus.createVertexLabels(["$W$", "$X$", "$Y$", "$Z$"]);
 const rhombusSideLabels = rhombus.createSideLabels(["$s$", "$s$", "$s$", "$s$"]);
 
-// Mark two opposite external angles
-const rhombusExtAngle1 = new Angle({
-  figure: rhombus,
-  vertexIndex: 1,
-  type: 'outward',
+// Mark two opposite external angles using new showAngle() API
+const rhombusExtAngle1 = rhombus.showAngle(1, {
+  mode: 'external',
   radius: 40,
   label: "η",
   labelFontSize: 16,
   style: { stroke: "#7b1fa2", strokeWidth: "2" },
 });
 
-const rhombusExtAngle3 = new Angle({
-  figure: rhombus,
-  vertexIndex: 3,
-  type: 'outward',
+const rhombusExtAngle3 = rhombus.showAngle(3, {
+  mode: 'external',
   radius: 40,
   label: "θ",
   labelFontSize: 16,
@@ -165,21 +153,18 @@ rectangle.position({
 const rectVertexLabels = rectangle.createVertexLabels(["$M$", "$N$", "$O$", "$P$"]);
 const rectSideLabels = rectangle.createSideLabels(["$w$", "$h$", "$w$", "$h$"]);
 
-// Mark all internal right angles with square markers
-for (let i = 0; i < 4; i++) {
-  const angle = new Angle({
-    figure: rectangle,
-    vertexIndex: i,
-    type: 'inward',
-    radius: 25,
-    style: { stroke: "#388e3c", strokeWidth: "2" },
-  });
-  artboard.addElement(angle);
-}
+// Mark all internal right angles with square markers using new showAngles() API
+const rectAngles = rectangle.showAngles({
+  mode: 'internal',
+  radius: 25,
+  rightAngleMarker: 'square',
+  style: { stroke: "#388e3c", strokeWidth: "2" },
+});
 
 // Add other elements
 artboard.addElement(rectangle);
 rectVertexLabels.forEach((label) => artboard.addElement(label));
 rectSideLabels.forEach((label) => artboard.addElement(label));
+rectAngles.forEach((angle) => artboard.addElement(angle));
 
 return artboard.render();

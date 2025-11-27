@@ -11,6 +11,7 @@ export { Quadrilateral, type QuadrilateralConfig, type QuadrilateralType, type Q
 export { Line, type LineConfig, type LineLabelConfig } from "./Line.js";
 export { RegularPolygon, type RegularPolygonConfig } from "./RegularPolygon.js";
 export { Text, type TextConfig, type AnnotatedTextElement, type MixedTextPartBoundingBox } from "./Text.js";
+export { TextArea, type TextAreaConfig, type HighlightedWord } from "./TextArea.js";
 export { Latex, type LatexConfig, type AnnotatedLatexElement, type LatexPartBoundingBox } from "./Latex.js";
 export { FunctionGraph, type FunctionGraphConfig, type PlottedFunction, type RemarkablePoint, type RemarkablePointType, type GraphAxis, type ShadedRegion } from "./FunctionGraph.js";
 export { Side, type SideConfig, type SideLabelConfig } from "./Side.js";
