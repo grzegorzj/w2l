@@ -196,7 +196,11 @@
     "timestamp": "2025-11-27T09:45:42.242Z"
   },
   "51-textarea-highlights-latex.js": {
-    "status": "pending",
-    "timestamp": "2025-11-27T09:45:33.170Z"
+    "status": "passed",
+    "timestamp": "2025-11-27T21:38:26.510Z"
+  },
+  "52-textarea-tall-latex.js": {
+    "status": "passed",
+    "timestamp": "2025-11-27T22:12:10.147Z"
   }
 }

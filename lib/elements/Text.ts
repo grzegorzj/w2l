@@ -330,8 +330,24 @@ export class Text extends Shape {
             if (viewBox) {
               const [minX, minY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
               const scale = this._fontSize / MATHJAX_UNITS_PER_EM;
+              const scaledHeight = vbHeight * scale;
               svg.setAttribute('width', `${vbWidth * scale}px`);
-              svg.setAttribute('height', `${vbHeight * scale}px`);
+              svg.setAttribute('height', `${scaledHeight}px`);
+              
+              // Adjust vertical-align for tall LaTeX (taller than normal line height)
+              const normalHeight = this._fontSize * this._lineHeight;
+              if (scaledHeight > normalHeight) {
+                // For tall LaTeX, use a less aggressive vertical-align
+                // Change from -1.575ex to -1.3ex for better visual centering
+                const currentStyle = svg.getAttribute('style') || '';
+                const adjustedStyle = currentStyle.replace(/vertical-align:\s*-?[\d.]+ex/, 'vertical-align: -1.3ex');
+                if (adjustedStyle !== currentStyle) {
+                  svg.setAttribute('style', adjustedStyle);
+                } else {
+                  // If no existing vertical-align, add it
+                  svg.setAttribute('style', currentStyle + '; vertical-align: -1.3ex');
+                }
+              }
             }
 
             this._renderedLatexSegments.set(segment.index, svg.outerHTML);
