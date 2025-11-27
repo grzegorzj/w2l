@@ -9,6 +9,8 @@ export {
   Bar,
   type BarChartConfig,
   type BarDataPoint as BarChartDataPoint,
+  type BarSeries,
+  type BarSegment,
   type BarChartRemarkablePoint,
   type BarChartRemarkablePointType,
 } from "./BarChart.js";

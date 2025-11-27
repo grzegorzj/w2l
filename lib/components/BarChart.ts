@@ -28,6 +28,20 @@ export interface BarDataPoint {
 }
 
 /**
+ * A data series for stacked or grouped bar charts.
+ */
+export interface BarSeries {
+  /** Name/label of this series */
+  name: string;
+  /** Data values (one per category) */
+  data: number[];
+  /** Optional color for this series */
+  color?: string;
+  /** Optional style for this series */
+  style?: Partial<Style>;
+}
+
+/**
  * Types of remarkable points in a bar chart.
  */
 export type BarChartRemarkablePointType =
@@ -53,6 +67,20 @@ export interface BarChartRemarkablePoint {
 }
 
 /**
+ * Represents a segment of a stacked bar.
+ */
+export interface BarSegment {
+  /** Series name */
+  seriesName: string;
+  /** Value of this segment */
+  value: number;
+  /** Color of this segment */
+  color: string;
+  /** Bounds of this segment */
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
+/**
  * Represents a single bar in the chart with position accessors.
  * Provides the same position API as other elements (topLeft, center, etc.).
  */
@@ -61,8 +89,10 @@ export class Bar {
   public readonly index: number;
   /** Label */
   public readonly label: string;
-  /** Value */
+  /** Value (total value for stacked bars) */
   public readonly value: number;
+  /** Segments (for stacked bars) */
+  public readonly segments?: BarSegment[];
   
   private _bounds: {
     x: number;
@@ -78,13 +108,15 @@ export class Bar {
     label: string,
     value: number,
     bounds: { x: number; y: number; width: number; height: number },
-    chart: BarChart
+    chart: BarChart,
+    segments?: BarSegment[]
   ) {
     this.index = index;
     this.label = label;
     this.value = value;
     this._bounds = bounds;
     this._chart = chart;
+    this.segments = segments;
   }
 
   /**
@@ -200,9 +232,28 @@ export class Bar {
  */
 export interface BarChartConfig {
   /**
-   * Data points to display.
+   * Data points to display (for simple bar charts).
+   * Ignored if `series` and `categories` are provided.
    */
-  data: BarDataPoint[];
+  data?: BarDataPoint[];
+
+  /**
+   * Multiple data series for stacked or grouped bar charts.
+   * If provided, `data` is ignored.
+   */
+  series?: BarSeries[];
+
+  /**
+   * Category labels for each bar position (required when using `series`).
+   */
+  categories?: string[];
+
+  /**
+   * Whether to stack bars on top of each other.
+   * Only applies when using `series`.
+   * @default false
+   */
+  stacked?: boolean;
 
   /**
    * Orientation of the bars.
@@ -321,7 +372,10 @@ export interface BarChartConfig {
  * BarChart component for creating vertical or horizontal bar charts.
  */
 export class BarChart extends Rectangle {
-  private data: BarDataPoint[];
+  private data?: BarDataPoint[];
+  private series?: BarSeries[];
+  private categories?: string[];
+  private stacked: boolean;
   private orientation: "vertical" | "horizontal";
   private minValue: number;
   private maxValue: number;
@@ -357,6 +411,9 @@ export class BarChart extends Rectangle {
       style = {},
       boxModel,
       data,
+      series,
+      categories,
+      stacked = false,
       orientation = "vertical",
       minValue,
       maxValue,
@@ -374,6 +431,14 @@ export class BarChart extends Rectangle {
       remarkablePointStyle = {},
     } = config;
 
+    // Validate configuration
+    if (series && !categories) {
+      throw new Error("BarChart: categories are required when using series");
+    }
+    if (!series && !data) {
+      throw new Error("BarChart: either data or series must be provided");
+    }
+
     // Create rectangle for the chart area
     super(
       width,
@@ -388,6 +453,9 @@ export class BarChart extends Rectangle {
     );
 
     this.data = data;
+    this.series = series;
+    this.categories = categories;
+    this.stacked = stacked;
     this.orientation = orientation;
     this.barSpacing = barSpacing;
     this.chartPadding = {
@@ -419,9 +487,38 @@ export class BarChart extends Rectangle {
     this.plotAreaY = this.chartPadding.top;
 
     // Determine value range
-    const values = data.map((d) => d.value);
-    const dataMin = Math.min(...values);
-    const dataMax = Math.max(...values);
+    let dataMin: number;
+    let dataMax: number;
+
+    if (this.series && this.categories) {
+      // For series data
+      const allValues = this.series.flatMap(s => s.data);
+      
+      if (this.stacked) {
+        // For stacked bars, calculate sum for each category
+        const sums: number[] = [];
+        for (let i = 0; i < this.categories.length; i++) {
+          let sum = 0;
+          for (const s of this.series) {
+            sum += s.data[i] ?? 0;
+          }
+          sums.push(sum);
+        }
+        dataMin = Math.min(...allValues, ...sums);
+        dataMax = Math.max(...sums);
+      } else {
+        // For grouped bars
+        dataMin = Math.min(...allValues);
+        dataMax = Math.max(...allValues);
+      }
+    } else if (this.data) {
+      // For simple data
+      const values = this.data.map((d) => d.value);
+      dataMin = Math.min(...values);
+      dataMax = Math.max(...values);
+    } else {
+      throw new Error("BarChart: No data provided");
+    }
 
     this.minValue = minValue ?? Math.min(0, dataMin);
     this.maxValue =
@@ -441,6 +538,26 @@ export class BarChart extends Rectangle {
    */
   private calculateBars(): void {
     this.bars = [];
+
+    if (this.series && this.categories && this.stacked) {
+      // STACKED BARS
+      this.calculateStackedBars();
+    } else if (this.series && this.categories && !this.stacked) {
+      // GROUPED BARS (not yet implemented, fall back to simple)
+      console.warn("BarChart: Grouped bars not yet implemented, using simple bars");
+      this.calculateSimpleBars();
+    } else if (this.data) {
+      // SIMPLE BARS
+      this.calculateSimpleBars();
+    }
+  }
+
+  /**
+   * Calculate simple (non-stacked) bars.
+   */
+  private calculateSimpleBars(): void {
+    if (!this.data) return;
+    
     const n = this.data.length;
 
     if (this.orientation === "vertical") {
@@ -504,10 +621,144 @@ export class BarChart extends Rectangle {
   }
 
   /**
+   * Calculate stacked bars from series data.
+   */
+  private calculateStackedBars(): void {
+    if (!this.series || !this.categories) return;
+
+    const n = this.categories.length;
+    const colorPalette = [
+      "#2196f3", "#4caf50", "#ff9800", "#f44336", 
+      "#9c27b0", "#00bcd4", "#ffeb3b", "#795548"
+    ];
+
+    if (this.orientation === "vertical") {
+      // Vertical stacked bars
+      const totalSpacing = (n + 1) * this.barSpacing;
+      const barWidth = this.plotAreaWidth / (n + totalSpacing);
+      const spacing = barWidth * this.barSpacing;
+
+      for (let i = 0; i < n; i++) {
+        const category = this.categories[i];
+        const x = this.plotAreaX + spacing + i * (barWidth + spacing);
+        
+        let cumulativeValue = 0;
+        let cumulativeY = this.plotAreaY + this.plotAreaHeight;
+        const segments: BarSegment[] = [];
+
+        // Stack segments from bottom to top
+        for (let j = 0; j < this.series.length; j++) {
+          const series = this.series[j];
+          const value = series.data[i] ?? 0;
+          const color = series.color ?? colorPalette[j % colorPalette.length];
+          
+          const normalizedValue = (value - this.minValue) / (this.maxValue - this.minValue);
+          const segmentHeight = normalizedValue * this.plotAreaHeight;
+          const segmentY = cumulativeY - segmentHeight;
+
+          segments.push({
+            seriesName: series.name,
+            value,
+            color,
+            bounds: {
+              x,
+              y: segmentY,
+              width: barWidth,
+              height: segmentHeight,
+            },
+          });
+
+          cumulativeValue += value;
+          cumulativeY = segmentY;
+        }
+
+        // Create bar with total bounds and segments
+        this.bars.push(
+          new Bar(
+            i,
+            category,
+            cumulativeValue,
+            {
+              x,
+              y: cumulativeY,
+              width: barWidth,
+              height: this.plotAreaY + this.plotAreaHeight - cumulativeY,
+            },
+            this,
+            segments
+          )
+        );
+      }
+    } else {
+      // Horizontal stacked bars
+      const totalSpacing = (n + 1) * this.barSpacing;
+      const barHeight = this.plotAreaHeight / (n + totalSpacing);
+      const spacing = barHeight * this.barSpacing;
+
+      for (let i = 0; i < n; i++) {
+        const category = this.categories[i];
+        const y = this.plotAreaY + spacing + i * (barHeight + spacing);
+        
+        let cumulativeValue = 0;
+        let cumulativeX = this.plotAreaX;
+        const segments: BarSegment[] = [];
+
+        // Stack segments from left to right
+        for (let j = 0; j < this.series.length; j++) {
+          const series = this.series[j];
+          const value = series.data[i] ?? 0;
+          const color = series.color ?? colorPalette[j % colorPalette.length];
+          
+          const normalizedValue = (value - this.minValue) / (this.maxValue - this.minValue);
+          const segmentWidth = normalizedValue * this.plotAreaWidth;
+
+          segments.push({
+            seriesName: series.name,
+            value,
+            color,
+            bounds: {
+              x: cumulativeX,
+              y,
+              width: segmentWidth,
+              height: barHeight,
+            },
+          });
+
+          cumulativeValue += value;
+          cumulativeX += segmentWidth;
+        }
+
+        // Create bar with total bounds and segments
+        this.bars.push(
+          new Bar(
+            i,
+            category,
+            cumulativeValue,
+            {
+              x: this.plotAreaX,
+              y,
+              width: cumulativeX - this.plotAreaX,
+              height: barHeight,
+            },
+            this,
+            segments
+          )
+        );
+      }
+    }
+  }
+
+  /**
    * Detect remarkable points (max, min, average, median).
    */
   private detectRemarkable(): void {
     this.remarkablePoints = [];
+    
+    if (!this.data) {
+      // Remarkable points not yet supported for stacked bars
+      return;
+    }
+    
     const values = this.data.map((d) => d.value);
 
     // Find maximum
@@ -738,21 +989,43 @@ export class BarChart extends Rectangle {
     const parts: string[] = [];
 
     this.bars.forEach((bar) => {
-      const dataPoint = this.data[bar.index];
-      const color = dataPoint.color ?? this.barColor;
-      const style = dataPoint.style ?? this.barStyle;
+      if (bar.segments) {
+        // Render stacked bar segments
+        bar.segments.forEach((segment) => {
+          const seriesStyle = this.series?.find(s => s.name === segment.seriesName)?.style;
+          const styleAttrs = styleToSVGAttributes({
+            fill: segment.color,
+            stroke: "#ffffff",
+            strokeWidth: "2",
+            ...this.barStyle,
+            ...seriesStyle,
+          });
 
-      const styleAttrs = styleToSVGAttributes({
-        fill: color,
-        stroke: "#424242",
-        strokeWidth: "1",
-        ...style,
-      });
+          const bounds = segment.bounds;
+          parts.push(
+            `<rect x="${bounds.x}" y="${bounds.y}" width="${bounds.width}" height="${bounds.height}" ${styleAttrs} />`
+          );
+        });
+      } else {
+        // Render simple bar
+        const dataPoint = this.data?.[bar.index];
+        if (!dataPoint) return;
+        
+        const color = dataPoint.color ?? this.barColor;
+        const style = dataPoint.style ?? this.barStyle;
 
-      const bounds = bar.bounds;
-      parts.push(
-        `<rect x="${bounds.x}" y="${bounds.y}" width="${bounds.width}" height="${bounds.height}" ${styleAttrs} />`
-      );
+        const styleAttrs = styleToSVGAttributes({
+          fill: color,
+          stroke: "#424242",
+          strokeWidth: "1",
+          ...style,
+        });
+
+        const bounds = bar.bounds;
+        parts.push(
+          `<rect x="${bounds.x}" y="${bounds.y}" width="${bounds.width}" height="${bounds.height}" ${styleAttrs} />`
+        );
+      }
     });
 
     return parts.join("\n");
@@ -765,17 +1038,19 @@ export class BarChart extends Rectangle {
     const parts: string[] = [];
 
     this.bars.forEach((bar) => {
+      const label = bar.label;
+      
       if (this.orientation === "vertical") {
         // Labels below x-axis
         const centerX = bar.bounds.x + bar.bounds.width / 2;
         parts.push(
-          `<text x="${centerX}" y="${this.plotAreaY + this.plotAreaHeight + 20}" text-anchor="middle" font-size="12" fill="#424242">${bar.label}</text>`
+          `<text x="${centerX}" y="${this.plotAreaY + this.plotAreaHeight + 20}" text-anchor="middle" font-size="12" fill="#424242">${label}</text>`
         );
       } else {
         // Labels left of y-axis
         const centerY = bar.bounds.y + bar.bounds.height / 2;
         parts.push(
-          `<text x="${this.plotAreaX - 10}" y="${centerY + 4}" text-anchor="end" font-size="12" fill="#424242">${bar.label}</text>`
+          `<text x="${this.plotAreaX - 10}" y="${centerY + 4}" text-anchor="end" font-size="12" fill="#424242">${label}</text>`
         );
       }
     });
