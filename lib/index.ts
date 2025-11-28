@@ -3,7 +3,21 @@
  */
 
 // Core base classes
-export { Element, Shape, Rectangle, type Position, type PositionConfig } from "./core/index.js";
+export { 
+  Element, 
+  Shape, 
+  Rectangle, 
+  type Position, 
+  type PositionConfig,
+  type Theme,
+  type Style,
+  type Stylable,
+  SwissTheme,
+  defaultTheme,
+  getTheme,
+  createTheme,
+  styleToSVGAttributes,
+} from "./core/index.js";
 
 // Layout containers
 export {
@@ -127,4 +141,10 @@ export {
   parseBoxValue,
   parseBoxModel,
 } from "./utils/index.js";
+
+// Themed Components (web-like UI elements)
+export {
+  Card,
+  type CardConfig,
+} from "./themed-components/index.js";
 

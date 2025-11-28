@@ -5,6 +5,7 @@
 import { Container, type SizeMode } from "../layout/Container.js";
 import { type Style, styleToSVGAttributes } from "../core/Stylable.js";
 import { type BoxModel } from "../utils/BoxModel.js";
+import { type Theme, defaultTheme } from "../core/Theme.js";
 
 export interface ArtboardConfig {
   /**
@@ -33,6 +34,12 @@ export interface ArtboardConfig {
    * Box model for the artboard (margin, border, padding).
    */
   boxModel?: BoxModel;
+
+  /**
+   * Optional theme to apply to the artboard.
+   * If provided, the artboard background will use theme colors.
+   */
+  theme?: Theme;
 }
 
 /**
@@ -48,12 +55,19 @@ export interface ArtboardConfig {
  * All layout logic is handled by the parent Container class.
  */
 export class Artboard extends Container {
+  private theme?: Theme;
+
   constructor(config: ArtboardConfig = {}) {
     const width = config.width ?? "auto";
     const height = config.height ?? "auto";
+    const theme = config.theme;
 
     const style: Partial<Style> = { ...config.style };
-    if (config.backgroundColor) {
+
+    // Apply theme background if theme is provided and no explicit backgroundColor
+    if (theme && !config.backgroundColor && !config.style?.fill) {
+      style.fill = theme.colors.background;
+    } else if (config.backgroundColor) {
       style.fill = config.backgroundColor;
     }
 
@@ -64,6 +78,15 @@ export class Artboard extends Container {
       boxModel: config.boxModel,
       style,
     });
+
+    this.theme = theme;
+  }
+
+  /**
+   * Get the theme used by this artboard.
+   */
+  getTheme(): Theme | undefined {
+    return this.theme;
   }
 
   /**

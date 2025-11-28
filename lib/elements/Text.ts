@@ -9,6 +9,7 @@ import { Shape } from "../core/Shape.js";
 import type { Style } from "../core/Stylable.js";
 import { styleToSVGAttributes } from "../core/Stylable.js";
 import { parseUnit } from "../core/units.js";
+import { defaultTheme } from "../core/Theme.js";
 import { 
   MATHJAX_EX_TO_EM_RATIO, 
   MATHJAX_CONTAINER_WIDTH_MULTIPLIER,
@@ -223,10 +224,15 @@ export class Text extends Shape {
     this._lineHeight = config.lineHeight || 1.2;
     this._segments = this.parseContent();
     
-    // Apply style if provided
-    if (config.style) {
-      this._style = { ...config.style };
-    }
+    // Apply theme defaults, then merge with user styles
+    const defaultStyle: Partial<Style> = {
+      ...defaultTheme.presets.text,
+    };
+    
+    this._style = {
+      ...defaultStyle,
+      ...config.style,
+    };
   }
 
   /**

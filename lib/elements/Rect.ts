@@ -15,6 +15,7 @@ export interface RectConfig {
 
 /**
  * A rectangular shape element.
+ * Basic primitive - no default styling.
  */
 export class Rect extends Rectangle {
   constructor(config: RectConfig) {

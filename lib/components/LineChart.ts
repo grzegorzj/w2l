@@ -137,8 +137,21 @@ export class DataPoint {
  * Configuration for a LineChart.
  */
 export interface LineChartConfig {
-  /** Series to display */
-  series: LineSeries[];
+  /** Series to display (can also use 'data' as an alias) */
+  series?: LineSeries[];
+
+  /** Alias for series - more intuitive property name */
+  data?: Array<{
+    label?: string; // Alias for 'name'
+    name?: string;
+    points?: LineDataPoint[]; // Alias for 'data'
+    data?: LineDataPoint[];
+    color?: string;
+    style?: Partial<Style>; // Alias for 'lineStyle'
+    lineStyle?: Partial<Style>;
+    markerStyle?: Partial<Style>;
+    showMarkers?: boolean;
+  }>;
 
   /** Width of the chart */
   width: number;
@@ -251,7 +264,8 @@ export class LineChart extends Rectangle {
     const {
       width,
       height,
-      series,
+      series: seriesProp,
+      data: dataProp,
       minX,
       maxX,
       minY,
@@ -285,7 +299,17 @@ export class LineChart extends Rectangle {
       }
     );
 
-    this.series = series;
+    // Support both 'series' and 'data' as property names
+    // Also normalize property names within each series (label->name, points->data, style->lineStyle)
+    const rawSeries = seriesProp || dataProp || [];
+    this.series = rawSeries.map((s: any) => ({
+      name: s.label || s.name || "",
+      data: s.points || s.data || [],
+      color: s.color,
+      lineStyle: s.style || s.lineStyle,
+      markerStyle: s.markerStyle,
+      showMarkers: s.showMarkers,
+    }));
     this.chartPadding = {
       top: chartPadding.top ?? 20,
       right: chartPadding.right ?? 20,
@@ -317,7 +341,7 @@ export class LineChart extends Rectangle {
     this.plotAreaY = this.chartPadding.top;
 
     // Calculate data ranges
-    const allPoints = series.flatMap((s) => s.data);
+    const allPoints = this.series.flatMap((s) => s.data);
     const xValues = allPoints.map((p) => p.x);
     const yValues = allPoints.map((p) => p.y);
 

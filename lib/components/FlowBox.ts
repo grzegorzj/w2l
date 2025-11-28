@@ -105,7 +105,7 @@ export class FlowBox extends Rectangle {
 
     // Create box model with default padding if not specified
     const boxModel = config.boxModel ?? parseBoxModel({
-      padding: theme.spacing.small,
+      padding: theme.spacing[2], // 8px
       border: 0, // We'll handle borders differently for double border effect
     });
 
@@ -156,11 +156,11 @@ export class FlowBox extends Rectangle {
 
     // Apply tint
     if (tint === "accent") {
-      fillColor = theme.presets.accent.fill as string || fillColor;
-      strokeColor = theme.presets.accent.stroke as string || strokeColor;
+      fillColor = theme.presets.highlight.fill as string || fillColor;
+      strokeColor = theme.presets.highlight.stroke as string || strokeColor;
     } else if (tint === "muted") {
-      fillColor = "#F5F5F5";
-      strokeColor = theme.colors.muted;
+      fillColor = theme.colors.neutral[50];
+      strokeColor = theme.colors.neutral[400];
     } else if (tint !== "default") {
       // Custom color
       fillColor = tint;
@@ -254,7 +254,7 @@ export class FlowBox extends Rectangle {
 
     // If double border is enabled, add an inner border
     if (this._doubleBorder) {
-      const innerOffset = this._theme.spacing.small * 0.5;
+      const innerOffset = this._theme.spacing[1]; // 4px
       const innerX = this.borderBox.topLeft.x + innerOffset;
       const innerY = this.borderBox.topLeft.y + innerOffset;
       const innerWidth = this.width - innerOffset * 2;

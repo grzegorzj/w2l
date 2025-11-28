@@ -9,6 +9,7 @@
 import { Rectangle } from "../core/Rectangle.js";
 import { type BoxModel } from "../utils/BoxModel.js";
 import { type Style } from "../core/Stylable.js";
+import { defaultTheme } from "../core/Theme.js";
 import { Element, type Position, type PositionConfig } from "../core/Element.js";
 
 /**

@@ -202,5 +202,13 @@
   "52-textarea-tall-latex.js": {
     "status": "passed",
     "timestamp": "2025-11-27T22:12:10.147Z"
+  },
+  "themed-charts.js": {
+    "status": "pending",
+    "timestamp": "2025-11-28T07:10:27.807Z"
+  },
+  "themed-demo.js": {
+    "status": "pending",
+    "timestamp": "2025-11-28T07:10:27.809Z"
   }
 }

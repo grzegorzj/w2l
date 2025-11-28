@@ -369,6 +369,34 @@ export abstract class Rectangle extends Shape {
   }
 
   /**
+   * Convenient alias for centerTop.
+   */
+  get top(): Position {
+    return this.centerTop;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottom(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerLeft.
+   */
+  get left(): Position {
+    return this.centerLeft;
+  }
+
+  /**
+   * Convenient alias for centerRight.
+   */
+  get right(): Position {
+    return this.centerRight;
+  }
+
+  /**
    * Get the bounding box of this rectangle in absolute coordinates.
    */
   getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } {
