@@ -8,7 +8,7 @@ import { Resizer } from "./components/Resizer";
 import { VerticalResizer } from "./components/VerticalResizer";
 import { Chat } from "./components/Chat";
 import { ConversationSelector } from "./components/ConversationSelector";
-import { useCodeExecution } from "./hooks/useCodeExecution";
+import { useCodeExecution, ensureW2LImports } from "./hooks/useCodeExecution";
 import {
   saveSVG,
   saveCode,
@@ -26,10 +26,15 @@ export function App() {
     return savedCode || DEFAULT_CODE;
   });
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<
-    "idle" | "success" | "error"
-  >("idle");
-  const { result, executeCode } = useCodeExecution();
+  const [messageType, setMessageType] = useState<"idle" | "success" | "error">(
+    "idle"
+  );
+  // Load autoimport preference from localStorage, default to true
+  const [autoImport, setAutoImport] = useState(() => {
+    const saved = localStorage.getItem("w2l-autoimport");
+    return saved !== null ? saved === "true" : true;
+  });
+  const { result, executeCode } = useCodeExecution(autoImport);
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
 
@@ -37,16 +42,19 @@ export function App() {
   useEffect(() => {
     const createDefaultConversation = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/conversations", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: "New Conversation",
-            code: initialCode,
-          }),
-        });
+        const response = await fetch(
+          "http://localhost:3001/api/conversations",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title: "New Conversation",
+              code: initialCode,
+            }),
+          }
+        );
         const newConversation = await response.json();
         setConversationId(newConversation.id);
       } catch (error) {
@@ -66,8 +74,18 @@ export function App() {
     }
   }, [result]);
 
-  const handleRun = () => {
-    const code = editorRef.current?.getValue() || "";
+  const handleRun = async () => {
+    let code = editorRef.current?.getValue() || "";
+
+    // If autoimport is ON and code has no imports, inject them into the editor
+    if (autoImport) {
+      const codeWithImports = await ensureW2LImports(code);
+      if (codeWithImports !== code) {
+        editorRef.current?.setValue(codeWithImports);
+        code = codeWithImports;
+      }
+    }
+
     executeCode(code);
   };
 
@@ -131,7 +149,9 @@ export function App() {
   const handleConversationSelect = async (id: number) => {
     setConversationId(id);
     try {
-      const response = await fetch(`http://localhost:3001/api/conversations/${id}`);
+      const response = await fetch(
+        `http://localhost:3001/api/conversations/${id}`
+      );
       const data = await response.json();
       if (data.code) {
         editorRef.current?.setValue(data.code);
@@ -154,6 +174,20 @@ export function App() {
     executeCode(code);
   };
 
+  const handleAutoImportChange = async (checked: boolean) => {
+    setAutoImport(checked);
+    localStorage.setItem("w2l-autoimport", String(checked));
+
+    // If turning autoimport ON, inject imports if missing
+    if (checked) {
+      const code = editorRef.current?.getValue() || "";
+      const codeWithImports = await ensureW2LImports(code);
+      if (codeWithImports !== code) {
+        editorRef.current?.setValue(codeWithImports);
+      }
+    }
+  };
+
   return (
     <div id="app">
       <Message message={message} type={messageType} />
@@ -172,20 +206,35 @@ export function App() {
             onNew={handleNewConversation}
           />
           <div className="editor-split-container">
-            <div className="editor-section" id="editor-section" style={{ flex: "0 0 50%" }}>
-        <EditorToolbar
-          onLoadFile={handleLoadFile}
-          onRefreshFile={handleRefreshFile}
-          onRun={handleRun}
-          onSaveCode={handleSaveCode}
-          currentFileName={currentFile?.name || null}
-        />
-          <CodeEditor ref={editorRef} initialValue={initialCode} onRun={handleRun} />
+            <div
+              className="editor-section"
+              id="editor-section"
+              style={{ flex: "0 0 50%" }}
+            >
+              <EditorToolbar
+                onLoadFile={handleLoadFile}
+                onRefreshFile={handleRefreshFile}
+                onRun={handleRun}
+                onSaveCode={handleSaveCode}
+                currentFileName={currentFile?.name || null}
+                autoImport={autoImport}
+                onAutoImportChange={handleAutoImportChange}
+              />
+              <CodeEditor
+                ref={editorRef}
+                initialValue={initialCode}
+                onRun={handleRun}
+                autoImport={autoImport}
+              />
             </div>
 
             <VerticalResizer />
 
-            <div className="chat-section" id="chat-section" style={{ flex: "0 0 50%" }}>
+            <div
+              className="chat-section"
+              id="chat-section"
+              style={{ flex: "0 0 50%" }}
+            >
               <Chat
                 conversationId={conversationId}
                 onCodeUpdate={handleCodeUpdate}
@@ -208,4 +257,3 @@ export function App() {
     </div>
   );
 }
-

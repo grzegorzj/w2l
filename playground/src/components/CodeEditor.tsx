@@ -4,6 +4,7 @@ import { useMonaco } from "../hooks/useMonaco";
 interface CodeEditorProps {
   initialValue: string;
   onRun?: () => void;
+  autoImport?: boolean;
 }
 
 export interface CodeEditorHandle {
@@ -12,9 +13,9 @@ export interface CodeEditorHandle {
 }
 
 export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
-  ({ initialValue, onRun }, ref) => {
+  ({ initialValue, onRun, autoImport = true }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const { getValue, setValue } = useMonaco(containerRef, initialValue, onRun);
+    const { getValue, setValue } = useMonaco(containerRef, initialValue, onRun, autoImport);
 
     useImperativeHandle(ref, () => ({
       getValue,

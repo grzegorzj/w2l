@@ -8,7 +8,62 @@ export interface ExecutionResult {
   status: ExecutionStatus;
 }
 
-export function useCodeExecution() {
+// Cache for w2l exports
+let cachedW2LExports: string[] | null = null;
+let w2lImportStatement: string | null = null;
+
+// Get all w2l exports dynamically
+async function getW2LExports(): Promise<string[]> {
+  if (cachedW2LExports) {
+    return cachedW2LExports;
+  }
+  
+  try {
+    const w2l = await import("w2l");
+    cachedW2LExports = Object.keys(w2l);
+    console.log("[Playground] Discovered w2l exports:", cachedW2LExports);
+    return cachedW2LExports;
+  } catch (error) {
+    console.error("[Playground] Failed to load w2l exports:", error);
+    return [];
+  }
+}
+
+// Generate import statement from actual w2l exports
+async function generateW2LImport(): Promise<string> {
+  if (w2lImportStatement) {
+    return w2lImportStatement;
+  }
+  
+  const exports = await getW2LExports();
+  if (exports.length === 0) {
+    return "";
+  }
+  
+  w2lImportStatement = `import { ${exports.join(", ")} } from "w2l";`;
+  return w2lImportStatement;
+}
+
+// Check if code has w2l imports
+function hasW2LImport(code: string): boolean {
+  return /import\s+.*from\s+['"]w2l['"]/.test(code);
+}
+
+// Ensure code has w2l imports (add if missing)
+export async function ensureW2LImports(code: string): Promise<string> {
+  if (hasW2LImport(code)) {
+    return code;
+  }
+  
+  const importStatement = await generateW2LImport();
+  if (!importStatement) {
+    return code;
+  }
+  
+  return `${importStatement}\n\n${code}`;
+}
+
+export function useCodeExecution(autoImport: boolean = true) {
   const [result, setResult] = useState<ExecutionResult>({
     svgs: [],
     message: "",
@@ -17,6 +72,12 @@ export function useCodeExecution() {
 
   const executeCode = useCallback(async (code: string) => {
     try {
+      // If autoimport is ON and code has no imports, add them
+      let codeToExecute = code;
+      if (autoImport && !hasW2LImport(code)) {
+        codeToExecute = await ensureW2LImports(code);
+      }
+
       // Import W2L dynamically
       const w2l = await import("w2l");
 
@@ -30,9 +91,11 @@ export function useCodeExecution() {
         },
       };
 
-      // Transform the code to remove imports and use sandbox
-      let transformedCode = code
+      // Transform the code to remove imports
+      // We always strip imports because we inject w2l into the sandbox
+      let transformedCode = codeToExecute
         .replace(/import\s+{[^}]+}\s+from\s+['"]w2l['"];?\s*/g, "")
+        .replace(/import\s+\*\s+as\s+\w+\s+from\s+['"]w2l['"];?\s*/g, "")
         .trim();
 
       // Auto-detect render calls and artboards
@@ -185,7 +248,7 @@ export function useCodeExecution() {
         status: "error",
       });
     }
-  }, []);
+  }, [autoImport]);
 
   return { result, executeCode };
 }
