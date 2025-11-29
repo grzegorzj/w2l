@@ -1,8 +1,0 @@
-node_modules
-*.log
-.git
-.DS_Store
-test-output.*
-coverage
-*.md
-
