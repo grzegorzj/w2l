@@ -7,6 +7,7 @@ import cors from "cors";
 import Cerebras from "@cerebras/cerebras_cloud_sdk";
 import dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import {
   executeTool,
@@ -67,9 +68,29 @@ app.get("/context", (req, res) => {
 });
 
 /**
+ * Load base instructions guide (always included)
+ */
+function getBaseInstructions() {
+  try {
+    const baseGuidePath = path.join(
+      __dirname,
+      "guides",
+      "00-base-instructions.md"
+    );
+    const content = fs.readFileSync(baseGuidePath, "utf-8");
+    return content;
+  } catch (error) {
+    console.warn("⚠️  Base instructions guide not found, skipping");
+    return "";
+  }
+}
+
+/**
  * Build system prompt with available context
  */
 function buildSystemPrompt(guides, elements) {
+  const baseInstructions = getBaseInstructions();
+
   const guidesList = guides
     .map((g) => `- ${g.id}: ${g.title}\n  ${g.overview}`)
     .join("\n");
@@ -88,6 +109,7 @@ function buildSystemPrompt(guides, elements) {
 
   return `You are an expert image generation assistant using the W2L library.
 
+${baseInstructions ? `BASE INSTRUCTIONS:\n${baseInstructions}\n` : ""}
 WORKFLOW:
 1. First, use get_guides to retrieve relevant documentation for the task
 2. Then, use get_elements to get detailed API information for specific elements
