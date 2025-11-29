@@ -56,10 +56,14 @@ app.post('/render/svg', async (req, res) => {
 app.post('/render/png', async (req, res) => {
   const startTime = Date.now();
   try {
-    const { code, width = 800, height = 600, scale = 2 } = req.body;
+    const { code, width, height, scale = 2 } = req.body;
     
     console.log('[PNG] Received render request');
-    console.log('[PNG] Dimensions:', { width, height, scale });
+    if (width && height) {
+      console.log('[PNG] Dimensions:', { width, height, scale });
+    } else {
+      console.log('[PNG] Auto-sizing to artboard, scale:', scale);
+    }
 
     if (!code) {
       console.log('[PNG] Error: Missing code');
@@ -95,10 +99,14 @@ app.post('/render/png', async (req, res) => {
 app.post('/render/jpg', async (req, res) => {
   const startTime = Date.now();
   try {
-    const { code, width = 800, height = 600, scale = 2, quality = 90 } = req.body;
+    const { code, width, height, scale = 2, quality = 90 } = req.body;
     
     console.log('[JPG] Received render request');
-    console.log('[JPG] Dimensions:', { width, height, scale, quality });
+    if (width && height) {
+      console.log('[JPG] Dimensions:', { width, height, scale, quality });
+    } else {
+      console.log('[JPG] Auto-sizing to artboard, scale:', scale, 'quality:', quality);
+    }
 
     if (!code) {
       console.log('[JPG] Error: Missing code');

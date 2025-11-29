@@ -403,21 +403,19 @@ export async function renderToImage(code, options = {}) {
   const startTime = Date.now();
   
   const { 
-    width = 800, 
-    height = 600, 
+    width: requestedWidth, 
+    height: requestedHeight, 
     format = 'png', 
     scale = 2,
     quality = 90 
   } = options;
 
   console.log('[Renderer] Starting image render');
-  console.log('[Renderer] Format:', format, 'Dimensions:', { width, height, scale });
-
-  // Validate dimensions
-  const scaledWidth = width * scale;
-  const scaledHeight = height * scale;
-  if (scaledWidth > MAX_WIDTH || scaledHeight > MAX_HEIGHT) {
-    throw new Error(`Scaled dimensions exceed maximum allowed (${MAX_WIDTH}x${MAX_HEIGHT})`);
+  console.log('[Renderer] Format:', format);
+  if (requestedWidth && requestedHeight) {
+    console.log('[Renderer] Requested dimensions:', { width: requestedWidth, height: requestedHeight, scale });
+  } else {
+    console.log('[Renderer] Auto-detecting dimensions from artboard');
   }
 
   const t1 = Date.now();
@@ -441,16 +439,20 @@ export async function renderToImage(code, options = {}) {
     // Get static server port (already running from initialization)
     const serverPort = staticServerPort;
     
+    // Use large initial viewport if dimensions not specified
+    const initialWidth = requestedWidth || 2000;
+    const initialHeight = requestedHeight || 2000;
+    
     const t2 = Date.now();
     await page.setViewport({ 
-      width, 
-      height,
+      width: initialWidth, 
+      height: initialHeight,
       deviceScaleFactor: scale 
     });
     timings.viewport = Date.now() - t2;
 
     // Create HTML content
-    const html = createRenderPage(code, width, height, serverPort);
+    const html = createRenderPage(code, initialWidth, initialHeight, serverPort);
     
     const t3 = Date.now();
     await page.setContent(html, { 
@@ -474,9 +476,40 @@ export async function renderToImage(code, options = {}) {
       throw new Error(`Render error: ${renderError}`);
     }
 
-    // Take screenshot
+    // Get the actual SVG dimensions from the rendered content
+    const svgDimensions = await page.evaluate(() => {
+      const svg = document.querySelector('svg');
+      if (svg) {
+        return {
+          width: parseFloat(svg.getAttribute('width')),
+          height: parseFloat(svg.getAttribute('height'))
+        };
+      }
+      return null;
+    });
+
+    if (!svgDimensions) {
+      throw new Error('Could not determine SVG dimensions');
+    }
+    
+    console.log('[Renderer] Artboard dimensions:', svgDimensions);
+    
+    // Validate dimensions
+    const scaledWidth = svgDimensions.width * scale;
+    const scaledHeight = svgDimensions.height * scale;
+    if (scaledWidth > MAX_WIDTH || scaledHeight > MAX_HEIGHT) {
+      throw new Error(`Scaled dimensions exceed maximum allowed (${MAX_WIDTH}x${MAX_HEIGHT})`);
+    }
+
+    // Take screenshot of just the SVG element (exact content size)
     const t5 = Date.now();
-    const screenshot = await page.screenshot({
+    const svg = await page.$('svg');
+    
+    if (!svg) {
+      throw new Error('SVG element not found');
+    }
+    
+    const screenshot = await svg.screenshot({
       type: format,
       quality: format === 'jpeg' ? quality : undefined,
       omitBackground: format === 'png',
