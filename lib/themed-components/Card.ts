@@ -1,6 +1,6 @@
 /**
  * Card - A themed container component for web-like layouts.
- * 
+ *
  * Features:
  * - Optional header
  * - Main content area
@@ -52,7 +52,7 @@ export interface CardConfig {
 
 /**
  * Card component - a themed container for content with optional header and footer.
- * 
+ *
  * Automatically styled with:
  * - White background
  * - Subtle border
@@ -60,7 +60,7 @@ export interface CardConfig {
  * - Comfortable padding (16px)
  * - Professional typography
  * - Vertical layout for content
- * 
+ *
  * @example
  * ```typescript
  * const card = new Card({
@@ -68,7 +68,7 @@ export interface CardConfig {
  *   header: "Card Title",
  *   footer: "Learn more →",
  * });
- * 
+ *
  * // Add content - will be automatically laid out vertically
  * card.addContent(text);
  * card.addContent(chart);
@@ -95,9 +95,9 @@ export class Card extends Container {
     // Card uses vertical direction to stack header, content, and footer
     super({
       width: config.width,
-      height: config.height === "auto" ? "auto" : (config.height ?? "auto"),
+      height: config.height === "auto" ? "auto" : config.height ?? "auto",
       direction: "vertical",
-      spacing: defaultTheme.spacing[3], // 12px between elements
+      spacing: defaultTheme.spacing[2], // 8px between elements (compact)
       horizontalAlignment: "left",
       verticalAlignment: "top",
       style: cardStyle,
@@ -136,24 +136,39 @@ export class Card extends Container {
    * Content is automatically laid out vertically by the Container.
    */
   addContent(element: Element): void {
-    // If we have a footer, we need to add content before it
-    if (this._footer) {
-      // Remove footer temporarily if it was added
+    // Remove footer temporarily if it exists
+    if (this._footer && this.children.includes(this._footer)) {
       const footerIndex = this.children.indexOf(this._footer);
-      if (footerIndex >= 0) {
-        // Remove and re-add after new content
-        this.children.splice(footerIndex, 1);
-      }
-      
-      // Add the content
-      super.addElement(element);
-      
-      // Re-add footer at the end
-      super.addElement(this._footer);
-    } else {
-      // No footer, just add normally
-      super.addElement(element);
+      this.children.splice(footerIndex, 1);
     }
+
+    // Add content normally
+    super.addElement(element);
+
+    // Re-add footer at end if it exists
+    if (this._footer && !this.children.includes(this._footer)) {
+      super.addElement(this._footer);
+    }
+  }
+
+  /**
+   * Get the footer element for manual positioning.
+   * Use this if you want to position the footer at the bottom of the card manually.
+   *
+   * @example
+   * ```typescript
+   * const footer = card.getFooter();
+   * if (footer) {
+   *   footer.position({
+   *     relativeFrom: footer.bottomLeft,
+   *     relativeTo: card.contentBox.bottomLeft,
+   *     y: 0,
+   *   });
+   * }
+   * ```
+   */
+  getFooter(): Text | undefined {
+    return this._footer;
   }
 
   render(): string {
@@ -162,22 +177,30 @@ export class Card extends Container {
       super.addElement(this._footer);
     }
 
+    // Render background with border radius
     const bgAttrs = styleToSVGAttributes(this.style);
     const borderBox = this.borderBox.topLeft;
-    const size = this.getBoxSize("border");
-    
-    // Add border radius
+
+    // Add border radius for card
     const radius = defaultTheme.borders.radius.sm;
     const radiusAttr = radius > 0 ? `rx="${radius}" ry="${radius}"` : "";
-    
-    const bgRect = `  <rect x="${borderBox.x}" y="${borderBox.y}" width="${size.width}" height="${size.height}" ${radiusAttr} ${bgAttrs}/>\n`;
-    
+
+    const bgSVG =
+      this._style && Object.keys(this._style).length > 0
+        ? `<rect x="${borderBox.x}" y="${borderBox.y}" width="${this.width}" height="${this.height}" ${radiusAttr} ${bgAttrs}/>\n`
+        : "";
+
+    // Render children
     const childrenHTML = this.children
       .map((child) => child.render())
       .join("\n  ");
-    
-    return `<g>
-${bgRect}  ${childrenHTML}
+
+    if (childrenHTML) {
+      return `<g>
+  ${bgSVG}${childrenHTML}
 </g>`;
+    }
+
+    return bgSVG;
   }
 }
