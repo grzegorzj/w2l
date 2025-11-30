@@ -630,6 +630,23 @@ export class Text extends Shape {
     return this.rightCenter;
   }
 
+  // Alternative naming convention (to match Rectangle)
+  get centerTop(): { x: number; y: number } {
+    return this.topCenter;
+  }
+
+  get centerBottom(): { x: number; y: number } {
+    return this.bottomCenter;
+  }
+
+  get centerLeft(): { x: number; y: number } {
+    return this.leftCenter;
+  }
+
+  get centerRight(): { x: number; y: number } {
+    return this.rightCenter;
+  }
+
   /**
    * Creates an annotated element with reference points from a bbox.
    * IMPORTANT: Returns coordinates in ABSOLUTE world space (relative bbox + mixed text position).

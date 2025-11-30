@@ -1,0 +1,17 @@
+{
+  "id": "basic-shapes",
+  "title": "Basic Shapes Guide",
+  "description": "Basic shapes like circles, squares, rectangles, and the ways to position them.",
+  "covers": [
+    "Triangle",
+    "Circle",
+    "Line",
+    "Rect",
+    "Square"
+  ],
+  "topics": [
+    "Available Basic Shapes",
+    "Positioning"
+  ],
+  "content": "### Circle\n\nA simple circular shape defined by a radius.\n\n**Key Properties:**\n\n- `radius`: The radius of the circle\n- `style`: Styling options (fill, stroke, etc.)\n\n**Example:**\n\n```javascript\nnew Circle({\n  radius: 50,\n  style: { fill: \"blue\", stroke: \"black\", strokeWidth: 2 },\n});\n```\n\n### Rect (Rectangle)\n\nA rectangular shape with width and height.\n\n**Key Properties:**\n\n- `width`: The width of the rectangle\n- `height`: The height of the rectangle\n- `style`: Styling options\n- `boxModel`: Optional padding, margin, border settings\n\n**Example:**\n\n```javascript\nnew Rect({\n  width: 100,\n  height: 60,\n  style: { fill: \"lightblue\", stroke: \"navy\" },\n});\n```\n\n### Square\n\nA special case of rectangle where width equals height.\n\n**Key Properties:**\n\n- `size`: The size of the square (both width and height)\n- `style`: Styling options\n\n### Triangle\n\nA three-sided polygon with various configuration options.\n\n**Key Properties:**\n\n- Various configuration options for different triangle types\n- `style`: Styling options\n\n### Line\n\nA straight line between two points.\n\n**Key Properties:**\n\n- Start and end positions\n- `style`: any valid SVG style; excluding sizing, positioning and tranlsations\n\n## Positioning\n\nAll shapes support flexible positioning:\n\n- Absolute positioning with x, y coordinates\n- Relative positioning to other elements\n- Anchor-based positioning (top, center, bottom, left, right)"
+}

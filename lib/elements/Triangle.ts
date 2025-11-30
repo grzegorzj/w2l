@@ -29,6 +29,20 @@ export interface TriangleConfig {
 }
 
 /**
+ * Altitude information for a side of a triangle.
+ */
+export interface TriangleAltitude {
+  /** The foot of the altitude (where it meets the side) */
+  foot: Position;
+  /** The opposite vertex (where the altitude originates) */
+  vertex: Position;
+  /** Length of the altitude */
+  height: number;
+  /** Line object representing the altitude (ready to add to artboard) */
+  line: Line;
+}
+
+/**
  * Represents a side (edge) of a triangle with geometric properties.
  *
  * Provides access to side length, center, angle, endpoints, and normal vectors
@@ -51,6 +65,8 @@ export interface TriangleSide {
   inwardNormal: Position;
   /** Direction unit vector (along the side from start to end) */
   direction: Position;
+  /** Altitude from the opposite vertex to this side */
+  altitude: TriangleAltitude;
 }
 
 /**
@@ -301,11 +317,11 @@ export class Triangle extends Shape {
 
   /**
    * Get the three sides of the triangle with their geometric properties.
-   * Each side includes length, center, angle, endpoints, normals, and direction.
+   * Each side includes length, center, angle, endpoints, normals, direction, and altitude.
    *
    * Sides are returned in counter-clockwise order (see CONVENTIONS.md).
    *
-   * @returns Array of three triangle sides with full geometric properties
+   * @returns Array of three triangle sides with full geometric properties including altitudes
    *
    * @example
    * Position elements along triangle sides
@@ -315,13 +331,54 @@ export class Triangle extends Shape {
    *   console.log(`Side ${index}: length=${side.length}, angle=${side.angle}°`);
    *   // Use side.outwardNormal to position elements outside the triangle
    *   // Use side.inwardNormal to position elements inside the triangle
+   *   // Draw the altitude
+   *   artboard.add(side.altitude.line);
    * });
    * ```
    */
   get sides(): [TriangleSide, TriangleSide, TriangleSide] {
     const verts = this.absoluteVertices;
 
-    const createSide = (start: Position, end: Position): TriangleSide => {
+    // Helper to calculate altitude from a vertex to a side
+    const calculateAltitude = (vertex: Position, sideStart: Position, sideEnd: Position): TriangleAltitude => {
+      // Calculate perpendicular projection of vertex onto the side
+      const dx = sideEnd.x - sideStart.x;
+      const dy = sideEnd.y - sideStart.y;
+      const t = ((vertex.x - sideStart.x) * dx + (vertex.y - sideStart.y) * dy) / (dx * dx + dy * dy);
+      
+      const foot: Position = {
+        x: sideStart.x + t * dx,
+        y: sideStart.y + t * dy
+      };
+      
+      // Calculate altitude height
+      const height = Math.sqrt(
+        (vertex.x - foot.x) ** 2 + (vertex.y - foot.y) ** 2
+      );
+      
+      // Create altitude line
+      const altitudeLine = new Line({
+        start: { x: 0, y: 0 },
+        end: { x: foot.x - vertex.x, y: foot.y - vertex.y },
+        style: { stroke: "#666", strokeWidth: 1, strokeDasharray: "4,4" }
+      });
+      
+      altitudeLine.position({
+        relativeFrom: altitudeLine.start,
+        relativeTo: vertex,
+        x: 0,
+        y: 0
+      });
+      
+      return {
+        foot,
+        vertex,
+        height,
+        line: altitudeLine
+      };
+    };
+
+    const createSide = (start: Position, end: Position, oppositeVertex: Position): TriangleSide => {
       const side = new Side({ start, end });
 
       return {
@@ -333,14 +390,16 @@ export class Triangle extends Shape {
         outwardNormal: side.outwardNormal,
         inwardNormal: side.inwardNormal,
         direction: side.direction,
+        altitude: calculateAltitude(oppositeVertex, start, end),
       };
     };
 
     // Create sides in counter-clockwise order: v0→v1, v1→v2, v2→v0
+    // Each side's altitude comes from the opposite vertex
     return [
-      createSide(verts[0], verts[1]),
-      createSide(verts[1], verts[2]),
-      createSide(verts[2], verts[0]),
+      createSide(verts[0], verts[1], verts[2]), // Side 0: v0→v1, altitude from v2
+      createSide(verts[1], verts[2], verts[0]), // Side 1: v1→v2, altitude from v0
+      createSide(verts[2], verts[0], verts[1]), // Side 2: v2→v0, altitude from v1
     ];
   }
 

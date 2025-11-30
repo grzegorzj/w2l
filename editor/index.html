@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>W2L Guide Editor</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #1e1e1e;
+      color: #e0e0e0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: #2d2d2d;
+      border-bottom: 1px solid #3a3a3a;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .recent-files {
+      position: relative;
+    }
+
+    .recent-files-btn {
+      position: relative;
+    }
+
+    .recent-files-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      min-width: 250px;
+      max-width: 400px;
+      max-height: 400px;
+      overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      display: none;
+    }
+
+    .recent-files-dropdown.show {
+      display: block;
+    }
+
+    .recent-file-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #333;
+      transition: background 0.15s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .recent-file-item:last-child {
+      border-bottom: none;
+    }
+
+    .recent-file-item:hover {
+      background: #333;
+    }
+
+    .recent-file-name {
+      flex: 1;
+      font-size: 13px;
+      color: #e0e0e0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recent-file-remove {
+      padding: 2px 6px;
+      font-size: 12px;
+      opacity: 0.6;
+    }
+
+    .recent-file-remove:hover {
+      opacity: 1;
+      background: #f44336;
+      border-color: #f44336;
+    }
+
+    .recent-files-empty {
+      padding: 20px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 13px;
+    }
+
+    .recent-files-clear {
+      padding: 8px 14px;
+      text-align: center;
+      border-top: 1px solid #333;
+      font-size: 12px;
+      cursor: pointer;
+      color: #999;
+    }
+
+    .recent-files-clear:hover {
+      background: #333;
+      color: #e0e0e0;
+    }
+
+    button {
+      background: #2a2a2a;
+      color: #e0e0e0;
+      border: 1px solid #3a3a3a;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      background: #333;
+      border-color: #4a4a4a;
+    }
+
+    button:active {
+      background: #1a1a1a;
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      background: #1a1a1a;
+      color: #666;
+      border-color: #2a2a2a;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    button.primary {
+      background: #4a9eff;
+      border-color: #4a9eff;
+      color: white;
+    }
+
+    button.primary:hover {
+      background: #3a8eef;
+      border-color: #3a8eef;
+    }
+
+    /* Main content */
+    .main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .editor-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .preview-pane {
+      flex: 1;
+      background: #252525;
+      border-left: 1px solid #3a3a3a;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Form groups */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #b0b0b0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, textarea {
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      color: #e0e0e0;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #4a9eff;
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    textarea {
+      resize: vertical;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+      line-height: 1.5;
+    }
+
+    textarea.small {
+      min-height: 60px;
+    }
+
+    textarea.large {
+      min-height: 400px;
+    }
+
+    /* Tags input */
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      min-height: 40px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #3a3a3a;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #e0e0e0;
+    }
+
+    .tag-remove {
+      cursor: pointer;
+      color: #999;
+      font-weight: bold;
+      padding: 0;
+      border: none;
+      background: none;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .tag-remove:hover {
+      color: #f44336;
+    }
+
+    .tag-input {
+      flex: 1;
+      min-width: 120px;
+      border: none;
+      background: none;
+      padding: 4px;
+      outline: none;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    /* Preview */
+    .preview-content {
+      color: #d0d0d0;
+      line-height: 1.6;
+    }
+
+    .preview-content h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #e0e0e0;
+    }
+
+    .preview-content h2 {
+      font-size: 20px;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: #e0e0e0;
+    }
+
+    .preview-content h3 {
+      font-size: 16px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #d0d0d0;
+    }
+
+    .preview-content p {
+      margin-bottom: 12px;
+    }
+
+    .preview-content code {
+      background: #2a2a2a;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 13px;
+    }
+
+    .preview-content pre {
+      background: #2a2a2a;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+
+    .preview-content pre code {
+      background: none;
+      padding: 0;
+    }
+
+    .preview-content ul, .preview-content ol {
+      margin-left: 24px;
+      margin-bottom: 12px;
+    }
+
+    .preview-content li {
+      margin-bottom: 6px;
+    }
+
+    .preview-meta {
+      background: #2a2a2a;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 24px;
+    }
+
+    .preview-meta h3 {
+      margin-top: 0 !important;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #b0b0b0;
+    }
+
+    .preview-meta-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .preview-meta-label {
+      color: #888;
+      min-width: 80px;
+    }
+
+    .preview-meta-value {
+      color: #d0d0d0;
+      flex: 1;
+    }
+
+    /* Status message */
+    .status-message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideIn 0.3s ease, fadeOut 3s 2s forwards;
+    }
+
+    .status-message.success {
+      background: #4caf50;
+      color: white;
+    }
+
+    .status-message.error {
+      background: #f44336;
+      color: white;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+      }
+    }
+
+    .file-name {
+      color: #4a9eff;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.4);
+      padding: 40px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-title">
+      W2L Guide Editor
+      <span class="file-name" id="fileName"></span>
+    </div>
+    <div class="header-actions">
+      <div class="recent-files">
+        <button onclick="toggleRecentFiles()" class="recent-files-btn" id="recentBtn">
+          Recent ▾
+        </button>
+        <div class="recent-files-dropdown" id="recentDropdown"></div>
+      </div>
+      <button onclick="openFile()">Open Guide</button>
+      <button onclick="saveFile()" class="primary" id="saveBtn" disabled>Save</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="editor-pane" id="editorPane">
+      <div class="empty-state">
+        Open a guide JSON file to start editing
+      </div>
+    </div>
+    <div class="preview-pane" id="previewPane">
+      <div class="empty-state">
+        Preview will appear here
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    let fileHandle = null;
+    let currentGuide = null;
+    let isDirty = false;
+    let db = null;
+
+    // Check File System Access API support
+    if (!('showOpenFilePicker' in window)) {
+      alert('File System Access API is not supported in this browser. Please use Chrome, Edge, or another Chromium-based browser.');
+    }
+
+    // Initialize IndexedDB for storing file handles
+    async function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('W2LGuideEditor', 1);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          db = request.result;
+          resolve(db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('recentFiles')) {
+            db.createObjectStore('recentFiles', { keyPath: 'id', autoIncrement: true });
+          }
+        };
+      });
+    }
+
+    // Get recent files
+    async function getRecentFiles() {
+      if (!db) await initDB();
+      
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['recentFiles'], 'readonly');
+        const store = transaction.objectStore('recentFiles');
+        const request = store.getAll();
+        
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    // Add to recent files
+    async function addToRecentFiles(handle, fileName) {
+      if (!db) await initDB();
+      
+      try {
+        // Check if we already have this file
+        const recentFiles = await getRecentFiles();
+        const existing = recentFiles.find(f => f.name === fileName);
+        
+        if (existing) {
+          // Update timestamp and move to top
+          await removeFromRecentFiles(existing.id);
+        }
+        
+        // Keep only last 10 files
+        if (recentFiles.length >= 10) {
+          const oldest = recentFiles.sort((a, b) => a.timestamp - b.timestamp)[0];
+          await removeFromRecentFiles(oldest.id);
+        }
+        
+        const transaction = db.transaction(['recentFiles'], 'readwrite');
+        const store = transaction.objectStore('recentFiles');
+        await store.add({
+          handle,
+          name: fileName,
+          timestamp: Date.now()
+        });
+      } catch (err) {
+        console.error('Failed to add to recent files:', err);
+      }
+    }
+
+    // Remove from recent files
+    async function removeFromRecentFiles(id) {
+      if (!db) await initDB();
+      
+      const transaction = db.transaction(['recentFiles'], 'readwrite');
+      const store = transaction.objectStore('recentFiles');
+      await store.delete(id);
+    }
+
+    // Clear all recent files
+    async function clearRecentFiles() {
+      if (!db) await initDB();
+      
+      const transaction = db.transaction(['recentFiles'], 'readwrite');
+      const store = transaction.objectStore('recentFiles');
+      await store.clear();
+      renderRecentFiles();
+    }
+
+    // Toggle recent files dropdown
+    window.toggleRecentFiles = async () => {
+      const dropdown = document.getElementById('recentDropdown');
+      const isShowing = dropdown.classList.contains('show');
+      
+      if (isShowing) {
+        dropdown.classList.remove('show');
+      } else {
+        await renderRecentFiles();
+        dropdown.classList.add('show');
+      }
+    };
+
+    // Render recent files dropdown
+    async function renderRecentFiles() {
+      const dropdown = document.getElementById('recentDropdown');
+      const recentFiles = await getRecentFiles();
+      
+      if (recentFiles.length === 0) {
+        dropdown.innerHTML = '<div class="recent-files-empty">No recent files</div>';
+        return;
+      }
+      
+      // Sort by timestamp (most recent first)
+      recentFiles.sort((a, b) => b.timestamp - a.timestamp);
+      
+      dropdown.innerHTML = recentFiles.map(file => `
+        <div class="recent-file-item">
+          <div class="recent-file-name" onclick="openRecentFile(${file.id})" title="${file.name}">
+            ${file.name}
+          </div>
+          <button class="recent-file-remove" onclick="event.stopPropagation(); removeRecent(${file.id})">×</button>
+        </div>
+      `).join('') + '<div class="recent-files-clear" onclick="clearAllRecent()">Clear All</div>';
+    }
+
+    // Open recent file
+    window.openRecentFile = async (id) => {
+      const recentFiles = await getRecentFiles();
+      const file = recentFiles.find(f => f.id === id);
+      
+      if (!file) return;
+      
+      try {
+        // Check if we still have permission
+        const permission = await file.handle.queryPermission({ mode: 'readwrite' });
+        
+        if (permission !== 'granted') {
+          const newPermission = await file.handle.requestPermission({ mode: 'readwrite' });
+          if (newPermission !== 'granted') {
+            showStatus('Permission denied', 'error');
+            return;
+          }
+        }
+        
+        fileHandle = file.handle;
+        const fileObj = await file.handle.getFile();
+        const content = await fileObj.text().then(text => text.trim());
+        
+        // Parse JSON and merge with defaults to ensure all required keys exist
+        try {
+          const parsed = content ? JSON.parse(content) : {};
+          
+          // Merge with defaults, ensuring arrays are always arrays
+          currentGuide = {
+            id: parsed.id ?? DEFAULT_GUIDE.id,
+            title: parsed.title ?? DEFAULT_GUIDE.title,
+            description: parsed.description ?? DEFAULT_GUIDE.description,
+            covers: Array.isArray(parsed.covers) ? parsed.covers : DEFAULT_GUIDE.covers,
+            topics: Array.isArray(parsed.topics) ? parsed.topics : DEFAULT_GUIDE.topics,
+            content: parsed.content ?? DEFAULT_GUIDE.content
+          };
+        } catch (parseErr) {
+          showStatus('Invalid JSON, starting with defaults', 'error');
+          currentGuide = { ...DEFAULT_GUIDE };
+        }
+        
+        renderEditor();
+        renderPreview();
+        updateFileName(file.name);
+        document.getElementById('saveBtn').disabled = false;
+        isDirty = false;
+        
+        // Update timestamp
+        await addToRecentFiles(file.handle, file.name);
+        
+        // Close dropdown
+        document.getElementById('recentDropdown').classList.remove('show');
+      } catch (err) {
+        showStatus('Failed to open file: ' + err.message, 'error');
+        // Remove from recent if file no longer exists
+        await removeFromRecentFiles(id);
+        renderRecentFiles();
+      }
+    };
+
+    // Remove from recent
+    window.removeRecent = async (id) => {
+      await removeFromRecentFiles(id);
+      renderRecentFiles();
+    };
+
+    // Clear all recent
+    window.clearAllRecent = async () => {
+      if (confirm('Clear all recent files?')) {
+        await clearRecentFiles();
+      }
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('recentDropdown');
+      const btn = document.getElementById('recentBtn');
+      
+      if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+        dropdown.classList.remove('show');
+      }
+    });
+
+    // Initialize DB on load
+    initDB();
+
+    // Default guide structure
+    const DEFAULT_GUIDE = {
+      id: "",
+      title: "",
+      description: "",
+      covers: [],
+      topics: [],
+      content: ""
+    };
+
+    // Open file
+    window.openFile = async () => {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          types: [{
+            description: 'Guide JSON Files',
+            accept: { 'application/json': ['.json'] }
+          }],
+          multiple: false
+        });
+
+        fileHandle = handle;
+        const file = await handle.getFile();
+        const content = await file.text().then(text => text.trim());
+        
+        // Parse JSON and merge with defaults to ensure all required keys exist
+        try {
+          const parsed = content ? JSON.parse(content) : {};
+          
+          // Merge with defaults, ensuring arrays are always arrays
+          currentGuide = {
+            id: parsed.id ?? DEFAULT_GUIDE.id,
+            title: parsed.title ?? DEFAULT_GUIDE.title,
+            description: parsed.description ?? DEFAULT_GUIDE.description,
+            covers: Array.isArray(parsed.covers) ? parsed.covers : DEFAULT_GUIDE.covers,
+            topics: Array.isArray(parsed.topics) ? parsed.topics : DEFAULT_GUIDE.topics,
+            content: parsed.content ?? DEFAULT_GUIDE.content
+          };
+        } catch (parseErr) {
+          showStatus('Invalid JSON, starting with defaults', 'error');
+          currentGuide = { ...DEFAULT_GUIDE };
+        }
+        
+        renderEditor();
+        renderPreview();
+        updateFileName(file.name);
+        document.getElementById('saveBtn').disabled = false;
+        isDirty = false;
+        
+        // Add to recent files
+        await addToRecentFiles(handle, file.name);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          showStatus('Failed to open file: ' + err.message, 'error');
+        }
+      }
+    };
+
+    // Save file
+    window.saveFile = async () => {
+      if (!fileHandle || !currentGuide) return;
+
+      try {
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(currentGuide, null, 2));
+        await writable.close();
+        
+        isDirty = false;
+        showStatus('Guide saved successfully!', 'success');
+      } catch (err) {
+        showStatus('Failed to save file: ' + err.message, 'error');
+      }
+    };
+
+    // Render editor
+    function renderEditor() {
+      const editorPane = document.getElementById('editorPane');
+      editorPane.innerHTML = `
+        <div class="form-group">
+          <label>ID</label>
+          <input type="text" id="guideId" value="${currentGuide.id}" placeholder="e.g., triangle">
+        </div>
+
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="guideTitle" value="${currentGuide.title}" placeholder="e.g., Triangle Guide">
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="guideDescription" class="small" placeholder="Short description for the agent...">${currentGuide.description}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Covers (Elements)</label>
+          <div class="tags-container" id="coversContainer">
+            ${currentGuide.covers.map(tag => `
+              <span class="tag">
+                ${tag}
+                <span class="tag-remove" onclick="removeTag('covers', '${tag}')">×</span>
+              </span>
+            `).join('')}
+            <input type="text" class="tag-input" id="coversInput" placeholder="Add element..." onkeydown="handleTagInput(event, 'covers')">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Topics</label>
+          <div class="tags-container" id="topicsContainer">
+            ${currentGuide.topics.map(tag => `
+              <span class="tag">
+                ${tag}
+                <span class="tag-remove" onclick="removeTag('topics', '${tag.replace(/'/g, "\\'")}')">×</span>
+              </span>
+            `).join('')}
+            <input type="text" class="tag-input" id="topicsInput" placeholder="Add topic..." onkeydown="handleTagInput(event, 'topics')">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Content (Markdown)</label>
+          <textarea id="guideContent" class="large" placeholder="Full guide content in markdown...">${currentGuide.content}</textarea>
+        </div>
+      `;
+
+      // Attach change listeners
+      ['guideId', 'guideTitle', 'guideDescription', 'guideContent'].forEach(id => {
+        document.getElementById(id).addEventListener('input', handleChange);
+      });
+    }
+
+    // Render preview
+    function renderPreview() {
+      const previewPane = document.getElementById('previewPane');
+      
+      // Simple markdown to HTML conversion
+      let html = currentGuide.content
+        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+        .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/^\* (.*$)/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^(?!<[huplc])/gm, '<p>')
+        .replace(/(?<![>])$/gm, '</p>');
+
+      previewPane.innerHTML = `
+        <div class="preview-meta">
+          <h3>Metadata</h3>
+          <div class="preview-meta-row">
+            <span class="preview-meta-label">ID:</span>
+            <span class="preview-meta-value">${currentGuide.id}</span>
+          </div>
+          <div class="preview-meta-row">
+            <span class="preview-meta-label">Title:</span>
+            <span class="preview-meta-value">${currentGuide.title}</span>
+          </div>
+          <div class="preview-meta-row">
+            <span class="preview-meta-label">Description:</span>
+            <span class="preview-meta-value">${currentGuide.description}</span>
+          </div>
+          <div class="preview-meta-row">
+            <span class="preview-meta-label">Covers:</span>
+            <span class="preview-meta-value">${currentGuide.covers.join(', ')}</span>
+          </div>
+          <div class="preview-meta-row">
+            <span class="preview-meta-label">Topics:</span>
+            <span class="preview-meta-value">${currentGuide.topics.join(', ')}</span>
+          </div>
+        </div>
+        <div class="preview-content">
+          ${html}
+        </div>
+      `;
+    }
+
+    // Handle changes
+    function handleChange(e) {
+      const field = e.target.id.replace('guide', '').toLowerCase();
+      const mappings = {
+        id: 'id',
+        title: 'title',
+        description: 'description',
+        content: 'content'
+      };
+      
+      if (mappings[field]) {
+        currentGuide[mappings[field]] = e.target.value;
+        isDirty = true;
+        renderPreview();
+      }
+    }
+
+    // Handle tag input
+    window.handleTagInput = (e, field) => {
+      if (e.key === 'Enter' && e.target.value.trim()) {
+        e.preventDefault();
+        const value = e.target.value.trim();
+        
+        if (!currentGuide[field].includes(value)) {
+          currentGuide[field].push(value);
+          isDirty = true;
+          renderEditor();
+          renderPreview();
+        }
+        
+        e.target.value = '';
+      }
+    };
+
+    // Remove tag
+    window.removeTag = (field, value) => {
+      currentGuide[field] = currentGuide[field].filter(t => t !== value);
+      isDirty = true;
+      renderEditor();
+      renderPreview();
+    };
+
+    // Update file name display
+    function updateFileName(name) {
+      document.getElementById('fileName').textContent = `— ${name}`;
+    }
+
+    // Show status message
+    function showStatus(message, type) {
+      const existing = document.querySelector('.status-message');
+      if (existing) existing.remove();
+
+      const el = document.createElement('div');
+      el.className = `status-message ${type}`;
+      el.textContent = message;
+      document.body.appendChild(el);
+
+      setTimeout(() => el.remove(), 5000);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        if (fileHandle) saveFile();
+      }
+    });
+
+    // Warn before closing if unsaved
+    window.addEventListener('beforeunload', (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,22 @@
+{
+  "id": "positioning-patterns",
+  "title": "Positioning Patterns",
+  "description": "Guide for Positioning Patterns",
+  "covers": [
+    "Circle",
+    "Text",
+    "Rect",
+    "Container",
+    "Artboard"
+  ],
+  "topics": [
+    "1. Vertical Stack",
+    "2. Horizontal Row",
+    "3. Centered Element",
+    "4. Absolute Positioning (Artboard)",
+    "5. Relative to Another Element",
+    "6. Freeform Container",
+    "Common Anchor Points"
+  ],
+  "content": "Quick reference for common positioning scenarios in W2L.\n\n## 1. Vertical Stack\n\nStack elements one below another with spacing.\n\n```javascript\nconst container = new Container({\n  direction: \"vertical\",\n  spacing: 20,\n});\n\ncontainer.addElement(rect1);\ncontainer.addElement(rect2);\ncontainer.addElement(rect3);\n```\n\n## 2. Horizontal Row\n\nPlace elements side-by-side with spacing.\n\n```javascript\nconst row = new Container({\n  direction: \"horizontal\",\n  spacing: 15,\n});\n\nrow.addElement(circle1);\nrow.addElement(circle2);\nrow.addElement(circle3);\n```\n\n## 3. Centered Element\n\nCenter an element on the artboard.\n\n```javascript\nconst rect = new Rectangle({ width: 100, height: 100 });\n\nrect.position({\n  relativeFrom: rect.center,\n  relativeTo: artboard.center,\n  x: 0,\n  y: 0,\n});\n```\n\n## 4. Absolute Positioning (Artboard)\n\nPosition element at specific coordinates on artboard.\n\n```javascript\nconst circle = new Circle({ radius: 50 });\n\ncircle.position({\n  relativeFrom: circle.topLeft,\n  relativeTo: artboard.contentBox.topLeft,\n  x: 100,\n  y: 50,\n});\n```\n\n## 5. Relative to Another Element\n\nPosition one element relative to another.\n\n```javascript\nconst label = new Text({ content: \"Label\" });\n\nlabel.position({\n  relativeFrom: label.bottomLeft,\n  relativeTo: rect.topLeft,\n  x: 0,\n  y: -10, // 10px above the rect\n});\n```\n\n## 6. Freeform Container\n\nAuto-sizing container for absolute-positioned children.\n\n```javascript\nconst container = new Container({\n  direction: \"freeform\",\n});\n\n// Children use absolute positioning\nconst rect = new Rectangle({ width: 100, height: 100 });\nrect.position({\n  relativeFrom: rect.topLeft,\n  relativeTo: container.contentBox.topLeft,\n  x: 50,\n  y: 50,\n});\n\ncontainer.addElement(rect);\n// Container auto-sizes to fit all children\n```\n\n## Common Anchor Points\n\nAvailable on all elements:\n\n- `topLeft`, `topCenter`, `topRight`\n- `centerLeft`, `center`, `centerRight`\n- `bottomLeft`, `bottomCenter`, `bottomRight`\n\n## Box Model References\n\nAvailable on artboard and containers:\n\n- `contentBox` - inside padding\n- `paddingBox` - includes padding\n- `borderBox` - includes border\n\nExample:\n\n```javascript\nelement.position({\n  relativeFrom: element.center,\n  relativeTo: artboard.contentBox.center, // center within padding\n  x: 0,\n  y: 0,\n});\n```"
+}

@@ -177,7 +177,7 @@ export class Angle extends Element {
    * Resolves the angle configuration from various input formats.
    */
   private resolveConfig(config: AngleConfig): ResolvedAngleConfig {
-    const radius = config.radius ?? 40;
+    const radius = config.radius ?? 80;
     const labelFontSize = config.labelFontSize ?? 14;
     const labelDistance = config.labelDistance ?? 0.6;
     const rightAngleMarker = config.rightAngleMarker ?? "square";
