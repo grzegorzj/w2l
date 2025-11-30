@@ -140,9 +140,16 @@ export class TextArea extends Rectangle {
   private _fontSize: number;
   private _lineHeight: number;
   private _textLines: Text[] = [];
+  private _lineContents: string[] = []; // Store line content for highlight annotation
   private _highlightMap: Map<
     string,
-    { lineIndex: number; highlightId: string }
+    {
+      lineIndex: number;
+      highlightId: string;
+      highlightText: string;
+      startInLine: number; // Position within the line (relative to trimmed line content)
+      endInLine: number;
+    }
   > = new Map();
   private _lineYPositions: number[] = [];
   private _lineHeights: number[] = []; // Actual height of each line (for smart line height)
@@ -183,9 +190,19 @@ export class TextArea extends Rectangle {
    */
   private extractHighlights(content: string): {
     cleanContent: string;
-    highlights: Array<{ id: string; start: number; end: number }>;
+    highlights: Array<{ id: string; start: number; end: number; text: string }>;
   } {
-    const highlights: Array<{ id: string; start: number; end: number }> = [];
+    // Safety check for undefined content
+    if (!content) {
+      return { cleanContent: "", highlights: [] };
+    }
+
+    const highlights: Array<{
+      id: string;
+      start: number;
+      end: number;
+      text: string;
+    }> = [];
     let cleanContent = "";
     let offset = 0;
 
@@ -203,7 +220,7 @@ export class TextArea extends Rectangle {
       cleanContent += text;
       const end = cleanContent.length;
 
-      highlights.push({ id, start, end });
+      highlights.push({ id, start, end, text });
       lastIndex = match.index + match[0].length;
     }
 
@@ -351,13 +368,19 @@ export class TextArea extends Rectangle {
     // With smart line height, measure actual height of each line (use variable from above)
 
     this._textLines = [];
+    this._lineContents = [];
     this._lineYPositions = [];
     this._lineHeights = [];
     let yOffset = 0;
+    let cleanContentSearchStart = 0; // Track where to start searching in cleanContent
 
     lines.forEach((lineContent, lineIndex) => {
+      // Store the TRIMMED line content for later use in highlighting
+      // (must match what's actually rendered in the Text instance)
+      const trimmedContent = lineContent.trim();
+      this._lineContents.push(trimmedContent);
       const textInstance = new Text({
-        content: lineContent.trim(),
+        content: trimmedContent,
         fontSize: this._fontSize,
         fontFamily: this.config.fontFamily,
         fontWeight: this.config.fontWeight,
@@ -399,15 +422,34 @@ export class TextArea extends Rectangle {
       this._lineHeights.push(actualLineHeight);
 
       // Track highlights in this line
-      const lineStart = this.config.content.indexOf(lineContent.trim());
+      // Find where this trimmed line content actually appears in cleanContent
+      const lineStart = cleanContent.indexOf(trimmedContent, cleanContentSearchStart);
+      const lineEnd = lineStart + trimmedContent.length;
+
       highlights.forEach((highlight) => {
-        if (lineStart >= highlight.start && lineStart <= highlight.end) {
+        // Check if this line contains the highlight
+        // Only process if the highlight actually overlaps with this line
+        if (lineStart <= highlight.end && lineEnd >= highlight.start) {
+          // Calculate position within the trimmed line
+          const startInLine = Math.max(0, highlight.start - lineStart);
+          const endInLine = Math.min(
+            trimmedContent.length,
+            highlight.end - lineStart
+          );
+
           this._highlightMap.set(highlight.id, {
             lineIndex,
             highlightId: highlight.id,
+            highlightText: highlight.text,
+            startInLine,
+            endInLine,
           });
         }
       });
+
+      // Move search start forward (to the end of this line + any whitespace)
+      // This ensures we don't find the same content again if it repeats
+      cleanContentSearchStart = lineEnd;
 
       yOffset += actualLineHeight;
     });
@@ -427,20 +469,155 @@ export class TextArea extends Rectangle {
       return null;
     }
 
-    // For now, return the full text bounding box
-    // (Could be enhanced to find specific word position within the line)
-    const bbox = textInstance.getBoundingBox();
-    const topLeft = textInstance.topLeft;
+    // Get the original line content and highlighted text
+    const lineContent = this._lineContents[highlightInfo.lineIndex];
+    const highlightText = highlightInfo.highlightText;
+    const startInLine = highlightInfo.startInLine;
+    const endInLine = highlightInfo.endInLine;
 
+    if (
+      !highlightText ||
+      startInLine === undefined ||
+      endInLine === undefined
+    ) {
+      // Fallback to full line if no highlight info stored
+      const bbox = textInstance.getBoundingBox();
+      const topLeft = textInstance.topLeft;
+
+      return {
+        id,
+        bbox: {
+          x: topLeft.x,
+          y: topLeft.y,
+          width: textInstance.textWidth,
+          height: textInstance.textHeight,
+        },
+        content: "",
+        textInstance,
+        get center() {
+          return {
+            x: this.bbox.x + this.bbox.width / 2,
+            y: this.bbox.y + this.bbox.height / 2,
+          };
+        },
+        get topLeft() {
+          return { x: this.bbox.x, y: this.bbox.y };
+        },
+        get topCenter() {
+          return { x: this.bbox.x + this.bbox.width / 2, y: this.bbox.y };
+        },
+        get topRight() {
+          return { x: this.bbox.x + this.bbox.width, y: this.bbox.y };
+        },
+        get leftCenter() {
+          return { x: this.bbox.x, y: this.bbox.y + this.bbox.height / 2 };
+        },
+        get rightCenter() {
+          return {
+            x: this.bbox.x + this.bbox.width,
+            y: this.bbox.y + this.bbox.height / 2,
+          };
+        },
+        get bottomLeft() {
+          return { x: this.bbox.x, y: this.bbox.y + this.bbox.height };
+        },
+        get bottomCenter() {
+          return {
+            x: this.bbox.x + this.bbox.width / 2,
+            y: this.bbox.y + this.bbox.height,
+          };
+        },
+        get bottomRight() {
+          return {
+            x: this.bbox.x + this.bbox.width,
+            y: this.bbox.y + this.bbox.height,
+          };
+        },
+        get top() {
+          return this.topCenter;
+        },
+        get bottom() {
+          return this.bottomCenter;
+        },
+        get left() {
+          return this.leftCenter;
+        },
+        get right() {
+          return this.rightCenter;
+        },
+      };
+    }
+
+    // To get precise bounding box of the highlighted word, we need to:
+    // 1. Measure the text before the highlight (to get x offset)
+    // 2. Measure the highlighted text itself (to get width)
+
+    const beforeHighlight = lineContent.substring(0, startInLine);
+    const highlightedPart = lineContent.substring(startInLine, endInLine);
+
+    // Check if we can measure (requires DOM)
+    const canMeasure = typeof document !== "undefined";
+
+    let xOffset: number;
+    let highlightWidth: number;
+    let highlightHeight: number;
+
+    if (canMeasure) {
+      // Measure text before highlight to get x offset
+      // Add as child temporarily to prevent auto-add to artboard
+      const beforeText = new Text({
+        content: beforeHighlight,
+        fontSize: this._fontSize,
+        fontFamily: this.config.fontFamily,
+        fontWeight: this.config.fontWeight,
+        lineHeight: this._lineHeight,
+      });
+      this.addElement(beforeText); // Prevent auto-add to artboard
+      xOffset = beforeText.textWidth;
+
+      // Measure the highlighted text itself to get width
+      const highlightTextMeasure = new Text({
+        content: highlightedPart,
+        fontSize: this._fontSize,
+        fontFamily: this.config.fontFamily,
+        fontWeight: this.config.fontWeight,
+        lineHeight: this._lineHeight,
+      });
+      this.addElement(highlightTextMeasure); // Prevent auto-add to artboard
+      highlightWidth = highlightTextMeasure.textWidth;
+      highlightHeight = highlightTextMeasure.textHeight;
+    } else {
+      // Fallback: use character-based estimation
+      // This is a rough approximation for when DOM is not available (e.g., tests)
+      const totalChars = lineContent.length;
+      const lineWidth = textInstance.textWidth;
+      const avgCharWidth = lineWidth / totalChars;
+
+      xOffset = startInLine * avgCharWidth;
+      highlightWidth = (endInLine - startInLine) * avgCharWidth;
+      highlightHeight = textInstance.textHeight;
+    }
+
+    // Calculate absolute position of the highlight
+    // IMPORTANT: Vertically center the HIGHLIGHT (not just its top) within the line
+    // When LaTeX is present, lines are taller and we need to center the highlight's center
+    const lineHeight = this._lineHeights[highlightInfo.lineIndex];
+    const verticalCenterOffset = (lineHeight - highlightHeight) / 2;
+    
+    const lineTopLeft = textInstance.topLeft;
+    const highlightX = lineTopLeft.x + xOffset;
+    const highlightY = lineTopLeft.y + verticalCenterOffset;
+
+    // Return the precisely measured highlight
     return {
       id,
       bbox: {
-        x: topLeft.x,
-        y: topLeft.y,
-        width: textInstance.textWidth,
-        height: textInstance.textHeight,
+        x: highlightX,
+        y: highlightY,
+        width: highlightWidth,
+        height: highlightHeight,
       },
-      content: "", // Placeholder
+      content: highlightText,
       textInstance,
       get center() {
         return {

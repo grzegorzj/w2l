@@ -1,6 +1,6 @@
 /**
  * TextArea Example: Highlighting and LaTeX Support
- * 
+ *
  * Demonstrates:
  * - Word/phrase highlighting using {highlight:id}text{/highlight}
  * - Inline LaTeX using $...$
@@ -9,7 +9,7 @@
  * - Creating visual highlights with Rect elements
  */
 
-import { Artboard, TextArea, Container, Text, Rect } from "w2l";
+import { Artboard, TextArea, Container, Text, Rect, Circle } from "w2l";
 
 const artboard = new Artboard({
   width: "auto",
@@ -45,6 +45,7 @@ artboard.addElement(mainContainer);
 function addHighlight(element, color, opacity = 0.4) {
   if (!element) return;
   
+
   const highlight = new Rect({
     width: element.bbox.width,
     height: element.bbox.height,
@@ -53,7 +54,7 @@ function addHighlight(element, color, opacity = 0.4) {
       opacity: opacity,
     },
   });
-  
+
   highlight.position({
     relativeFrom: highlight.topLeft,
     relativeTo: element.topLeft,
@@ -61,7 +62,35 @@ function addHighlight(element, color, opacity = 0.4) {
     y: 0,
   });
   
-  artboard.addElement(highlight);
+  // No need to add - Rect auto-adds to artboard
+
+  // DEBUG: Add circles at corners to visualize the bbox
+  const debugCircles = [
+    { pos: element.topLeft, color: "red" },
+    { pos: element.topRight, color: "blue" },
+    { pos: element.bottomLeft, color: "green" },
+    { pos: element.bottomRight, color: "yellow" },
+  ];
+
+  debugCircles.forEach(({ pos, color: debugColor }) => {
+    const circle = new Circle({
+      radius: 3,
+      style: {
+        fill: debugColor,
+        stroke: "black",
+        strokeWidth: 1,
+      },
+    });
+
+    circle.position({
+      relativeFrom: circle.center,
+      relativeTo: pos,
+      x: 0,
+      y: 0,
+    });
+    
+    // No need to add - Circle auto-adds to artboard
+  });
 }
 
 // ========================================
@@ -83,7 +112,8 @@ const label1 = new Text({
 });
 
 const textArea1 = new TextArea({
-  content: "The {highlight:quick}quick{/highlight} brown fox jumps over the {highlight:lazy}lazy{/highlight} dog. This is a {highlight:classic}classic{/highlight} sentence.",
+  content:
+    "The {highlight:quick}quick{/highlight} brown fox jumps over the {highlight:lazy}lazy{/highlight} dog. This is a {highlight:classic}classic{/highlight} sentence.",
   width: 400,
   fontSize: 16,
   textColor: "#2c3e50",
@@ -100,9 +130,9 @@ example1Container.addElement(textArea1);
 mainContainer.addElement(example1Container);
 
 // Add highlights
-addHighlight(textArea1.getHighlightedWord('quick'), "#fff3cd", 0.6);
-addHighlight(textArea1.getHighlightedWord('lazy'), "#d1ecf1", 0.6);
-addHighlight(textArea1.getHighlightedWord('classic'), "#f8d7da", 0.6);
+addHighlight(textArea1.getHighlightedWord("quick"), "#fff3cd", 0.6);
+addHighlight(textArea1.getHighlightedWord("lazy"), "#d1ecf1", 0.6);
+addHighlight(textArea1.getHighlightedWord("classic"), "#f8d7da", 0.6);
 
 // ========================================
 // EXAMPLE 2: LaTeX in TextArea
@@ -123,7 +153,8 @@ const label2 = new Text({
 });
 
 const textArea2 = new TextArea({
-  content: "Einstein's famous equation $E = mc^2$ relates energy and mass. The Pythagorean theorem $a^2 + b^2 = c^2$ is fundamental in geometry.",
+  content:
+    "Einstein's famous equation $E = mc^2$ relates energy and mass. The Pythagorean theorem $a^2 + b^2 = c^2$ is fundamental in geometry.",
   width: 400,
   fontSize: 16,
   textColor: "#2c3e50",
@@ -158,7 +189,8 @@ const label3 = new Text({
 });
 
 const textArea3 = new TextArea({
-  content: "The {highlight:quadratic}quadratic formula{/highlight} is given by $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$. It's a {highlight:powerful}powerful{/highlight} tool for solving equations.",
+  content:
+    "The {highlight:quadratic}quadratic formula{/highlight} is given by $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$. It's a {highlight:powerful}powerful{/highlight} tool for solving equations.",
   width: 450,
   fontSize: 16,
   textColor: "#2c3e50",
@@ -175,8 +207,8 @@ example3Container.addElement(textArea3);
 mainContainer.addElement(example3Container);
 
 // Add highlights
-addHighlight(textArea3.getHighlightedWord('quadratic'), "#d1ecf1", 0.6);
-addHighlight(textArea3.getHighlightedWord('powerful'), "#f8d7da", 0.6);
+addHighlight(textArea3.getHighlightedWord("quadratic"), "#d1ecf1", 0.6);
+addHighlight(textArea3.getHighlightedWord("powerful"), "#f8d7da", 0.6);
 
 // ========================================
 // EXAMPLE 4: Long Text with Multiple Highlights
@@ -197,7 +229,8 @@ const label4 = new Text({
 });
 
 const textArea4 = new TextArea({
-  content: "In mathematics, {highlight:calculus}calculus{/highlight} is the study of continuous change. The derivative $\\frac{dy}{dx}$ represents the rate of change, while the integral $\\int f(x) dx$ represents accumulation. These {highlight:concepts}concepts{/highlight} are {highlight:fundamental}fundamental{/highlight} to modern science and engineering.",
+  content:
+    "In mathematics, {highlight:calculus}calculus{/highlight} is the study of continuous change. The derivative $\\frac{dy}{dx}$ represents the rate of change, while the integral $\\int f(x) dx$ represents accumulation. These {highlight:concepts}concepts{/highlight} are {highlight:fundamental}fundamental{/highlight} to modern science and engineering.",
   width: 500,
   fontSize: 15,
   lineHeight: 1.5,
@@ -215,9 +248,9 @@ example4Container.addElement(textArea4);
 mainContainer.addElement(example4Container);
 
 // Add highlights with different colors
-addHighlight(textArea4.getHighlightedWord('calculus'), "#ffcdd2", 0.6);
-addHighlight(textArea4.getHighlightedWord('concepts'), "#c5e1a5", 0.6);
-addHighlight(textArea4.getHighlightedWord('fundamental'), "#b3e5fc", 0.6);
+addHighlight(textArea4.getHighlightedWord("calculus"), "#ffcdd2", 0.6);
+addHighlight(textArea4.getHighlightedWord("concepts"), "#c5e1a5", 0.6);
+addHighlight(textArea4.getHighlightedWord("fundamental"), "#b3e5fc", 0.6);
 
 // ========================================
 // EXAMPLE 5: Narrow Width with Wrapping
@@ -246,7 +279,8 @@ const label5 = new Text({
 });
 
 const textArea5 = new TextArea({
-  content: "The {highlight:area}area{/highlight} of a circle is $A = \\pi r^2$ where $r$ is the {highlight:radius}radius{/highlight}. This simple formula has many applications.",
+  content:
+    "The {highlight:area}area{/highlight} of a circle is $A = \\pi r^2$ where $r$ is the {highlight:radius}radius{/highlight}. This simple formula has many applications.",
   width: 220,
   fontSize: 14,
   lineHeight: 1.4,
@@ -264,8 +298,8 @@ example5Container.addElement(textArea5);
 row5.addElement(example5Container);
 
 // Add highlights
-addHighlight(textArea5.getHighlightedWord('area'), "#ffe082", 0.6);
-addHighlight(textArea5.getHighlightedWord('radius'), "#ce93d8", 0.6);
+addHighlight(textArea5.getHighlightedWord("area"), "#ffe082", 0.6);
+addHighlight(textArea5.getHighlightedWord("radius"), "#ce93d8", 0.6);
 
 // ========================================
 // EXAMPLE 6: No Background
@@ -286,7 +320,8 @@ const label6 = new Text({
 });
 
 const textArea6 = new TextArea({
-  content: "The {highlight:limit}limit{/highlight} of $f(x)$ as $x$ approaches infinity is an {highlight:important}important{/highlight} concept.",
+  content:
+    "The {highlight:limit}limit{/highlight} of $f(x)$ as $x$ approaches infinity is an {highlight:important}important{/highlight} concept.",
   width: 300,
   fontSize: 14,
   textColor: "#2c3e50",
@@ -297,8 +332,8 @@ example6Container.addElement(textArea6);
 row5.addElement(example6Container);
 
 // Add highlights (these will be visible even without background)
-addHighlight(textArea6.getHighlightedWord('limit'), "#ffecb3", 0.7);
-addHighlight(textArea6.getHighlightedWord('important'), "#f8bbd0", 0.7);
+addHighlight(textArea6.getHighlightedWord("limit"), "#ffecb3", 0.7);
+addHighlight(textArea6.getHighlightedWord("important"), "#f8bbd0", 0.7);
 
 mainContainer.addElement(row5);
 
@@ -321,7 +356,8 @@ const label7 = new Text({
 });
 
 const textArea7 = new TextArea({
-  content: "Debug mode shows the {highlight:border}border box{/highlight} and {highlight:content}content box{/highlight} with $x = 5$.",
+  content:
+    "Debug mode shows the {highlight:border}border box{/highlight} and {highlight:content}content box{/highlight} with $x = 5$.",
   width: 350,
   fontSize: 15,
   textColor: "#c62828",
@@ -339,14 +375,16 @@ example7Container.addElement(textArea7);
 mainContainer.addElement(example7Container);
 
 // Add highlights
-addHighlight(textArea7.getHighlightedWord('border'), "#c5cae9", 0.5);
-addHighlight(textArea7.getHighlightedWord('content'), "#fff9c4", 0.5);
+addHighlight(textArea7.getHighlightedWord("border"), "#c5cae9", 0.5);
+addHighlight(textArea7.getHighlightedWord("content"), "#fff9c4", 0.5);
 
 // Log debug info
 console.log("=== TextArea Highlighting Debug Info ===");
 console.log("Example 1 highlighted words:", textArea1.getHighlightedWordIds());
-console.log("Example 3 'quadratic' position:", textArea3.getHighlightedWord('quadratic'));
+console.log(
+  "Example 3 'quadratic' position:",
+  textArea3.getHighlightedWord("quadratic")
+);
 console.log("Example 4 highlighted words:", textArea4.getHighlightedWordIds());
 
 return artboard.render();
-

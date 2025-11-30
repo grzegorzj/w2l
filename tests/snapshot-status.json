@@ -234,5 +234,13 @@
   "themed-simple.js": {
     "status": "pending",
     "timestamp": "2025-11-30T00:34:13.757Z"
+  },
+  "card-demo.js": {
+    "status": "pending",
+    "timestamp": "2025-11-30T02:48:46.684Z"
+  },
+  "card-simple.js": {
+    "status": "pending",
+    "timestamp": "2025-11-30T02:48:46.690Z"
   }
 }

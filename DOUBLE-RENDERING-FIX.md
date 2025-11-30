@@ -93,7 +93,7 @@ this._textLines.push(textInstance);
 3. ✅ **Better memory management** - Parent-child relationships are explicit
 4. ✅ **Consistent with other components** - Follows same pattern as Angle, FlowBox, etc.
 
-## Additional Fix: Text Positioning
+## Additional Fix #1: Text Positioning
 
 ### The Problem
 
@@ -117,9 +117,57 @@ textInstance.position({
 });
 ```
 
+## Additional Fix #2: Highlight Tracking Bug
+
+### The Problem
+
+`getHighlightedWord(id)` was returning `null` because the highlight tracking logic had a critical bug:
+
+```typescript
+// BROKEN CODE:
+const lineStart = this.config.content.indexOf(lineContent.trim());
+highlights.forEach((highlight) => {
+  if (lineStart >= highlight.start && lineStart <= highlight.end) {
+    this._highlightMap.set(highlight.id, { ... });
+  }
+});
+```
+
+**Why this was broken:**
+- `highlights` have start/end positions in `cleanContent` (without markers like `{highlight:id}`)
+- `lineStart` was calculated from `this.config.content` (WITH markers)
+- Example: `"quick"` appears at position 4 in `cleanContent` but position 19 in original content `"The {highlight:quick}quick{/highlight} brown fox"`
+- Positions never matched → highlights never tracked → `getHighlightedWord()` always returned null
+
+### The Solution
+
+Track position in `cleanContent` as we build lines, and check for overlaps:
+
+```typescript
+let cleanContentPosition = 0; // Track position in cleanContent
+
+lines.forEach((lineContent, lineIndex) => {
+  const lineStart = cleanContentPosition;
+  const lineEnd = cleanContentPosition + lineContent.length;
+  
+  highlights.forEach((highlight) => {
+    // Check if this line overlaps with the highlight
+    if (lineStart <= highlight.end && lineEnd >= highlight.start) {
+      this._highlightMap.set(highlight.id, {
+        lineIndex,
+        highlightId: highlight.id,
+      });
+    }
+  });
+  
+  cleanContentPosition += lineContent.length; // Move forward
+});
+```
+
 Now:
-- ✅ Each line is positioned at the correct Y offset
-- ✅ `getHighlightedWord()` returns correct absolute positions
+- ✅ Positions are compared in the same coordinate space (cleanContent)
+- ✅ Highlight ranges are properly tracked to their lines
+- ✅ `getHighlightedWord()` returns the correct Text instances
 - ✅ Highlighting works correctly
 
 ## Testing
