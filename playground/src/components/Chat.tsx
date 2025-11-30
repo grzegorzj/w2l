@@ -7,12 +7,13 @@ interface Message {
 }
 
 interface ChatProps {
-  conversationId: number | null;
   onCodeUpdate: (code: string) => void;
   currentCode: string;
 }
 
-export function Chat({ conversationId, onCodeUpdate, currentCode }: ChatProps) {
+const AGENT_SERVER_URL = "http://localhost:3100";
+
+export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,28 +25,28 @@ export function Chat({ conversationId, onCodeUpdate, currentCode }: ChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Load messages when conversation changes
+  // Load messages from localStorage on mount
   useEffect(() => {
-    if (conversationId) {
-      loadConversation(conversationId);
-    } else {
-      setMessages([]);
+    const saved = localStorage.getItem("w2l-chat-messages");
+    if (saved) {
+      try {
+        setMessages(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to load saved messages:", e);
+      }
     }
-  }, [conversationId]);
+  }, []);
 
-  const loadConversation = async (id: number) => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/conversations/${id}`);
-      const data = await response.json();
-      setMessages(data.messages || []);
-    } catch (error) {
-      console.error("Error loading conversation:", error);
+  // Save messages to localStorage when they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("w2l-chat-messages", JSON.stringify(messages));
     }
-  };
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !conversationId || isLoading) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
     setInput("");
@@ -59,91 +60,111 @@ export function Chat({ conversationId, onCodeUpdate, currentCode }: ChatProps) {
     };
     setMessages((prev) => [...prev, tempUserMessage]);
 
+    // Add placeholder for assistant message
+    const tempAssistantMessage: Message = {
+      id: Date.now() + 1,
+      role: "assistant",
+      content: "",
+    };
+    setMessages((prev) => [...prev, tempAssistantMessage]);
+
     try {
-      // Start streaming response
-      const response = await fetch(
-        `http://localhost:3001/api/conversations/${conversationId}/chat`,
-        {
+      console.log("🤖 Calling agent server...");
+      
+      // Build message history for agent server
+      const apiMessages = messages.map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+      
+      // Add current user message
+      apiMessages.push({
+        role: "user",
+        content: userMessage + (currentCode ? `\n\nCurrent code in editor:\n\`\`\`javascript\n${currentCode}\n\`\`\`` : "")
+      });
+
+      // Call agent server
+      const response = await fetch(`${AGENT_SERVER_URL}/v1/chat/completions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            message: userMessage,
-            currentCode,
+          messages: apiMessages,
+          model: "llama3.1-8b",
+          max_completion_tokens: 4096,
+          temperature: 0.1,
           }),
-        }
-      );
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to send message");
+        const error = await response.json();
+        throw new Error(error.error || "Agent server request failed");
       }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+      const data = await response.json();
+      console.log("✅ Agent server response:", data);
 
-      if (!reader) {
-        throw new Error("No response body");
-      }
-
-      let assistantMessage = "";
-      const tempAssistantMessage: Message = {
-        id: Date.now() + 1,
-        role: "assistant",
-        content: "",
-      };
-      setMessages((prev) => [...prev, tempAssistantMessage]);
-
-      console.log("📡 Starting to read stream...");
+      // Parse the response
+      const assistantContent = data.choices[0].message.content;
+      console.log("📦 Raw assistant content:", assistantContent);
+      console.log("📦 Type:", typeof assistantContent);
       
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          console.log("✅ Stream complete");
-          break;
+      let parsedContent;
+      
+      try {
+        parsedContent = JSON.parse(assistantContent);
+        console.log("✅ Successfully parsed JSON");
+        console.log("📋 Parsed content keys:", Object.keys(parsedContent));
+      } catch (e) {
+        console.warn("⚠️ Failed to parse as JSON, using raw content");
+        parsedContent = {
+          code: assistantContent,
+          explanation: "Code generated",
+        };
         }
 
-        const chunk = decoder.decode(value);
-        console.log("📦 Received chunk:", chunk);
-        const lines = chunk.split("\n");
+      const explanation = parsedContent.explanation || "Code generated successfully.";
+      const code = parsedContent.code;
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            console.log("📨 Processing line:", line);
-            try {
-              const data = JSON.parse(line.slice(6));
-              console.log("📋 Parsed data:", data);
+      console.log("📝 Extracted values:");
+      console.log("  - hasCode:", !!code);
+      console.log("  - codeLength:", code?.length || 0);
+      console.log("  - explanation:", explanation.substring(0, 100));
+      
+      if (code) {
+        console.log("🔍 CODE PREVIEW (first 200 chars):");
+        console.log(code.substring(0, 200));
+      } else {
+        console.log("❌ NO CODE found in response!");
+        console.log("   Available fields:", Object.keys(parsedContent));
+        console.log("   Full parsed content:", parsedContent);
+      }
 
-              if (data.type === "chunk") {
-                assistantMessage += data.content;
+      // Update assistant message with explanation
                 setMessages((prev) => {
                   const newMessages = [...prev];
-                  newMessages[newMessages.length - 1].content = assistantMessage;
+        newMessages[newMessages.length - 1].content = explanation;
                   return newMessages;
                 });
-              } else if (data.type === "code") {
-                console.log("💻 Received code update");
-                onCodeUpdate(data.content);
-              } else if (data.type === "error") {
-                console.error("Stream error:", data.content);
-              }
-            } catch (e) {
-              console.warn("⚠️ JSON parse error:", e, "Line:", line);
-              // Ignore JSON parse errors for incomplete chunks
-            }
-          }
-        }
+
+      // Update code in editor if present
+      if (code) {
+        console.log("💻 Calling onCodeUpdate with code length:", code.length);
+        onCodeUpdate(code);
+        console.log("✅ onCodeUpdate called successfully");
+      } else {
+        console.log("⚠️ Skipping code update - no code in response");
       }
+
     } catch (error) {
-      console.error("Error sending message:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 2,
-          role: "assistant",
-          content: "Sorry, an error occurred. Please try again.",
-        },
-      ]);
+      console.error("❌ Error calling agent server:", error);
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1].content = 
+          `Sorry, an error occurred: ${error instanceof Error ? error.message : "Unknown error"}. Make sure the agent server is running on port 3100.`;
+        return newMessages;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -156,18 +177,39 @@ export function Chat({ conversationId, onCodeUpdate, currentCode }: ChatProps) {
     }
   };
 
-  if (!conversationId) {
-    return (
-      <div className="chat-container">
-        <div className="chat-empty">
-          <p>Select or create a conversation to start chatting</p>
-        </div>
-      </div>
-    );
+  const handleClearChat = () => {
+    if (confirm("Clear all chat messages?")) {
+      setMessages([]);
+      localStorage.removeItem("w2l-chat-messages");
   }
+  };
 
   return (
     <div className="chat-container">
+      <div className="chat-header" style={{ 
+        padding: "10px", 
+        borderBottom: "1px solid var(--border)", 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center" 
+      }}>
+        <h3 style={{ margin: 0, fontSize: "14px" }}>W2L AI Assistant</h3>
+        {messages.length > 0 && (
+          <button
+            onClick={handleClearChat}
+            style={{
+              padding: "4px 8px",
+              fontSize: "12px",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Clear Chat
+          </button>
+        )}
+      </div>
       <div className="chat-messages">
         {messages.length === 0 ? (
           <div className="chat-welcome">
@@ -225,7 +267,7 @@ export function Chat({ conversationId, onCodeUpdate, currentCode }: ChatProps) {
           className="chat-submit"
           disabled={!input.trim() || isLoading}
         >
-          {isLoading ? "Sending..." : "Send"}
+          {isLoading ? "Generating..." : "Send"}
         </button>
       </form>
     </div>

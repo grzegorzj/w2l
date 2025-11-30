@@ -9,6 +9,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Agent server configuration
+const AGENT_SERVER_URL = process.env.AGENT_SERVER_URL || "http://localhost:3100";
+const USE_AGENT_SERVER = process.env.USE_AGENT_SERVER === "true";
+
 /**
  * Extract code blocks from LLM response (fallback for non-structured output)
  * @param {string} content - The LLM response content
@@ -24,6 +28,80 @@ export function extractCodeFromResponse(content) {
   }
 
   return null;
+}
+
+/**
+ * Call the agent server for code generation
+ * @param {Array} messages - Array of message objects with role and content
+ * @param {Function} onChunk - Callback for each chunk (streaming reasoning)
+ * @param {Function} onComplete - Callback when complete
+ * @param {Function} onError - Callback on error
+ */
+export async function streamAgentCompletion(
+  messages,
+  onChunk,
+  onComplete,
+  onError
+) {
+  try {
+    console.log("🤖 Calling agent server at", AGENT_SERVER_URL);
+    
+    // Call the agent server
+    const response = await fetch(`${AGENT_SERVER_URL}/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messages: messages,
+        model: "gpt-oss-120b",
+        max_completion_tokens: 4096,
+        temperature: 0.1,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Agent server request failed");
+    }
+
+    const data = await response.json();
+    console.log("✅ Agent server response received");
+
+    // Parse the response
+    const assistantMessage = data.choices[0].message.content;
+    let parsedContent;
+    
+    try {
+      parsedContent = JSON.parse(assistantMessage);
+    } catch (e) {
+      console.warn("⚠️ Failed to parse agent response as JSON:", e.message);
+      parsedContent = {
+        code: assistantMessage,
+        explanation: "Code generated",
+      };
+    }
+
+    const extractedCode = parsedContent.code || null;
+    const explanation = parsedContent.explanation || "Code generated successfully.";
+
+    console.log("📝 Agent response:", {
+      hasCode: !!extractedCode,
+      codeLength: extractedCode?.length || 0,
+      explanation: explanation.substring(0, 100),
+    });
+
+    // Stream the explanation to the frontend
+    if (explanation) {
+      onChunk(explanation);
+    }
+
+    // Call completion with reasoning and code
+    onComplete(explanation, extractedCode);
+  } catch (error) {
+    console.error("❌ Agent server error:", error);
+    onError(error);
+  }
 }
 
 /**
@@ -284,6 +362,12 @@ export async function streamChatCompletion(
   onComplete,
   onError
 ) {
+  // Delegate to agent server if configured
+  if (USE_AGENT_SERVER) {
+    console.log("🤖 Using agent server for code generation");
+    return streamAgentCompletion(messages, onChunk, onComplete, onError);
+  }
+
   try {
     console.log("🔵 Starting stream with gpt-5-codex...");
     let fullContent = "";

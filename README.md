@@ -6,6 +6,25 @@ An imperative library for LLM-driven structured image generation.
 
 W2L is a TypeScript library designed to make it easy for Large Language Models (LLMs) to create structured visual compositions such as infographics, diagrams, graphs, and posters. Instead of struggling with low-level SVG geometry, LLMs can express visual intent using intuitive, high-level commands.
 
+## 🚀 Quick Start - AI-Powered Playground
+
+The fastest way to experience W2L is with the AI-powered playground:
+
+```bash
+./start-playground.sh
+```
+
+This starts:
+
+- **Agent Server** (port 3100) - Cerebras-powered code generation with tool calling
+- **Playground UI** (port 3000) - Interactive editor with chat interface
+
+Then open `http://localhost:3000` and chat with the AI assistant to generate visualizations!
+
+**Requirements:**
+
+- Cerebras API key: `echo 'CEREBRAS_API_KEY=your-key' > .env`
+
 ## Philosophy
 
 When asked to "Create a visual representation of the Pythagorean Theorem," an LLM shouldn't try to write SVG directly (which often fails due to geometric complexity). Instead, it should:
@@ -167,13 +186,27 @@ size: { width: 800, height: 600 }
 
 ### Interactive Playground
 
-W2L includes an interactive playground for testing and development:
+W2L includes an interactive playground for testing and development.
+
+**For AI-powered development** (recommended):
+
+```bash
+./start-all.sh
+```
+
+This starts the complete stack with AI assistant:
+
+- Agent Server (Cerebras + tool calling)
+- Playground Server (conversation management)
+- Playground UI with chat interface at `http://localhost:3000`
+
+**For manual development** (library dev only):
 
 ```bash
 npm run dev:all
 ```
 
-This starts all development watchers simultaneously:
+This starts development watchers:
 
 - Library compilation with hot reload
 - Documentation generation
@@ -181,12 +214,14 @@ This starts all development watchers simultaneously:
 
 The playground features:
 
-- Monaco editor (VS Code's editor) with TypeScript support
-- Live SVG rendering with zoom and pan
-- File loading for `.ts` and `.js` files
-- Code examples in `playground/examples/`
+- **AI Chat Assistant** - Natural language code generation (with agent server)
+- **Monaco Editor** - VS Code's editor with TypeScript support
+- **Live SVG Rendering** - Real-time preview with zoom and pan
+- **File Loading** - Load `.ts` and `.js` files
+- **Example Library** - Pre-built examples in `playground/examples/`
+- **Conversation History** - Persistent chat and code sessions
 
-For more detailed development information, see [DEV_GUIDE.md](./DEV_GUIDE.md).
+For more detailed development information, see [DEV_GUIDE.md](./DEV_GUIDE.md) and [AGENT_INTEGRATION.md](./AGENT_INTEGRATION.md).
 
 ### Watch Mode (Individual Components)
 

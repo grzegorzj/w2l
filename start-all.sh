@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Start W2L Playground with Agent Server
+# Start all W2L services for the playground with agent server integration
 # This script starts:
 # 1. Agent Server (port 3100)
-# 2. Playground UI (port 3000)
+# 2. Playground Server (port 3001)
+# 3. Playground UI (port 3000)
 
 set -e
 
@@ -16,23 +17,33 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}"
 echo "╔════════════════════════════════════════╗"
-echo "║     W2L Playground - AI Powered        ║"
-echo "╚════════════════════════════════════════╝"
+echo "║   W2L Playground - Complete Startup    ║"
+echo "╔════════════════════════════════════════╗"
 echo -e "${NC}"
 
-# Function to check if .env file exists
+# Function to check if .env file exists and has required keys
 check_env_file() {
     local dir=$1
+    local required_keys=("${@:2}")
     local env_file="$dir/.env"
     
     if [ ! -f "$env_file" ]; then
         # Check parent directory too
         if [ -f "../.env" ]; then
-            return 0
+            env_file="../.env"
         else
+            echo -e "${YELLOW}⚠️  Warning: No .env file found in $dir${NC}"
+            echo -e "${YELLOW}   Using defaults or environment variables${NC}"
             return 1
         fi
     fi
+    
+    for key in "${required_keys[@]}"; do
+        if ! grep -q "^$key=" "$env_file" && ! grep -q "^export $key=" "$env_file"; then
+            echo -e "${YELLOW}⚠️  Warning: $key not found in $env_file${NC}"
+        fi
+    done
+    
     return 0
 }
 
@@ -44,10 +55,11 @@ PROJECT_ROOT=$(pwd)
 
 # Check agent server env
 cd "$PROJECT_ROOT/agent_server"
-if ! check_env_file "."; then
-    echo -e "${YELLOW}⚠️  Warning: No CEREBRAS_API_KEY found${NC}"
-    echo -e "${YELLOW}   Create .env in project root: echo 'CEREBRAS_API_KEY=your-key' > ../.env${NC}"
-fi
+check_env_file "." "CEREBRAS_API_KEY"
+
+# Check playground server env
+cd "$PROJECT_ROOT/server"
+check_env_file "." "USE_AGENT_SERVER"
 
 cd "$PROJECT_ROOT"
 
@@ -72,7 +84,21 @@ npm run dev > /tmp/w2l-agent-server.log 2>&1 &
 AGENT_PID=$!
 echo -e "${GREEN}✅ Agent Server started (PID: $AGENT_PID)${NC}"
 
-# Wait for agent server to start
+# Wait a bit for agent server to start
+sleep 3
+
+# Start Playground Server
+echo -e "\n${BLUE}🚀 Starting Playground Server (port 3001)...${NC}"
+cd "$PROJECT_ROOT/server"
+if [ ! -d "node_modules" ]; then
+    echo -e "${YELLOW}📦 Installing playground server dependencies...${NC}"
+    npm install
+fi
+npm run dev > /tmp/w2l-playground-server.log 2>&1 &
+SERVER_PID=$!
+echo -e "${GREEN}✅ Playground Server started (PID: $SERVER_PID)${NC}"
+
+# Wait a bit for playground server to start
 sleep 3
 
 # Start Playground UI
@@ -109,6 +135,7 @@ check_service() {
 }
 
 check_service "Agent Server" "http://localhost:3100/health" "/tmp/w2l-agent-server.log"
+check_service "Playground Server" "http://localhost:3001/health" "/tmp/w2l-playground-server.log"
 check_service "Playground UI" "http://localhost:3000" "/tmp/w2l-playground-ui.log"
 
 # Display summary
@@ -117,12 +144,14 @@ echo -e "${GREEN}║          🎨 All Services Running!      ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
 echo -e ""
 echo -e "${BLUE}📍 Services:${NC}"
-echo -e "   • Agent Server: ${GREEN}http://localhost:3100${NC}"
-echo -e "   • Playground:   ${GREEN}http://localhost:3000${NC}"
+echo -e "   • Agent Server:      ${GREEN}http://localhost:3100${NC}"
+echo -e "   • Playground Server: ${GREEN}http://localhost:3001${NC}"
+echo -e "   • Playground UI:     ${GREEN}http://localhost:3000${NC}"
 echo -e ""
 echo -e "${BLUE}📝 Logs:${NC}"
-echo -e "   • Agent Server: ${YELLOW}tail -f /tmp/w2l-agent-server.log${NC}"
-echo -e "   • Playground:   ${YELLOW}tail -f /tmp/w2l-playground-ui.log${NC}"
+echo -e "   • Agent Server:      ${YELLOW}tail -f /tmp/w2l-agent-server.log${NC}"
+echo -e "   • Playground Server: ${YELLOW}tail -f /tmp/w2l-playground-server.log${NC}"
+echo -e "   • Playground UI:     ${YELLOW}tail -f /tmp/w2l-playground-ui.log${NC}"
 echo -e ""
 echo -e "${BLUE}🎯 Open in browser:${NC}"
 echo -e "   ${GREEN}http://localhost:3000${NC}"
@@ -132,3 +161,4 @@ echo -e ""
 
 # Wait for any process to exit
 wait
+

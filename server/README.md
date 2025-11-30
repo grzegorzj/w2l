@@ -11,11 +11,26 @@ npm install
 
 2. Create a `.env` file in this directory:
 ```bash
-cp .env.example .env
+cp env.template .env
 ```
 
-3. Add your OpenAI API key to the `.env` file:
+3. Configure your LLM backend:
+
+**Option A: Use Agent Server (Recommended)**
 ```
+USE_AGENT_SERVER=true
+AGENT_SERVER_URL=http://localhost:3100
+PORT=3001
+```
+
+Then start the agent server in another terminal:
+```bash
+cd ../agent_server && npm run dev
+```
+
+**Option B: Use OpenAI**
+```
+USE_AGENT_SERVER=false
 OPENAI_API_KEY=your_key_here
 PORT=3001
 ```
@@ -59,8 +74,23 @@ SQLite database (`conversations.db`) with tables:
 ## Features
 
 - SQLite database for persistent storage
-- OpenAI GPT-4 integration with streaming
+- **W2L Agent Server integration** with Cerebras + tool calling (recommended)
+- OpenAI GPT-4 integration with streaming (legacy)
 - Automatic code extraction from LLM responses
 - Conversation title generation
 - RESTful API for conversation management
+
+## Architecture
+
+The server acts as a proxy between the playground UI and the LLM backend:
+
+```
+Playground UI (port 3000)
+    ↓
+Playground Server (port 3001) - Manages conversations & database
+    ↓
+Agent Server (port 3100) - Generates W2L code with Cerebras + tools
+```
+
+When `USE_AGENT_SERVER=true`, the server delegates all code generation to the agent server, which uses Cerebras with tool calling to access W2L documentation and generate accurate code.
 

@@ -122,9 +122,10 @@ AVAILABLE ELEMENTS:
 ${elementsText}
 
 When generating code:
-- Do not comment the code
+- Before each instruction, write a one liner comment about why you are choosing to do what you do - refer to the guides.
 - Do not use any imports; the library is already available
 - End the document with return artboard.render(); or calls to multiple artboards if needed
+- Don't add other comments
 `;
 }
 
@@ -164,7 +165,6 @@ app.post("/v1/chat/completions", async (req, res) => {
       model = "gpt-oss-120b",
       max_completion_tokens = 4096,
       temperature = 0.1,
-      reasoning_effort = "low",
       top_p = 1,
       ...otherParams
     } = req.body;
@@ -233,7 +233,6 @@ app.post("/v1/chat/completions", async (req, res) => {
         model,
         messages: conversationMessages,
         max_completion_tokens,
-        reasoning_effort,
         temperature,
         top_p,
         ...otherParams,
@@ -271,6 +270,32 @@ app.post("/v1/chat/completions", async (req, res) => {
       const choice = response.choices[0];
       const message = choice.message;
 
+      // Check if tool call is in message content (Cerebras format)
+      let isToolCallInContent = false;
+      if (message.content) {
+        try {
+          const parsed = JSON.parse(message.content);
+          if (parsed.type === "function" && parsed.name && parsed.parameters) {
+            isToolCallInContent = true;
+            console.log(`   🔧 Detected tool call in content: ${parsed.name}`);
+
+            // Convert to standard tool_calls format
+            message.tool_calls = [
+              {
+                id: `call_${Date.now()}`,
+                type: "function",
+                function: {
+                  name: parsed.name,
+                  arguments: JSON.stringify(parsed.parameters),
+                },
+              },
+            ];
+          }
+        } catch (e) {
+          // Not a tool call, continue normally
+        }
+      }
+
       // Check if LLM wants to call tools
       if (message.tool_calls && message.tool_calls.length > 0) {
         console.log(
@@ -284,7 +309,32 @@ app.post("/v1/chat/completions", async (req, res) => {
         const toolsStartTime = Date.now();
         for (const toolCall of message.tool_calls) {
           const toolName = toolCall.function.name;
-          const toolArgs = JSON.parse(toolCall.function.arguments);
+          let toolArgs = JSON.parse(toolCall.function.arguments);
+
+          // Handle Cerebras format where arrays might be stringified
+          // e.g., {"elements": "['Rect']"} should become {"elements": ["Rect"]}
+          for (const [key, value] of Object.entries(toolArgs)) {
+            if (
+              typeof value === "string" &&
+              value.startsWith("[") &&
+              value.endsWith("]")
+            ) {
+              try {
+                // Try to parse as JSON array
+                toolArgs[key] = JSON.parse(value.replace(/'/g, '"'));
+              } catch (e) {
+                // If that fails, try eval (safe here since it's our own data)
+                try {
+                  toolArgs[key] = eval(value);
+                } catch (e2) {
+                  // Keep original value if both fail
+                  console.log(
+                    `      ⚠️  Could not parse array string: ${value}`
+                  );
+                }
+              }
+            }
+          }
 
           console.log(
             `      📦 Executing: ${toolName}(${JSON.stringify(toolArgs)})`
@@ -367,16 +417,41 @@ app.post("/v1/chat/completions", async (req, res) => {
       console.log(`   ✨ Completed\n`);
 
       // Parse the structured JSON response
+      console.log("\n📦 RAW LLM RESPONSE:");
+      console.log("─────────────────────────────────────────────────");
+      console.log(message.content);
+      console.log("─────────────────────────────────────────────────\n");
+
       let parsedContent;
       try {
         parsedContent = JSON.parse(message.content);
+        console.log("✅ Successfully parsed as JSON");
       } catch (e) {
+        console.log("⚠️  Failed to parse as JSON, using raw content");
         // If parsing fails, wrap plain text response
         parsedContent = {
           code: message.content,
           explanation: "Code generated",
         };
       }
+
+      // Log what we're sending back
+      console.log("\n📤 SENDING TO CLIENT:");
+      console.log("─────────────────────────────────────────────────");
+      if (parsedContent.code) {
+        console.log(`✅ Has code field (${parsedContent.code.length} chars)`);
+        console.log("\n🔍 CODE PREVIEW (first 300 chars):");
+        console.log(parsedContent.code.substring(0, 300) + "...");
+      } else {
+        console.log("❌ NO CODE FIELD in parsed content!");
+        console.log("Available fields:", Object.keys(parsedContent));
+      }
+      if (parsedContent.explanation) {
+        console.log(
+          `\n💬 Explanation: ${parsedContent.explanation.substring(0, 100)}...`
+        );
+      }
+      console.log("─────────────────────────────────────────────────\n");
 
       return res.json({
         id: response.id,
