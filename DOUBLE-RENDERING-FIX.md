@@ -93,14 +93,44 @@ this._textLines.push(textInstance);
 3. ✅ **Better memory management** - Parent-child relationships are explicit
 4. ✅ **Consistent with other components** - Follows same pattern as Angle, FlowBox, etc.
 
+## Additional Fix: Text Positioning
+
+### The Problem
+
+After adding Text objects as children, they weren't being positioned! They all defaulted to position (0, 0) relative to TextArea. This broke:
+
+1. **Text rendering** - All lines appeared at Y=0 (overlapping)
+2. **Highlighting** - `getHighlightedWord()` returned wrong positions (all at 0,0)
+
+### The Solution
+
+Position each Text instance at its proper Y offset within the TextArea:
+
+```typescript
+// Position the text at its proper Y offset within the TextArea
+textInstance.position({
+  relativeFrom: textInstance.topLeft,
+  relativeTo: this.contentBox.topLeft,
+  x: 0,
+  y: yOffset,
+  boxReference: "contentBox",
+});
+```
+
+Now:
+- ✅ Each line is positioned at the correct Y offset
+- ✅ `getHighlightedWord()` returns correct absolute positions
+- ✅ Highlighting works correctly
+
 ## Testing
 
 To verify the fix:
 
 1. Run example 51: `playground/examples/tests/51-textarea-highlights-latex.js`
-2. Check that text appears only once per line
-3. Verify highlighting still works correctly
-4. Check that LaTeX rendering is not duplicated
+2. Check that text appears only once per line (no double rendering)
+3. Verify lines are at correct Y positions (not all overlapping at Y=0)
+4. Verify highlighting works and Rects appear at correct positions
+5. Check that LaTeX rendering is not duplicated
 
 ## Lessons Learned
 

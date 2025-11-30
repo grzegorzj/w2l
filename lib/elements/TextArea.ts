@@ -369,6 +369,15 @@ export class TextArea extends Rectangle {
       // TextArea will render this Text as part of its own rendering
       this.addElement(textInstance);
 
+      // Position the text at its proper Y offset within the TextArea
+      textInstance.position({
+        relativeFrom: textInstance.topLeft,
+        relativeTo: this.contentBox.topLeft,
+        x: 0,
+        y: yOffset,
+        boxReference: "contentBox",
+      });
+
       this._textLines.push(textInstance);
       this._lineYPositions.push(yOffset);
 
