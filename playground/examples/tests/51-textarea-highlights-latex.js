@@ -146,7 +146,7 @@ const example2Container = new Container({
 });
 
 const label2 = new Text({
-  content: "Example 2: Inline LaTeX",
+  content: "Example 2: LaTeX Highlighting Test",
   fontSize: 16,
   fontWeight: "bold",
   style: { fill: "#2c3e50" },
@@ -154,7 +154,7 @@ const label2 = new Text({
 
 const textArea2 = new TextArea({
   content:
-    "Einstein's famous equation $E = mc^2$ relates energy and mass. The Pythagorean theorem $a^2 + b^2 = c^2$ is fundamental in geometry.",
+    "Einstein's equation {highlight:emc}$E = mc^2${/highlight} relates energy and mass. The theorem {highlight:pythag}$a^2 + b^2 = c^2${/highlight} is fundamental.",
   width: 400,
   fontSize: 16,
   textColor: "#2c3e50",
@@ -169,6 +169,10 @@ const textArea2 = new TextArea({
 example2Container.addElement(label2);
 example2Container.addElement(textArea2);
 mainContainer.addElement(example2Container);
+
+// Highlight the entire LaTeX expressions
+addHighlight(textArea2.getHighlightedWord("emc"), "#fff3cd", 0.6);
+addHighlight(textArea2.getHighlightedWord("pythag"), "#d1ecf1", 0.6);
 
 // ========================================
 // EXAMPLE 3: Combined LaTeX and Highlights
@@ -297,10 +301,6 @@ example5Container.addElement(label5);
 example5Container.addElement(textArea5);
 row5.addElement(example5Container);
 
-// Add highlights
-addHighlight(textArea5.getHighlightedWord("area"), "#ffe082", 0.6);
-addHighlight(textArea5.getHighlightedWord("radius"), "#ce93d8", 0.6);
-
 // ========================================
 // EXAMPLE 6: No Background
 // ========================================
@@ -331,11 +331,14 @@ example6Container.addElement(label6);
 example6Container.addElement(textArea6);
 row5.addElement(example6Container);
 
-// Add highlights (these will be visible even without background)
+// Add row5 to mainContainer FIRST, so it gets positioned
+mainContainer.addElement(row5);
+
+// NOW add highlights (after row5 is positioned in the hierarchy)
+addHighlight(textArea5.getHighlightedWord("area"), "#ffe082", 0.6);
+addHighlight(textArea5.getHighlightedWord("radius"), "#ce93d8", 0.6);
 addHighlight(textArea6.getHighlightedWord("limit"), "#ffecb3", 0.7);
 addHighlight(textArea6.getHighlightedWord("important"), "#f8bbd0", 0.7);
-
-mainContainer.addElement(row5);
 
 // ========================================
 // EXAMPLE 7: Debug Mode

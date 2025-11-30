@@ -563,17 +563,24 @@ export class TextArea extends Rectangle {
     let highlightHeight: number;
 
     if (canMeasure) {
+      // Let these auto-add to artboard for measurement, we'll track them for cleanup
+      const tempTexts: Text[] = [];
+      
       // Measure text before highlight to get x offset
-      // Add as child temporarily to prevent auto-add to artboard
-      const beforeText = new Text({
-        content: beforeHighlight,
-        fontSize: this._fontSize,
-        fontFamily: this.config.fontFamily,
-        fontWeight: this.config.fontWeight,
-        lineHeight: this._lineHeight,
-      });
-      this.addElement(beforeText); // Prevent auto-add to artboard
-      xOffset = beforeText.textWidth;
+      // Special case: empty string has 0 width
+      if (beforeHighlight === "") {
+        xOffset = 0;
+      } else {
+        const beforeText = new Text({
+          content: beforeHighlight,
+          fontSize: this._fontSize,
+          fontFamily: this.config.fontFamily,
+          fontWeight: this.config.fontWeight,
+          lineHeight: this._lineHeight,
+        });
+        tempTexts.push(beforeText);
+        xOffset = beforeText.textWidth;
+      }
 
       // Measure the highlighted text itself to get width
       const highlightTextMeasure = new Text({
@@ -583,9 +590,13 @@ export class TextArea extends Rectangle {
         fontWeight: this.config.fontWeight,
         lineHeight: this._lineHeight,
       });
-      this.addElement(highlightTextMeasure); // Prevent auto-add to artboard
+      tempTexts.push(highlightTextMeasure);
       highlightWidth = highlightTextMeasure.textWidth;
       highlightHeight = highlightTextMeasure.textHeight;
+      
+      // Clean up: Make them children of TextArea so they don't render on artboard
+      // This happens AFTER measurement when they've already measured themselves
+      tempTexts.forEach(t => this.addElement(t));
     } else {
       // Fallback: use character-based estimation
       // This is a rough approximation for when DOM is not available (e.g., tests)
@@ -598,65 +609,74 @@ export class TextArea extends Rectangle {
       highlightHeight = textInstance.textHeight;
     }
 
-    // Calculate absolute position of the highlight
-    // IMPORTANT: Vertically center the HIGHLIGHT (not just its top) within the line
-    // When LaTeX is present, lines are taller and we need to center the highlight's center
-    const lineHeight = this._lineHeights[highlightInfo.lineIndex];
-    const verticalCenterOffset = (lineHeight - highlightHeight) / 2;
-    
-    const lineTopLeft = textInstance.topLeft;
-    const highlightX = lineTopLeft.x + xOffset;
-    const highlightY = lineTopLeft.y + verticalCenterOffset;
+    // Store measurement data for lazy position calculation
+    // Positions must be calculated lazily because the TextArea might not be positioned yet
+    // (Containers position their children during render())
+    const storedXOffset = xOffset;
+    const storedHighlightWidth = highlightWidth;
+    const storedHighlightHeight = highlightHeight;
+    const storedLineIndex = highlightInfo.lineIndex;
+    const self = this; // Capture 'this' for closures
 
-    // Return the precisely measured highlight
+    // Return the precisely measured highlight with lazy position calculation
     return {
       id,
-      bbox: {
-        x: highlightX,
-        y: highlightY,
-        width: highlightWidth,
-        height: highlightHeight,
+      get bbox() {
+        // Calculate position NOW (when bbox is accessed), not when getHighlightedWord was called
+        const contentPos = self.getPositionForBox("content");
+        const yOffset = self._lineYPositions[storedLineIndex];
+        const lineHeight = self._lineHeights[storedLineIndex];
+        const verticalCenterOffset = (lineHeight - storedHighlightHeight) / 2;
+        
+        const result = {
+          x: contentPos.x + storedXOffset,
+          y: contentPos.y + yOffset + verticalCenterOffset,
+          width: storedHighlightWidth,
+          height: storedHighlightHeight,
+        };
+        
+        console.log(`[bbox] "${id}": contentPos=(${contentPos.x.toFixed(1)}, ${contentPos.y.toFixed(1)}) + xOff=${storedXOffset.toFixed(1)} + yOff=${yOffset.toFixed(1)} = result=(${result.x.toFixed(1)}, ${result.y.toFixed(1)}) [${storedHighlightWidth.toFixed(1)}x${storedHighlightHeight.toFixed(1)}]`);
+        
+        return result;
       },
       content: highlightText,
       textInstance,
+      // All position getters use the lazy bbox
       get center() {
-        return {
-          x: this.bbox.x + this.bbox.width / 2,
-          y: this.bbox.y + this.bbox.height / 2,
-        };
+        const b = this.bbox;
+        return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
       },
       get topLeft() {
-        return { x: this.bbox.x, y: this.bbox.y };
+        const b = this.bbox;
+        return { x: b.x, y: b.y };
       },
       get topCenter() {
-        return { x: this.bbox.x + this.bbox.width / 2, y: this.bbox.y };
+        const b = this.bbox;
+        return { x: b.x + b.width / 2, y: b.y };
       },
       get topRight() {
-        return { x: this.bbox.x + this.bbox.width, y: this.bbox.y };
+        const b = this.bbox;
+        return { x: b.x + b.width, y: b.y };
       },
       get leftCenter() {
-        return { x: this.bbox.x, y: this.bbox.y + this.bbox.height / 2 };
+        const b = this.bbox;
+        return { x: b.x, y: b.y + b.height / 2 };
       },
       get rightCenter() {
-        return {
-          x: this.bbox.x + this.bbox.width,
-          y: this.bbox.y + this.bbox.height / 2,
-        };
+        const b = this.bbox;
+        return { x: b.x + b.width, y: b.y + b.height / 2 };
       },
       get bottomLeft() {
-        return { x: this.bbox.x, y: this.bbox.y + this.bbox.height };
+        const b = this.bbox;
+        return { x: b.x, y: b.y + b.height };
       },
       get bottomCenter() {
-        return {
-          x: this.bbox.x + this.bbox.width / 2,
-          y: this.bbox.y + this.bbox.height,
-        };
+        const b = this.bbox;
+        return { x: b.x + b.width / 2, y: b.y + b.height };
       },
       get bottomRight() {
-        return {
-          x: this.bbox.x + this.bbox.width,
-          y: this.bbox.y + this.bbox.height,
-        };
+        const b = this.bbox;
+        return { x: b.x + b.width, y: b.y + b.height };
       },
       get top() {
         return this.topCenter;
