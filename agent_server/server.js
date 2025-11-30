@@ -164,7 +164,7 @@ app.post("/v1/chat/completions", async (req, res) => {
     const {
       messages,
       model = "gpt-oss-120b",
-      max_completion_tokens = 4096,
+      max_completion_tokens = 16384,
       temperature = 0.1,
       top_p = 1,
       ...otherParams

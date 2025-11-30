@@ -15,14 +15,14 @@
 const artboard = new Artboard({
   width: 800,
   height: 600,
-  boxModel: { padding: 40 }, // optional padding
+  boxModel: { padding: 40 }, // custom padding (default is 20)
 });
 ```
 
-3. For auto-sizing (default), you can create an artboard without any size or config:
+3. For auto-sizing (default), you can create an artboard without any config (default padding is 20):
 
 ```javascript
-const artboard = new Artboard({ boxModel: { padding: 40 } });
+const artboard = new Artboard(); // Has default padding of 20
 ```
 
 4. Elements need positioning (.position) unless they are in a Container or anything that has "direction" specified. Containers position their children automatically.
@@ -35,7 +35,7 @@ All code has to be in pure Javascript.
 ```javascript
 const rect = new Rectangle({
   // config goes here
-  style: {}, // any SVG compatible style
+  style: {}, // any SVG compatible style - properties like in CSS, e.g. backgroundFill, etc., values - the same
 });
 ```
 
@@ -57,8 +57,6 @@ const mainContainer = new Container({
 Then add children with
 
 ```javascript
-mainContainer.addElement(element);
-// Or use the shorthand .add() method - THIS IS PREFERRED.
 mainContainer.add(new Rectangle({ width: 100, height: 100 }));
 ```
 

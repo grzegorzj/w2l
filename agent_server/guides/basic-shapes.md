@@ -74,13 +74,6 @@ A three-sided polygon with various configuration options.
 
 A straight line between two points.
 
-**Use Cases:**
-
-- Connecting elements
-- Axes in graphs
-- Borders and dividers
-- Arrows and pointers
-
 **Key Properties:**
 
 - Start and end positions

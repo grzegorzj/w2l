@@ -72,11 +72,14 @@ export class Artboard extends Container {
       style.fill = config.backgroundColor;
     }
 
+    // Default padding of 20 if no boxModel provided
+    const boxModel = config.boxModel ?? { padding: 20 };
+
     super({
       width,
       height,
       direction: "freeform",
-      boxModel: config.boxModel,
+      boxModel,
       style,
     });
 
