@@ -158,28 +158,24 @@ function buildGuidesDocs() {
   const files = fs.readdirSync(GUIDES_PATH);
   
   for (const file of files) {
-    if (!file.endsWith('.md')) continue;
+    if (!file.endsWith('.json')) continue;
     
     const filePath = path.join(GUIDES_PATH, file);
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const guideData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     
-    // Extract title (first # heading)
-    const titleMatch = content.match(/^#\s+(.+)$/m);
-    const title = titleMatch ? titleMatch[1] : file.replace('.md', '');
-    
-    // Extract overview (text after ## Overview)
-    const overviewMatch = content.match(/##\s+Overview\s*\n(.+?)(?=\n##|\n$)/s);
-    const overview = overviewMatch ? overviewMatch[1].trim() : 'No overview available';
-    
-    // Extract "When to Use" section
-    const whenToUseMatch = content.match(/##\s+When to Use[^#]*\n([\s\S]*?)(?=\n##|\n$)/);
-    const whenToUse = whenToUseMatch ? whenToUseMatch[1].trim() : '';
+    // Validate required fields
+    if (!guideData.id || !guideData.title || !guideData.description || !guideData.content) {
+      console.warn(`⚠️  Guide ${file} missing required fields (id, title, description, content)`);
+      continue;
+    }
     
     guides.push({
-      id: file.replace('.md', ''),
-      title,
-      overview,
-      whenToUse,
+      id: guideData.id,
+      title: guideData.title,
+      description: guideData.description,
+      covers: guideData.covers || [],
+      topics: guideData.topics || [],
+      content: guideData.content,
       filePath: file
     });
   }
@@ -212,8 +208,9 @@ function buildAgentContext(elements, guides) {
       available: guides.map(g => ({
         id: g.id,
         title: g.title,
-        overview: g.overview.substring(0, 200) + '...',
-        whenToUse: g.whenToUse
+        description: g.description,
+        covers: g.covers,
+        topics: g.topics
       }))
     },
     timestamp: new Date().toISOString()

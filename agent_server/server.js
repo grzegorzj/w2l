@@ -92,8 +92,20 @@ function buildSystemPrompt(guides, elements) {
   const baseInstructions = getBaseInstructions();
 
   const guidesList = guides
-    .map((g) => `- ${g.id}: ${g.title}\n  ${g.overview}`)
-    .join("\n");
+    .map((g) => {
+      let info = `- ${g.id}: ${g.title}\n  ${g.description}`;
+
+      if (g.covers && g.covers.length > 0) {
+        info += `\n  Covers: ${g.covers.join(", ")}`;
+      }
+
+      if (g.topics && g.topics.length > 0) {
+        info += `\n  Topics: ${g.topics.slice(0, 5).join(", ")}${g.topics.length > 5 ? ", ..." : ""}`;
+      }
+
+      return info;
+    })
+    .join("\n\n");
 
   const elementsByCategory = {};
   for (const el of elements) {
@@ -164,7 +176,7 @@ app.post("/v1/chat/completions", async (req, res) => {
     const {
       messages,
       model = "gpt-oss-120b",
-      max_completion_tokens = 16384,
+      max_completion_tokens = 1024,
       temperature = 0.1,
       top_p = 1,
       ...otherParams

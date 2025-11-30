@@ -76,8 +76,16 @@ rect.position({
 });
 ```
 
+# Style and graphics
+
+- Use vertical stacking container with two cards
+- Add a Card element as a parent to the figure
+- Add another Card with a visual legend of what's on the figure
+- Cards are styled by default
+
 # IMPORTANT REMARKS
 
 - do not use SVG style for positioning
 - prefer using .add() shorthand for adding children: `parent.add(new Rectangle(config))`
 - elements are auto-added to `artboard`, only explicitly add them when they should be children of containers or other elements
+- Do not return ```javascript backticks as notation - only the code.

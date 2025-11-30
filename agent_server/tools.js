@@ -48,14 +48,11 @@ export function getGuides(guideIds) {
       continue;
     }
 
-    // Load full guide content
-    const guidePath = path.join(GUIDES_PATH, guide.filePath);
-    const content = fs.readFileSync(guidePath, "utf-8");
-
+    // Return guide with full content from JSON
     results.push({
-      id,
+      id: guide.id,
       title: guide.title,
-      content,
+      content: guide.content,
     });
   }
 
@@ -106,8 +103,9 @@ export function getAvailableGuides() {
   return docs.guides.map((g) => ({
     id: g.id,
     title: g.title,
-    overview: g.overview,
-    whenToUse: g.whenToUse,
+    description: g.description,
+    topics: g.topics || [],
+    covers: g.covers || [],
   }));
 }
 

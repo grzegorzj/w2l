@@ -70,31 +70,32 @@ export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
 
     try {
       console.log("🤖 Calling agent server...");
-      
+
       // Build message history for agent server
-      const apiMessages = messages.map(m => ({
+      const apiMessages = messages.map((m) => ({
         role: m.role,
-        content: m.content
+        content: m.content,
       }));
-      
+
       // Add current user message
       apiMessages.push({
         role: "user",
-        content: userMessage + (currentCode ? `\n\nCurrent code in editor:\n\`\`\`javascript\n${currentCode}\n\`\`\`` : "")
+        content:
+          userMessage +
+          (currentCode
+            ? `\n\nCurrent code in editor:\n\`\`\`javascript\n${currentCode}\n\`\`\``
+            : ""),
       });
 
       // Call agent server
       const response = await fetch(`${AGENT_SERVER_URL}/v1/chat/completions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           messages: apiMessages,
-          model: "llama3.1-8b",
-          max_completion_tokens: 4096,
-          temperature: 0.1,
-          }),
+        }),
       });
 
       if (!response.ok) {
@@ -109,9 +110,9 @@ export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
       const assistantContent = data.choices[0].message.content;
       console.log("📦 Raw assistant content:", assistantContent);
       console.log("📦 Type:", typeof assistantContent);
-      
+
       let parsedContent;
-      
+
       try {
         parsedContent = JSON.parse(assistantContent);
         console.log("✅ Successfully parsed JSON");
@@ -122,16 +123,17 @@ export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
           code: assistantContent,
           explanation: "Code generated",
         };
-        }
+      }
 
-      const explanation = parsedContent.explanation || "Code generated successfully.";
+      const explanation =
+        parsedContent.explanation || "Code generated successfully.";
       const code = parsedContent.code;
 
       console.log("📝 Extracted values:");
       console.log("  - hasCode:", !!code);
       console.log("  - codeLength:", code?.length || 0);
       console.log("  - explanation:", explanation.substring(0, 100));
-      
+
       if (code) {
         console.log("🔍 CODE PREVIEW (first 200 chars):");
         console.log(code.substring(0, 200));
@@ -142,11 +144,11 @@ export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
       }
 
       // Update assistant message with explanation
-                setMessages((prev) => {
-                  const newMessages = [...prev];
+      setMessages((prev) => {
+        const newMessages = [...prev];
         newMessages[newMessages.length - 1].content = explanation;
-                  return newMessages;
-                });
+        return newMessages;
+      });
 
       // Update code in editor if present
       if (code) {
@@ -156,12 +158,11 @@ export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
       } else {
         console.log("⚠️ Skipping code update - no code in response");
       }
-
     } catch (error) {
       console.error("❌ Error calling agent server:", error);
       setMessages((prev) => {
         const newMessages = [...prev];
-        newMessages[newMessages.length - 1].content = 
+        newMessages[newMessages.length - 1].content =
           `Sorry, an error occurred: ${error instanceof Error ? error.message : "Unknown error"}. Make sure the agent server is running on port 3100.`;
         return newMessages;
       });
@@ -181,18 +182,21 @@ export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
     if (confirm("Clear all chat messages?")) {
       setMessages([]);
       localStorage.removeItem("w2l-chat-messages");
-  }
+    }
   };
 
   return (
     <div className="chat-container">
-      <div className="chat-header" style={{ 
-        padding: "10px", 
-        borderBottom: "1px solid var(--border)", 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center" 
-      }}>
+      <div
+        className="chat-header"
+        style={{
+          padding: "10px",
+          borderBottom: "1px solid var(--border)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <h3 style={{ margin: 0, fontSize: "14px" }}>W2L AI Assistant</h3>
         {messages.length > 0 && (
           <button
@@ -218,7 +222,9 @@ export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
             <div className="chat-suggestions">
               <button
                 className="suggestion-button"
-                onClick={() => setInput("Create a blue rectangle with rounded corners")}
+                onClick={() =>
+                  setInput("Create a blue rectangle with rounded corners")
+                }
               >
                 Create a blue rectangle
               </button>
@@ -238,7 +244,10 @@ export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
           </div>
         ) : (
           messages.map((message) => (
-            <div key={message.id} className={`chat-message chat-message-${message.role}`}>
+            <div
+              key={message.id}
+              className={`chat-message chat-message-${message.role}`}
+            >
               <div className="chat-message-role">
                 {message.role === "user" ? "You" : "Assistant"}
               </div>
@@ -273,4 +282,3 @@ export function Chat({ onCodeUpdate, currentCode }: ChatProps) {
     </div>
   );
 }
-
