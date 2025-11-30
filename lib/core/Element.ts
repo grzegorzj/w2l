@@ -9,7 +9,12 @@ export interface Position {
   y: number;
 }
 
-export type BoxReferenceType = "contentBox" | "borderBox" | "paddingBox" | "marginBox" | "none";
+export type BoxReferenceType =
+  | "contentBox"
+  | "borderBox"
+  | "paddingBox"
+  | "marginBox"
+  | "none";
 
 export interface PositionConfig {
   relativeFrom: Position;
@@ -45,18 +50,18 @@ export abstract class Element {
   /**
    * Auto-add this element to the current artboard if one exists.
    * Should be called by leaf element classes (Shape subclasses) but not containers.
-   * 
+   *
    * Note: This is automatically overridden if you explicitly add the element to
    * a different parent (like a Container). Elements can only have ONE parent.
-   * 
+   *
    * @example
    * // Shape auto-adds to artboard
    * const circle = new Circle({ radius: 50 });
-   * 
+   *
    * // Adding to container removes from artboard (one parent only)
    * const container = new Container({ direction: "horizontal" });
    * container.add(circle); // Now circle's parent is container, not artboard
-   * 
+   *
    * @internal
    */
   protected autoAddToArtboard(): void {
@@ -84,16 +89,16 @@ export abstract class Element {
   /**
    * Adds a child element to this element.
    * The child will be positioned relative to this element.
-   * 
+   *
    * **Important**: An element can only have ONE parent at a time.
    * If the element is already a child of another element (including the artboard),
    * it will be automatically removed from that parent before being added here.
    * This prevents elements from appearing in multiple places.
-   * 
+   *
    * @example
    * // Shape auto-adds to artboard on creation
    * const circle = new Circle({ radius: 50 });
-   * 
+   *
    * // Adding to container removes it from artboard
    * const container = new Container({ direction: "horizontal" });
    * container.add(circle); // circle is now ONLY in container, not artboard
@@ -103,26 +108,39 @@ export abstract class Element {
     // This is critical for auto-add to artboard feature - when a shape is created,
     // it auto-adds to artboard, but if you then add it to a container, we must
     // remove it from the artboard to prevent it appearing in both places
+    let oldParentAbsolutePos = { x: 0, y: 0 };
     if (element._parent) {
+      // Store old parent's absolute position for coordinate conversion
+      oldParentAbsolutePos = element._parent.getAbsolutePosition();
+
       const oldParent = element._parent;
       const index = oldParent.children.indexOf(element);
       if (index > -1) {
         oldParent.children.splice(index, 1);
       }
+      // Clear parent reference
+      element._parent = null;
     }
-    
-    // If element had no parent but has a position, convert from absolute to relative
-    if (!element._parent && element._hasExplicitPosition) {
-      const elementAbsolutePos = { ...element._position }; // This was absolute
-      const thisAbsolutePos = this.getAbsolutePosition(); // Parent's absolute position
-      
-      // Convert to relative position
+
+    // If element has an explicit position, it needs to be converted to be relative to this parent
+    // The element's current position is relative to its old parent (or absolute if it had no parent)
+    if (element._hasExplicitPosition) {
+      // Calculate element's absolute position (relative to old parent + old parent's absolute pos)
+      const elementAbsolutePos = {
+        x: element._position.x + oldParentAbsolutePos.x,
+        y: element._position.y + oldParentAbsolutePos.y,
+      };
+
+      // Get this (new) parent's absolute position
+      const thisAbsolutePos = this.getAbsolutePosition();
+
+      // Convert to position relative to new parent
       element._position = {
         x: elementAbsolutePos.x - thisAbsolutePos.x,
         y: elementAbsolutePos.y - thisAbsolutePos.y,
       };
     }
-    
+
     this.children.push(element);
     element._parent = this;
   }
@@ -130,7 +148,7 @@ export abstract class Element {
   /**
    * Shorthand alias for addElement().
    * Useful for more concise code when adding children.
-   * 
+   *
    * @example
    * parent.add(new Rectangle({ width: 100, height: 100 }));
    */
@@ -235,7 +253,12 @@ export abstract class Element {
    * Get the bounding box of this element in absolute coordinates.
    * Returns null if the element doesn't have a defined size.
    */
-  getBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  getBoundingBox(): {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+  } | null {
     // This method should be overridden by subclasses that have a size
     return null;
   }
@@ -243,10 +266,12 @@ export abstract class Element {
   /**
    * Get the bounding box of all children (recursively) in absolute coordinates.
    * Only includes children that should contribute to parent's auto-sizing.
-   * 
+   *
    * @param includeContentBoxOnly - If true, only include children positioned relative to contentBox
    */
-  getChildrenBoundingBox(includeContentBoxOnly: boolean = false): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  getChildrenBoundingBox(
+    includeContentBoxOnly: boolean = false
+  ): { minX: number; minY: number; maxX: number; maxY: number } | null {
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -255,7 +280,11 @@ export abstract class Element {
 
     const processChild = (child: Element) => {
       // Skip if we only want contentBox-positioned children and this isn't one
-      if (includeContentBoxOnly && child._positionBoxReference !== "contentBox" && child._positionBoxReference !== "none") {
+      if (
+        includeContentBoxOnly &&
+        child._positionBoxReference !== "contentBox" &&
+        child._positionBoxReference !== "none"
+      ) {
         return;
       }
 
@@ -286,7 +315,10 @@ export abstract class Element {
    * By default, elements positioned relative to contentBox are included.
    */
   shouldIncludeInParentAutoSize(): boolean {
-    return this._positionBoxReference === "contentBox" || this._positionBoxReference === "none";
+    return (
+      this._positionBoxReference === "contentBox" ||
+      this._positionBoxReference === "none"
+    );
   }
 
   /**
