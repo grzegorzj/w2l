@@ -19,6 +19,13 @@ export {
   styleToSVGAttributes,
 } from "./core/index.js";
 
+// Artboard context (for auto-add to artboard)
+export {
+  getCurrentArtboard,
+  setCurrentArtboard,
+  clearCurrentArtboard,
+} from "./core/ArtboardContext.js";
+
 // Layout containers
 export {
   Container,

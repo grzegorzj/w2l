@@ -165,6 +165,9 @@ export class FlowConnector extends Element {
       ...this._theme.presets.connector,
       ...config.style,
     };
+    
+    // Auto-add to current artboard
+    this.autoAddToArtboard();
   }
 
   /**

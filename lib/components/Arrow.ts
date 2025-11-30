@@ -133,6 +133,9 @@ export class Arrow extends Element {
 
     // Add line as a child
     this.addElement(this.line);
+    
+    // Auto-add to current artboard
+    this.autoAddToArtboard();
   }
 
   /**

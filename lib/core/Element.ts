@@ -2,6 +2,8 @@
  * New layout system - Base Element class
  */
 
+import { getCurrentArtboard } from "./ArtboardContext.js";
+
 export interface Position {
   x: number;
   y: number;
@@ -41,6 +43,30 @@ export abstract class Element {
   }
 
   /**
+   * Auto-add this element to the current artboard if one exists.
+   * Should be called by leaf element classes (Shape subclasses) but not containers.
+   * 
+   * Note: This is automatically overridden if you explicitly add the element to
+   * a different parent (like a Container). Elements can only have ONE parent.
+   * 
+   * @example
+   * // Shape auto-adds to artboard
+   * const circle = new Circle({ radius: 50 });
+   * 
+   * // Adding to container removes from artboard (one parent only)
+   * const container = new Container({ direction: "horizontal" });
+   * container.add(circle); // Now circle's parent is container, not artboard
+   * 
+   * @internal
+   */
+  protected autoAddToArtboard(): void {
+    const artboard = getCurrentArtboard();
+    if (artboard && artboard !== this) {
+      artboard.addElement(this);
+    }
+  }
+
+  /**
    * Gets the z-index of this element.
    */
   get zIndex(): number | undefined {
@@ -58,8 +84,33 @@ export abstract class Element {
   /**
    * Adds a child element to this element.
    * The child will be positioned relative to this element.
+   * 
+   * **Important**: An element can only have ONE parent at a time.
+   * If the element is already a child of another element (including the artboard),
+   * it will be automatically removed from that parent before being added here.
+   * This prevents elements from appearing in multiple places.
+   * 
+   * @example
+   * // Shape auto-adds to artboard on creation
+   * const circle = new Circle({ radius: 50 });
+   * 
+   * // Adding to container removes it from artboard
+   * const container = new Container({ direction: "horizontal" });
+   * container.add(circle); // circle is now ONLY in container, not artboard
    */
   addElement(element: Element): void {
+    // Enforce one-parent-only policy: Remove from previous parent if it has one
+    // This is critical for auto-add to artboard feature - when a shape is created,
+    // it auto-adds to artboard, but if you then add it to a container, we must
+    // remove it from the artboard to prevent it appearing in both places
+    if (element._parent) {
+      const oldParent = element._parent;
+      const index = oldParent.children.indexOf(element);
+      if (index > -1) {
+        oldParent.children.splice(index, 1);
+      }
+    }
+    
     // If element had no parent but has a position, convert from absolute to relative
     if (!element._parent && element._hasExplicitPosition) {
       const elementAbsolutePos = { ...element._position }; // This was absolute
@@ -74,6 +125,26 @@ export abstract class Element {
     
     this.children.push(element);
     element._parent = this;
+  }
+
+  /**
+   * Shorthand alias for addElement().
+   * Useful for more concise code when adding children.
+   * 
+   * @example
+   * parent.add(new Rectangle({ width: 100, height: 100 }));
+   */
+  add(element: Element): Element {
+    this.addElement(element);
+    return element;
+  }
+
+  /**
+   * Gets the parent element of this element.
+   * Returns null if this element has no parent (root level).
+   */
+  getParent(): Element | null {
+    return this._parent;
   }
 
   /**

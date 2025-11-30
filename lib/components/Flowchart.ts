@@ -212,6 +212,9 @@ export class Flowchart extends Element {
     this.nodes = new Map();
 
     this.buildFlowchart();
+    
+    // Auto-add to current artboard
+    this.autoAddToArtboard();
   }
 
   /**

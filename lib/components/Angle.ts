@@ -168,6 +168,9 @@ export class Angle extends Element {
       this._label = this.createLabelElement();
       this.addElement(this._label);
     }
+
+    // Auto-add to current artboard
+    this.autoAddToArtboard();
   }
 
   /**

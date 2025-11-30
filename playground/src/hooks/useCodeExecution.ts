@@ -81,6 +81,11 @@ export function useCodeExecution(autoImport: boolean = true) {
       // Import W2L dynamically
       const w2l = await import("w2l");
 
+      // Clear any existing artboard context before execution
+      if (w2l.clearCurrentArtboard) {
+        w2l.clearCurrentArtboard();
+      }
+
       // Create a sandboxed environment
       const sandbox = {
         ...w2l,
@@ -90,6 +95,15 @@ export function useCodeExecution(autoImport: boolean = true) {
           warn: (...args: any[]) => console.warn("[User Code]", ...args),
         },
       };
+
+      // Check if code already creates an artboard
+      const hasArtboardCreation = /new\s+Artboard\s*\(/.test(codeToExecute);
+      
+      // If no artboard is created explicitly, prepend one
+      if (!hasArtboardCreation) {
+        console.log("[Playground] No artboard detected, prepending default artboard creation");
+        codeToExecute = `const artboard = new Artboard({ width: "auto", height: "auto" });\n\n${codeToExecute}`;
+      }
 
       // Transform the code to remove imports
       // We always strip imports because we inject w2l into the sandbox

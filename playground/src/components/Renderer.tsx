@@ -46,7 +46,10 @@ export function Renderer({ result }: RendererProps) {
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
           }}
         >
-          <div dangerouslySetInnerHTML={{ __html: result.svgs[0] }} />
+          <div
+            style={{ lineHeight: 0 }}
+            dangerouslySetInnerHTML={{ __html: result.svgs[0] }}
+          />
         </div>
       );
     }
@@ -56,7 +59,10 @@ export function Renderer({ result }: RendererProps) {
         {result.svgs.map((svg, index) => (
           <div key={index} className="artboard-item">
             <div className="artboard-label">Artboard {index + 1}</div>
-            <div dangerouslySetInnerHTML={{ __html: svg }} />
+            <div
+              style={{ lineHeight: 0 }}
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
           </div>
         ))}
       </div>

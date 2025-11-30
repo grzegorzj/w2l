@@ -19,6 +19,9 @@ export abstract class Shape extends Element implements Stylable {
     if (style) {
       this._style = { ...style };
     }
+    // Auto-add to current artboard (if one exists)
+    // This can be overridden by explicitly adding to another container
+    this.autoAddToArtboard();
   }
 
   get style(): Style {

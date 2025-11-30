@@ -135,13 +135,14 @@ When generating code:
 const codeOutputSchema = {
   type: "object",
   properties: {
-    code: {
-      type: "string",
-      description: "The generated JavaScript code using the W2L library",
-    },
     explanation: {
       type: "string",
       description: "Brief explanation of what the code does",
+    },
+    code: {
+      type: "string",
+      description:
+        "The generated JavaScript code using the W2L library. IMPORTANT: NEVER return anything else than JavaScript here, or the program will fail.",
     },
   },
   required: ["code"],

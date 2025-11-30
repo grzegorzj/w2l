@@ -1,19 +1,32 @@
 # Base Instructions
 
 1. No imports - all components available in the library are available in the runtime out of the box.
-2. Script should end with artboard.render(); - there can be multiple artboards which you can render if user asked for more than one image.
-3. Don't use any APIs you don't know for sure.
+2. **Artboard is auto-created** - You don't need to create an artboard unless the user specifically wants custom sizing or multiple artboards. The playground automatically creates a default artboard.
+3. Script can optionally end with artboard.render(); - but this is also handled automatically.
+4. Don't use any APIs you don't know for sure.
+5. Elements are automatically added to the artboard on creation - you only need to explicitly add them if they should be children of another element.
+6. No shapes or elements exist until you create them (`artboard` is the only exception).
 
-# Your default behviour
+# Your default behaviour
 
-1. If no size has been specified, you can just initialize `new Artboard()` without any size or config. It will auto adjust. Artboard by default renders with padding that can be adjusted if user wants to:
+1. If you need custom artboard sizing or multiple artboards, create them explicitly. Otherwise, the default artboard is automatically available as `artboard`.
 
+```javascript
+const artboard = new Artboard({
+  width: 800,
+  height: 600,
+  boxModel: { padding: 40 }, // optional padding
+});
 ```
-{ boxModel: { padding: 40 } }, // this goes into artboard arguments
+
+3. For auto-sizing (default), you can create an artboard without any size or config:
+
+```javascript
+const artboard = new Artboard({ boxModel: { padding: 40 } });
 ```
 
-2. Elements need positioning (.position) unless they are in a Container or anything that has "directio" specified. This is positioning them automatically.
-3. Position works semantically. You just specify what is positioned where in relation to what.
+4. Elements need positioning (.position) unless they are in a Container or anything that has "direction" specified. Containers position their children automatically.
+5. Position works semantically. You just specify what is positioned where in relation to what.
 
 # Objects and their properties
 
@@ -45,6 +58,8 @@ Then add children with
 
 ```javascript
 mainContainer.addElement(element);
+// Or use the shorthand .add() method - THIS IS PREFERRED.
+mainContainer.add(new Rectangle({ width: 100, height: 100 }));
 ```
 
 # Absolute positioning
@@ -66,3 +81,5 @@ rect.position({
 # IMPORTANT REMARKS
 
 - do not use SVG style for positioning
+- prefer using .add() shorthand for adding children: `parent.add(new Rectangle(config))`
+- elements are auto-added to `artboard`, only explicitly add them when they should be children of containers or other elements

@@ -6,6 +6,7 @@ import { Container, type SizeMode } from "../layout/Container.js";
 import { type Style, styleToSVGAttributes } from "../core/Stylable.js";
 import { type BoxModel } from "../utils/BoxModel.js";
 import { type Theme, defaultTheme } from "../core/Theme.js";
+import { setCurrentArtboard } from "../core/ArtboardContext.js";
 
 export interface ArtboardConfig {
   /**
@@ -80,6 +81,9 @@ export class Artboard extends Container {
     });
 
     this.theme = theme;
+
+    // Set this as the current artboard for auto-adding elements
+    setCurrentArtboard(this);
   }
 
   /**

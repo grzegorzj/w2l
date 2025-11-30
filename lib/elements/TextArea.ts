@@ -296,6 +296,10 @@ export class TextArea extends Rectangle {
           lineHeight: this._lineHeight,
         });
 
+        // Add as child to prevent it from being rendered on artboard
+        // (TextArea uses this only for measurement)
+        this.addElement(tempText);
+
         const latexHeight = tempText.textHeight;
 
         // If LaTeX is too tall, put it on its own line
@@ -321,6 +325,10 @@ export class TextArea extends Rectangle {
         fontWeight: this.config.fontWeight,
         lineHeight: this._lineHeight,
       });
+
+      // Add as child to prevent it from being rendered on artboard
+      // (TextArea uses this only for measurement)
+      this.addElement(tempText);
 
       const measuredWidth = tempText.textWidth;
 
@@ -356,6 +364,10 @@ export class TextArea extends Rectangle {
         lineHeight: this._lineHeight,
         style: { fill: this.config.textColor || "#000000" },
       });
+
+      // Add as child to prevent it from being rendered on artboard
+      // TextArea will render this Text as part of its own rendering
+      this.addElement(textInstance);
 
       this._textLines.push(textInstance);
       this._lineYPositions.push(yOffset);
