@@ -1,0 +1,10 @@
+# Nixpacks configuration for Railway deployment
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "chromium"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[start]
+cmd = "node server.js"
+

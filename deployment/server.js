@@ -7,10 +7,40 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const API_KEY = process.env.API_KEY;
+
+// Check if API key is configured
+if (!API_KEY) {
+  console.error('ERROR: API_KEY environment variable is not set!');
+  console.error('Please set API_KEY in your .env file or environment variables.');
+  process.exit(1);
+}
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// API Key authentication middleware
+const authenticateApiKey = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+  
+  if (!apiKey) {
+    return res.status(401).json({ 
+      error: 'Unauthorized', 
+      message: 'API key is required. Provide it via X-API-Key header or Authorization: Bearer <key>' 
+    });
+  }
+  
+  if (apiKey !== API_KEY) {
+    console.warn(`[Auth] Invalid API key attempt from ${req.ip}`);
+    return res.status(403).json({ 
+      error: 'Forbidden', 
+      message: 'Invalid API key' 
+    });
+  }
+  
+  next();
+};
 
 // Health check
 app.get('/health', (req, res) => {
@@ -18,7 +48,7 @@ app.get('/health', (req, res) => {
 });
 
 // Render to SVG
-app.post('/render/svg', async (req, res) => {
+app.post('/render/svg', authenticateApiKey, async (req, res) => {
   const startTime = Date.now();
   try {
     const { code, width = 800, height = 600 } = req.body;
@@ -53,7 +83,7 @@ app.post('/render/svg', async (req, res) => {
 });
 
 // Render to PNG
-app.post('/render/png', async (req, res) => {
+app.post('/render/png', authenticateApiKey, async (req, res) => {
   const startTime = Date.now();
   try {
     const { code, width, height, scale = 2 } = req.body;
@@ -96,7 +126,7 @@ app.post('/render/png', async (req, res) => {
 });
 
 // Render to JPG
-app.post('/render/jpg', async (req, res) => {
+app.post('/render/jpg', authenticateApiKey, async (req, res) => {
   const startTime = Date.now();
   try {
     const { code, width, height, scale = 2, quality = 90 } = req.body;

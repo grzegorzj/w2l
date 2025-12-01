@@ -59,6 +59,7 @@ export {
   Side,
   Image,
   BezierCurve,
+  Path,
   type ArtboardConfig,
   type CircleConfig,
   type RectConfig,
@@ -89,6 +90,7 @@ export {
   type SideLabelConfig,
   type ImageConfig,
   type BezierCurveConfig,
+  type PathConfig,
 } from "./elements/index.js";
 
 // Components
@@ -163,5 +165,24 @@ export {
   type TimelineEvent,
   type TimelinePeriod,
   type TimelineBreak,
+  PeriodicElement,
+  type ElementData,
+  ElementCategory,
+  type PeriodicElementConfig,
+  PeriodicTable,
+  type PeriodicTableConfig,
+  ChemFig,
+  ChemicalFormula,
+  type ChemFigConfig,
+  ChemicalStructures,
+  ChemicalReactions,
+  Treemap,
+  type TreemapConfig,
+  type TreemapNode,
+  Alluvial,
+  type AlluvialConfig,
+  type AlluvialNode,
+  type AlluvialFlow,
+  type AlluvialStage,
 } from "./themed-components/index.js";
 

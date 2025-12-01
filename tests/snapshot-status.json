@@ -270,5 +270,17 @@
   "test-timeline.js": {
     "status": "pending",
     "timestamp": "2025-12-01T05:49:33.983Z"
+  },
+  "test-chemistry.js": {
+    "status": "pending",
+    "timestamp": "2025-12-01T07:42:41.499Z"
+  },
+  "test-alluvial.js": {
+    "status": "pending",
+    "timestamp": "2025-12-01T08:36:16.684Z"
+  },
+  "test-treemap.js": {
+    "status": "pending",
+    "timestamp": "2025-12-01T08:22:50.843Z"
   }
 }

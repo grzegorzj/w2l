@@ -17,4 +17,5 @@ export { FunctionGraph, type FunctionGraphConfig, type PlottedFunction, type Rem
 export { Side, type SideConfig, type SideLabelConfig } from "./Side.js";
 export { Image, type ImageConfig } from "./Image.js";
 export { BezierCurve, type BezierCurveConfig } from "./BezierCurve.js";
+export { Path, type PathConfig } from "./Path.js";
 
