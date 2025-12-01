@@ -236,7 +236,7 @@ export const SwissTheme: Theme = {
   borders: {
     width: 1,
     radius: {
-      sm: 2,
+      sm: 4,
       full: 9999,
     },
   },

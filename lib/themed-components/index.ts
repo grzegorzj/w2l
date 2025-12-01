@@ -6,4 +6,5 @@
  */
 
 export { Card, type CardConfig } from "./Card.js";
+export { Legend, type LegendConfig, type LegendItem } from "./Legend.js";
 

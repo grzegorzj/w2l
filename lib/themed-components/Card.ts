@@ -56,7 +56,7 @@ export interface CardConfig {
  * Automatically styled with:
  * - White background
  * - Subtle border
- * - Small border radius (2px)
+ * - Small border radius (4px)
  * - Comfortable padding (16px)
  * - Professional typography
  * - Vertical layout for content

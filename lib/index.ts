@@ -153,5 +153,8 @@ export {
 export {
   Card,
   type CardConfig,
+  Legend,
+  type LegendConfig,
+  type LegendItem,
 } from "./themed-components/index.js";
 
