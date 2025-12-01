@@ -148,6 +148,10 @@ export class Angle extends Element {
   constructor(config: AngleConfig) {
     super();
 
+    // Mark this element to escape container layouts
+    // Angles must be positioned absolutely based on global geometry
+    this._escapeContainerLayout = true;
+
     this.config = config;
 
     // Resolve the configuration
@@ -177,7 +181,7 @@ export class Angle extends Element {
    * Resolves the angle configuration from various input formats.
    */
   private resolveConfig(config: AngleConfig): ResolvedAngleConfig {
-    const radius = config.radius ?? 80;
+    const radius = config.radius ?? 40;
     const labelFontSize = config.labelFontSize ?? 14;
     const labelDistance = config.labelDistance ?? 0.6;
     const rightAngleMarker = config.rightAngleMarker ?? "square";

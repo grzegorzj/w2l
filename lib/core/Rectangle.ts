@@ -297,12 +297,7 @@ export abstract class Rectangle extends Shape {
   getCorners(): { x: number; y: number }[] {
     if (this._rotation === 0) {
       // No rotation - return regular corners
-      return [
-        this.topLeft,
-        this.topRight,
-        this.bottomRight,
-        this.bottomLeft,
-      ];
+      return [this.topLeft, this.topRight, this.bottomRight, this.bottomLeft];
     }
 
     // Get center point for rotation
@@ -323,7 +318,7 @@ export abstract class Rectangle extends Shape {
     const cos = Math.cos(rotationRad);
     const sin = Math.sin(rotationRad);
 
-    return corners.map(corner => {
+    return corners.map((corner) => {
       // Translate to origin
       const x = corner.x - cx;
       const y = corner.y - cy;
@@ -376,9 +371,23 @@ export abstract class Rectangle extends Shape {
   }
 
   /**
+   * Convenient alias for centerTop.
+   */
+  get topCenter(): Position {
+    return this.centerTop;
+  }
+
+  /**
    * Convenient alias for centerBottom.
    */
   get bottom(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottomCenter(): Position {
     return this.centerBottom;
   }
 
@@ -403,8 +412,8 @@ export abstract class Rectangle extends Shape {
     // If rotated, calculate bbox from actual corners
     if (this._rotation !== 0) {
       const corners = this.getCorners();
-      const xs = corners.map(c => c.x);
-      const ys = corners.map(c => c.y);
+      const xs = corners.map((c) => c.x);
+      const ys = corners.map((c) => c.y);
       return {
         minX: Math.min(...xs),
         minY: Math.min(...ys),
@@ -412,7 +421,7 @@ export abstract class Rectangle extends Shape {
         maxY: Math.max(...ys),
       };
     }
-    
+
     // Not rotated - simple bbox
     const absPos = this.getAbsolutePosition();
     return {

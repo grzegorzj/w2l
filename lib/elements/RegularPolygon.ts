@@ -95,6 +95,171 @@ export class RegularPolygon extends Shape {
   }
 
   /**
+   * Get the top-left corner position (bounding box).
+   */
+  get topLeft(): Position {
+    return this.boundingBoxTopLeft;
+  }
+
+  /**
+   * Get the top-right corner position (bounding box).
+   */
+  get topRight(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map(v => v.x);
+    const ys = this.vertices.map(v => v.y);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+
+    return {
+      x: absPos.x + maxX,
+      y: absPos.y + minY,
+    };
+  }
+
+  /**
+   * Get the bottom-left corner position (bounding box).
+   */
+  get bottomLeft(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map(v => v.x);
+    const ys = this.vertices.map(v => v.y);
+    const minX = Math.min(...xs);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + minX,
+      y: absPos.y + maxY,
+    };
+  }
+
+  /**
+   * Get the bottom-right corner position (bounding box).
+   */
+  get bottomRight(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map(v => v.x);
+    const ys = this.vertices.map(v => v.y);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + maxX,
+      y: absPos.y + maxY,
+    };
+  }
+
+  /**
+   * Get the center-top position (bounding box).
+   */
+  get centerTop(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map(v => v.x);
+    const ys = this.vertices.map(v => v.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+
+    return {
+      x: absPos.x + (minX + maxX) / 2,
+      y: absPos.y + minY,
+    };
+  }
+
+  /**
+   * Get the center-bottom position (bounding box).
+   */
+  get centerBottom(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map(v => v.x);
+    const ys = this.vertices.map(v => v.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + (minX + maxX) / 2,
+      y: absPos.y + maxY,
+    };
+  }
+
+  /**
+   * Get the center-left position (bounding box).
+   */
+  get centerLeft(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map(v => v.x);
+    const ys = this.vertices.map(v => v.y);
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + minX,
+      y: absPos.y + (minY + maxY) / 2,
+    };
+  }
+
+  /**
+   * Get the center-right position (bounding box).
+   */
+  get centerRight(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map(v => v.x);
+    const ys = this.vertices.map(v => v.y);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + maxX,
+      y: absPos.y + (minY + maxY) / 2,
+    };
+  }
+
+  /**
+   * Convenient alias for centerTop.
+   */
+  get top(): Position {
+    return this.centerTop;
+  }
+
+  /**
+   * Convenient alias for centerTop.
+   */
+  get topCenter(): Position {
+    return this.centerTop;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottom(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottomCenter(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerLeft.
+   */
+  get left(): Position {
+    return this.centerLeft;
+  }
+
+  /**
+   * Convenient alias for centerRight.
+   */
+  get right(): Position {
+    return this.centerRight;
+  }
+
+  /**
    * Get the bounding box width
    */
   get boundingWidth(): number {

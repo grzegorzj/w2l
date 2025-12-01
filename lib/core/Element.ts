@@ -42,9 +42,27 @@ export abstract class Element {
   protected _creationIndex: number;
   protected _hasExplicitPosition: boolean = false;
   protected _positionBoxReference: BoxReferenceType = "none"; // Track what box reference was used
+  protected _escapeContainerLayout: boolean = false; // If true, element escapes to artboard/freeform ancestor
 
   constructor() {
     this._creationIndex = Element._creationCounter++;
+  }
+
+  /**
+   * Checks if this element should escape container layout systems.
+   * Elements marked as escape will be added to the artboard instead of layout containers.
+   */
+  get escapeContainerLayout(): boolean {
+    return this._escapeContainerLayout;
+  }
+
+  /**
+   * Marks this element to escape container layout systems.
+   * Use this for elements that need absolute positioning based on global geometry.
+   * @internal
+   */
+  protected markEscapeContainerLayout(): void {
+    this._escapeContainerLayout = true;
   }
 
   /**

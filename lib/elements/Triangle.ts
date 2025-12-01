@@ -230,6 +230,171 @@ export class Triangle extends Shape {
   }
 
   /**
+   * Get the top-left corner position (bounding box).
+   */
+  get topLeft(): Position {
+    return this.boundingBoxTopLeft;
+  }
+
+  /**
+   * Get the top-right corner position (bounding box).
+   */
+  get topRight(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+
+    return {
+      x: absPos.x + maxX,
+      y: absPos.y + minY,
+    };
+  }
+
+  /**
+   * Get the bottom-left corner position (bounding box).
+   */
+  get bottomLeft(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const minX = Math.min(...xs);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + minX,
+      y: absPos.y + maxY,
+    };
+  }
+
+  /**
+   * Get the bottom-right corner position (bounding box).
+   */
+  get bottomRight(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + maxX,
+      y: absPos.y + maxY,
+    };
+  }
+
+  /**
+   * Get the center-top position (bounding box).
+   */
+  get centerTop(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+
+    return {
+      x: absPos.x + (minX + maxX) / 2,
+      y: absPos.y + minY,
+    };
+  }
+
+  /**
+   * Get the center-bottom position (bounding box).
+   */
+  get centerBottom(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + (minX + maxX) / 2,
+      y: absPos.y + maxY,
+    };
+  }
+
+  /**
+   * Get the center-left position (bounding box).
+   */
+  get centerLeft(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + minX,
+      y: absPos.y + (minY + maxY) / 2,
+    };
+  }
+
+  /**
+   * Get the center-right position (bounding box).
+   */
+  get centerRight(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + maxX,
+      y: absPos.y + (minY + maxY) / 2,
+    };
+  }
+
+  /**
+   * Convenient alias for centerTop.
+   */
+  get top(): Position {
+    return this.centerTop;
+  }
+
+  /**
+   * Convenient alias for centerTop.
+   */
+  get topCenter(): Position {
+    return this.centerTop;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottom(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottomCenter(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerLeft.
+   */
+  get left(): Position {
+    return this.centerLeft;
+  }
+
+  /**
+   * Convenient alias for centerRight.
+   */
+  get right(): Position {
+    return this.centerRight;
+  }
+
+  /**
    * Get the vertices in absolute coordinates
    */
   get absoluteVertices(): [Position, Position, Position] {
@@ -357,10 +522,11 @@ export class Triangle extends Shape {
       );
       
       // Create altitude line
+      const altStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
       const altitudeLine = new Line({
         start: { x: 0, y: 0 },
         end: { x: foot.x - vertex.x, y: foot.y - vertex.y },
-        style: { stroke: "#666", strokeWidth: 1, strokeDasharray: "4,4" }
+        style: altStyle
       });
       
       altitudeLine.position({
@@ -526,6 +692,9 @@ export class Triangle extends Shape {
         content: labelText,
         fontSize,
       });
+
+      // Mark label to escape container layout - it's positioned based on global geometry
+      (label as any).markEscapeContainerLayout();
 
       // Position the label so its center is at the offset position
       const targetX = vertex.x + normalX;

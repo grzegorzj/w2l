@@ -33,6 +33,136 @@ export class Circle extends Shape {
     return this.getAbsolutePosition();
   }
 
+  /**
+   * Get the top-left corner position (bounding box).
+   */
+  get topLeft(): Position {
+    const c = this.center;
+    return {
+      x: c.x - this._radius,
+      y: c.y - this._radius,
+    };
+  }
+
+  /**
+   * Get the top-right corner position (bounding box).
+   */
+  get topRight(): Position {
+    const c = this.center;
+    return {
+      x: c.x + this._radius,
+      y: c.y - this._radius,
+    };
+  }
+
+  /**
+   * Get the bottom-left corner position (bounding box).
+   */
+  get bottomLeft(): Position {
+    const c = this.center;
+    return {
+      x: c.x - this._radius,
+      y: c.y + this._radius,
+    };
+  }
+
+  /**
+   * Get the bottom-right corner position (bounding box).
+   */
+  get bottomRight(): Position {
+    const c = this.center;
+    return {
+      x: c.x + this._radius,
+      y: c.y + this._radius,
+    };
+  }
+
+  /**
+   * Get the center-top position (bounding box).
+   */
+  get centerTop(): Position {
+    const c = this.center;
+    return {
+      x: c.x,
+      y: c.y - this._radius,
+    };
+  }
+
+  /**
+   * Get the center-bottom position (bounding box).
+   */
+  get centerBottom(): Position {
+    const c = this.center;
+    return {
+      x: c.x,
+      y: c.y + this._radius,
+    };
+  }
+
+  /**
+   * Get the center-left position (bounding box).
+   */
+  get centerLeft(): Position {
+    const c = this.center;
+    return {
+      x: c.x - this._radius,
+      y: c.y,
+    };
+  }
+
+  /**
+   * Get the center-right position (bounding box).
+   */
+  get centerRight(): Position {
+    const c = this.center;
+    return {
+      x: c.x + this._radius,
+      y: c.y,
+    };
+  }
+
+  /**
+   * Convenient alias for centerTop.
+   */
+  get top(): Position {
+    return this.centerTop;
+  }
+
+  /**
+   * Convenient alias for centerTop.
+   */
+  get topCenter(): Position {
+    return this.centerTop;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottom(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottomCenter(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerLeft.
+   */
+  get left(): Position {
+    return this.centerLeft;
+  }
+
+  /**
+   * Convenient alias for centerRight.
+   */
+  get right(): Position {
+    return this.centerRight;
+  }
+
   render(): string {
     const absolutePos = this.getAbsolutePosition();
     const attrs = styleToSVGAttributes(this._style);

@@ -114,6 +114,23 @@ export class Container extends Rectangle {
    * This is the proactive strategy in action.
    */
   addElement(element: Element): void {
+    // Check if element should escape container layout
+    // Elements like Angle need to be positioned absolutely at artboard level
+    if (element.escapeContainerLayout && this.direction !== "none" && this.direction !== "freeform") {
+      // Find the artboard or a freeform/none ancestor
+      let target: Element | null = this.getParent();
+      while (target !== null) {
+        // Check if this is a Container with freeform or none direction
+        if (target instanceof Container && (target.direction === "none" || target.direction === "freeform")) {
+          target.addElement(element);
+          return;
+        }
+        target = target.getParent();
+      }
+      // If no suitable parent found, element will have auto-added to artboard already
+      return;
+    }
+    
     // Add to children array first
     super.addElement(element);
     

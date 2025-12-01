@@ -28,9 +28,9 @@ export interface NewSideConfig {
  *
  * @remarks
  * Sides automatically calculate both inward and outward normal vectors.
- * 
+ *
  * **Important**: This class assumes counter-clockwise vertex ordering (see CONVENTIONS.md).
- * The "outward" direction is determined by the right-hand rule: if you walk from start 
+ * The "outward" direction is determined by the right-hand rule: if you walk from start
  * to end along a counter-clockwise polygon, outward is to your right (90° clockwise rotation).
  *
  * @example
@@ -121,7 +121,6 @@ export class NewSide {
    *   x: side.outwardNormal.x * 50,
    *   y: side.outwardNormal.y * 50
    * };
-   * element.setPosition({ x: side.center.x + offset.x, y: side.center.y + offset.y });
    * ```
    */
   get outwardNormal(): Position {
@@ -182,7 +181,6 @@ export class NewSide {
    *   x: side.direction.x * 30,
    *   y: side.direction.y * 30
    * };
-   * element.setPosition({ x: side.start.x + offset.x, y: side.start.y + offset.y });
    * ```
    */
   get direction(): Position {
@@ -207,4 +205,3 @@ export class NewSide {
     return (Math.atan2(dy, dx) * 180) / Math.PI;
   }
 }
-

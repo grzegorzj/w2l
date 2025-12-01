@@ -41,9 +41,9 @@ export interface SideLabelConfig {
  *
  * @remarks
  * Sides automatically calculate both inward and outward normal vectors.
- * 
+ *
  * **Important**: This class assumes counter-clockwise vertex ordering (see CONVENTIONS.md).
- * The "outward" direction is determined by the right-hand rule: if you walk from start 
+ * The "outward" direction is determined by the right-hand rule: if you walk from start
  * to end along a counter-clockwise polygon, outward is to your right (90° clockwise rotation).
  *
  * @example
@@ -134,7 +134,6 @@ export class Side {
    *   x: side.outwardNormal.x * 50,
    *   y: side.outwardNormal.y * 50
    * };
-   * element.setPosition({ x: side.center.x + offset.x, y: side.center.y + offset.y });
    * ```
    */
   get outwardNormal(): Position {
@@ -168,7 +167,6 @@ export class Side {
    *   x: side.inwardNormal.x * 20,
    *   y: side.inwardNormal.y * 20
    * };
-   * element.setPosition({ x: side.center.x + offset.x, y: side.center.y + offset.y });
    * ```
    */
   get inwardNormal(): Position {
@@ -195,7 +193,6 @@ export class Side {
    *   x: side.direction.x * 30,
    *   y: side.direction.y * 30
    * };
-   * element.setPosition({ x: side.start.x + offset.x, y: side.start.y + offset.y });
    * ```
    */
   get direction(): Position {
@@ -234,7 +231,7 @@ export class Side {
   /**
    * Find intersection points with another side.
    * Returns array of intersection points (currently max 1 for straight sides).
-   * 
+   *
    * @param other - The other side to intersect with
    * @param infinite - If true, treats sides as infinite lines. If false, only returns intersections within both segments.
    * @returns Array of intersection points (empty if no intersections)
@@ -245,13 +242,17 @@ export class Side {
     const p3 = other._start;
     const p4 = other._end;
 
-    const x1 = p1.x, y1 = p1.y;
-    const x2 = p2.x, y2 = p2.y;
-    const x3 = p3.x, y3 = p3.y;
-    const x4 = p4.x, y4 = p4.y;
+    const x1 = p1.x,
+      y1 = p1.y;
+    const x2 = p2.x,
+      y2 = p2.y;
+    const x3 = p3.x,
+      y3 = p3.y;
+    const x4 = p4.x,
+      y4 = p4.y;
 
     const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    
+
     // Lines are parallel
     if (Math.abs(denom) < 1e-10) {
       return [];
@@ -274,17 +275,17 @@ export class Side {
 
   /**
    * Creates a Text label for this side, positioned outward from the center.
-   * 
+   *
    * @param text - The label text (can include LaTeX, e.g., "$a$")
    * @param config - Optional configuration for the label positioning and styling
    * @returns A Text element positioned at the side's center with outward offset
-   * 
+   *
    * @example
    * Create a labeled triangle side
    * ```typescript
    * const triangle = new Triangle({ type: "right", a: 100, b: 100 });
    * const [side1, side2, side3] = triangle.sides;
-   * 
+   *
    * const label = side1.createLabel("$a$", { offset: 25, fontSize: 18 });
    * artboard.addElement(label);
    * ```
@@ -294,16 +295,19 @@ export class Side {
     const fontSize = config?.fontSize ?? 16;
     const normal = config?.inward ? this.inwardNormal : this.outwardNormal;
     const center = this.center;
-    
+
     const label = new Text({
       content: text,
       fontSize,
     });
-    
+
+    // Mark label to escape container layout - it's positioned based on global geometry
+    (label as any).markEscapeContainerLayout();
+
     // Calculate target position
     const targetX = center.x + normal.x * offset;
     const targetY = center.y + normal.y * offset;
-    
+
     // Position the label at the side's center with outward/inward offset
     label.position({
       relativeTo: { x: targetX, y: targetY },
@@ -312,8 +316,7 @@ export class Side {
       y: 0,
       boxReference: "contentBox",
     });
-    
+
     return label;
   }
 }
-

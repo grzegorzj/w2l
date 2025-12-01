@@ -10,7 +10,8 @@ const openai = new OpenAI({
 });
 
 // Agent server configuration
-const AGENT_SERVER_URL = process.env.AGENT_SERVER_URL || "http://localhost:3100";
+const AGENT_SERVER_URL =
+  process.env.AGENT_SERVER_URL || "http://localhost:3100";
 const USE_AGENT_SERVER = process.env.USE_AGENT_SERVER === "true";
 
 /**
@@ -45,7 +46,7 @@ export async function streamAgentCompletion(
 ) {
   try {
     console.log("🤖 Calling agent server at", AGENT_SERVER_URL);
-    
+
     // Call the agent server
     const response = await fetch(`${AGENT_SERVER_URL}/v1/chat/completions`, {
       method: "POST",
@@ -56,7 +57,7 @@ export async function streamAgentCompletion(
         messages: messages,
         model: "gpt-oss-120b",
         max_completion_tokens: 4096,
-        temperature: 0.1,
+        temperature: 0,
       }),
     });
 
@@ -71,7 +72,7 @@ export async function streamAgentCompletion(
     // Parse the response
     const assistantMessage = data.choices[0].message.content;
     let parsedContent;
-    
+
     try {
       parsedContent = JSON.parse(assistantMessage);
     } catch (e) {
@@ -83,7 +84,8 @@ export async function streamAgentCompletion(
     }
 
     const extractedCode = parsedContent.code || null;
-    const explanation = parsedContent.explanation || "Code generated successfully.";
+    const explanation =
+      parsedContent.explanation || "Code generated successfully.";
 
     console.log("📝 Agent response:", {
       hasCode: !!extractedCode,

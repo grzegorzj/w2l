@@ -34,6 +34,40 @@ export interface QuadrilateralConfig {
 }
 
 /**
+ * Altitude information for a quadrilateral.
+ * Represents a perpendicular line from a vertex or side to another side.
+ */
+export interface QuadrilateralAltitude {
+  /** The foot of the altitude (where it meets the target side) */
+  foot: Position;
+  /** The origin point (vertex or point on opposite side) */
+  origin: Position;
+  /** Length of the altitude */
+  height: number;
+  /** Line object representing the altitude (ready to add to artboard) */
+  line: Line;
+}
+
+/**
+ * Diagonal information for a quadrilateral.
+ * Represents a line segment connecting two opposite vertices.
+ */
+export interface QuadrilateralDiagonal {
+  /** Starting vertex of the diagonal */
+  start: Position;
+  /** Ending vertex of the diagonal */
+  end: Position;
+  /** Length of the diagonal */
+  length: number;
+  /** Center point of the diagonal */
+  center: Position;
+  /** Angle of the diagonal in degrees */
+  angle: number;
+  /** Line object representing the diagonal (ready to add to artboard) */
+  line: Line;
+}
+
+/**
  * Represents a side (edge) of a quadrilateral with geometric properties.
  */
 export interface QuadrilateralSide {
@@ -86,10 +120,12 @@ export class Quadrilateral extends Shape {
   private _center: Position;
   private _boundingWidth: number;
   private _boundingHeight: number;
+  private _type: QuadrilateralType;
 
   constructor(config: QuadrilateralConfig) {
     super(config.style);
 
+    this._type = config.type;
     this.vertices = this.calculateVertices(config);
 
     // Calculate bounding box and center
@@ -267,6 +303,171 @@ export class Quadrilateral extends Shape {
       x: absPos.x + minX,
       y: absPos.y + minY,
     };
+  }
+
+  /**
+   * Get the top-left corner position (bounding box).
+   */
+  get topLeft(): Position {
+    return this.boundingBoxTopLeft;
+  }
+
+  /**
+   * Get the top-right corner position (bounding box).
+   */
+  get topRight(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+
+    return {
+      x: absPos.x + maxX,
+      y: absPos.y + minY,
+    };
+  }
+
+  /**
+   * Get the bottom-left corner position (bounding box).
+   */
+  get bottomLeft(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const minX = Math.min(...xs);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + minX,
+      y: absPos.y + maxY,
+    };
+  }
+
+  /**
+   * Get the bottom-right corner position (bounding box).
+   */
+  get bottomRight(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + maxX,
+      y: absPos.y + maxY,
+    };
+  }
+
+  /**
+   * Get the center-top position (bounding box).
+   */
+  get centerTop(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+
+    return {
+      x: absPos.x + (minX + maxX) / 2,
+      y: absPos.y + minY,
+    };
+  }
+
+  /**
+   * Get the center-bottom position (bounding box).
+   */
+  get centerBottom(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + (minX + maxX) / 2,
+      y: absPos.y + maxY,
+    };
+  }
+
+  /**
+   * Get the center-left position (bounding box).
+   */
+  get centerLeft(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + minX,
+      y: absPos.y + (minY + maxY) / 2,
+    };
+  }
+
+  /**
+   * Get the center-right position (bounding box).
+   */
+  get centerRight(): Position {
+    const absPos = this.getAbsolutePosition();
+    const xs = this.vertices.map((v) => v.x);
+    const ys = this.vertices.map((v) => v.y);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    return {
+      x: absPos.x + maxX,
+      y: absPos.y + (minY + maxY) / 2,
+    };
+  }
+
+  /**
+   * Convenient alias for centerTop.
+   */
+  get top(): Position {
+    return this.centerTop;
+  }
+
+  /**
+   * Convenient alias for centerTop.
+   */
+  get topCenter(): Position {
+    return this.centerTop;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottom(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerBottom.
+   */
+  get bottomCenter(): Position {
+    return this.centerBottom;
+  }
+
+  /**
+   * Convenient alias for centerLeft.
+   */
+  get left(): Position {
+    return this.centerLeft;
+  }
+
+  /**
+   * Convenient alias for centerRight.
+   */
+  get right(): Position {
+    return this.centerRight;
   }
 
   /**
@@ -481,6 +682,9 @@ export class Quadrilateral extends Shape {
         fontSize,
       });
 
+      // Mark label to escape container layout - it's positioned based on global geometry
+      (label as any).markEscapeContainerLayout();
+
       // Position the label so its center is at the offset position
       const targetX = vertex.x + normalX;
       const targetY = vertex.y + normalY;
@@ -599,6 +803,222 @@ export class Quadrilateral extends Shape {
       this.showAngle(2, { ...options, label: labels[2] }),
       this.showAngle(3, { ...options, label: labels[3] }),
     ];
+  }
+
+  /**
+   * Get the two diagonals of the quadrilateral.
+   * Returns diagonal information including line objects ready to be drawn.
+   * 
+   * @returns Array of two diagonals: [diagonal 0→2, diagonal 1→3]
+   * 
+   * @example
+   * Draw the diagonals of a quadrilateral
+   * ```typescript
+   * const quad = new Quadrilateral({ type: "rectangle", a: 100, b: 80 });
+   * const diagonals = quad.getDiagonals();
+   * artboard.add(quad);
+   * diagonals.forEach(diag => artboard.add(diag.line));
+   * ```
+   */
+  getDiagonals(): [QuadrilateralDiagonal, QuadrilateralDiagonal] {
+    const verts = this.absoluteVertices;
+    
+    const createDiagonal = (start: Position, end: Position): QuadrilateralDiagonal => {
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+      const center = {
+        x: (start.x + end.x) / 2,
+        y: (start.y + end.y) / 2,
+      };
+      
+      const lineStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
+      const line = new Line({
+        start: { x: 0, y: 0 },
+        end: { x: dx, y: dy },
+        style: lineStyle,
+      });
+      
+      line.position({
+        relativeFrom: line.start,
+        relativeTo: start,
+        x: 0,
+        y: 0,
+      });
+      
+      return {
+        start,
+        end,
+        length,
+        center,
+        angle,
+        line,
+      };
+    };
+    
+    return [
+      createDiagonal(verts[0], verts[2]), // Diagonal from vertex 0 to vertex 2
+      createDiagonal(verts[1], verts[3]), // Diagonal from vertex 1 to vertex 3
+    ];
+  }
+
+  /**
+   * Get altitudes for the quadrilateral.
+   * Returns meaningful altitudes based on the quadrilateral type:
+   * - Trapezoid: Two altitudes from top base vertices to bottom base (showing the height h)
+   * - Parallelogram/Rectangle/Square/Rhombus: Two altitudes showing height between parallel sides
+   * - Kite/Custom: All four altitudes from vertices to opposite sides
+   * 
+   * @returns Array of altitude objects with positioning information
+   * 
+   * @example
+   * Draw altitudes of a parallelogram
+   * ```typescript
+   * const para = new Quadrilateral({ type: "parallelogram", a: 100, b: 60, angle: 60 });
+   * const altitudes = para.getAltitudes();
+   * artboard.add(para);
+   * altitudes.forEach(alt => artboard.add(alt.line));
+   * ```
+   */
+  getAltitudes(): QuadrilateralAltitude[] {
+    const verts = this.absoluteVertices;
+    const altitudes: QuadrilateralAltitude[] = [];
+    
+    // Helper to calculate perpendicular projection of a point onto a line segment
+    const calculateAltitude = (vertex: Position, sideStart: Position, sideEnd: Position): QuadrilateralAltitude => {
+      const dx = sideEnd.x - sideStart.x;
+      const dy = sideEnd.y - sideStart.y;
+      let t = ((vertex.x - sideStart.x) * dx + (vertex.y - sideStart.y) * dy) / (dx * dx + dy * dy);
+      
+      // Clamp t to [0, 1] so the foot stays on the actual line segment, not the extended line
+      t = Math.max(0, Math.min(1, t));
+      
+      const foot: Position = {
+        x: sideStart.x + t * dx,
+        y: sideStart.y + t * dy,
+      };
+      
+      const height = Math.sqrt(
+        (vertex.x - foot.x) ** 2 + (vertex.y - foot.y) ** 2
+      );
+      
+      const altStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
+      const altitudeLine = new Line({
+        start: { x: 0, y: 0 },
+        end: { x: foot.x - vertex.x, y: foot.y - vertex.y },
+        style: altStyle,
+      });
+      
+      altitudeLine.position({
+        relativeFrom: altitudeLine.start,
+        relativeTo: vertex,
+        x: 0,
+        y: 0,
+      });
+      
+      return {
+        foot,
+        origin: vertex,
+        height,
+        line: altitudeLine,
+      };
+    };
+    
+    // Return altitudes based on quadrilateral type
+    if (this._type === "trapezoid") {
+      // For trapezoid: only altitudes from top base (vertices 2, 3) to bottom base (side 0-1)
+      // These show the height between the two parallel bases
+      altitudes.push(calculateAltitude(verts[2], verts[0], verts[1]));
+      altitudes.push(calculateAltitude(verts[3], verts[0], verts[1]));
+    } else if (this._type === "parallelogram" || this._type === "rectangle" || this._type === "square" || this._type === "rhombus") {
+      // For parallelograms and related shapes: altitudes from one pair of vertices to opposite side
+      // Show the height perpendicular to the base
+      altitudes.push(calculateAltitude(verts[2], verts[0], verts[1]));
+      altitudes.push(calculateAltitude(verts[3], verts[0], verts[1]));
+    } else {
+      // For kite and custom: return all four altitudes
+      altitudes.push(calculateAltitude(verts[0], verts[1], verts[2]));
+      altitudes.push(calculateAltitude(verts[1], verts[2], verts[3]));
+      altitudes.push(calculateAltitude(verts[2], verts[3], verts[0]));
+      altitudes.push(calculateAltitude(verts[3], verts[0], verts[1]));
+    }
+    
+    return altitudes;
+  }
+
+  /**
+   * Draw all diagonals of the quadrilateral.
+   * Returns Line elements that can be added to the artboard.
+   * 
+   * @param style - Optional style for the diagonal lines
+   * @returns Array of two Line elements representing the diagonals
+   * 
+   * @example
+   * ```typescript
+   * const quad = new Quadrilateral({ type: "rectangle", a: 100, b: 80 });
+   * const diagonalLines = quad.drawDiagonals({ stroke: "blue", strokeWidth: 2 });
+   * artboard.add(quad);
+   * diagonalLines.forEach(line => artboard.add(line));
+   * ```
+   */
+  drawDiagonals(style?: Partial<Style>): [Line, Line] {
+    const diagonals = this.getDiagonals();
+    const defaultStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
+    
+    return diagonals.map(diag => {
+      const line = new Line({
+        start: { x: 0, y: 0 },
+        end: { x: diag.end.x - diag.start.x, y: diag.end.y - diag.start.y },
+        style: style ?? defaultStyle,
+      });
+      
+      line.position({
+        relativeFrom: line.start,
+        relativeTo: diag.start,
+        x: 0,
+        y: 0,
+      });
+      
+      return line;
+    }) as [Line, Line];
+  }
+
+  /**
+   * Draw all altitudes of the quadrilateral.
+   * Returns Line elements that can be added to the artboard.
+   * 
+   * @param style - Optional style for the altitude lines
+   * @returns Array of Line elements representing the altitudes
+   * 
+   * @example
+   * ```typescript
+   * const para = new Quadrilateral({ type: "parallelogram", a: 100, b: 60, angle: 60 });
+   * const altitudeLines = para.drawAltitudes({ stroke: "red", strokeDasharray: "2,2" });
+   * artboard.add(para);
+   * altitudeLines.forEach(line => artboard.add(line));
+   * ```
+   */
+  drawAltitudes(style?: Partial<Style>): Line[] {
+    const altitudes = this.getAltitudes();
+    const defaultStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
+    
+    return altitudes.map(alt => {
+      const line = new Line({
+        start: { x: 0, y: 0 },
+        end: { x: alt.foot.x - alt.origin.x, y: alt.foot.y - alt.origin.y },
+        style: style ?? defaultStyle,
+      });
+      
+      line.position({
+        relativeFrom: line.start,
+        relativeTo: alt.origin,
+        x: 0,
+        y: 0,
+      });
+      
+      return line;
+    });
   }
 
   render(): string {

@@ -60,7 +60,6 @@ For each major API usage in your draft, you must:
 **Documentation Checks Required For**:
 - Every w2l class instantiation (Artboard, Rectangle, Circle, Container, etc.)
 - Layout usage (GridLayout, ColumnsLayout, SpreadLayout)
-- Positioning methods (setPosition, moveTo, etc.)
 - Styling methods
 - Any method calls on w2l objects
 
