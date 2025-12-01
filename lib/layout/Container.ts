@@ -994,9 +994,12 @@ export class Container extends Rectangle {
 
   render(): string {
     // Render the container background (if styled)
-    const bgSVG = this._style && Object.keys(this._style).length > 0
-      ? `<rect x="${this.borderBox.topLeft.x}" y="${this.borderBox.topLeft.y}" width="${this.width}" height="${this.height}" fill="${this._style.fill || 'none'}" stroke="${this._style.stroke || 'none'}" stroke-width="${this._style.strokeWidth || 0}"/>\n`
-      : '';
+    let bgSVG = '';
+    if (this._style && Object.keys(this._style).length > 0) {
+      const radius = (this as any)._borderRadius ?? 0;
+      const radiusAttr = radius > 0 ? ` rx="${radius}" ry="${radius}"` : '';
+      bgSVG = `<rect x="${this.borderBox.topLeft.x}" y="${this.borderBox.topLeft.y}" width="${this.width}" height="${this.height}"${radiusAttr} fill="${this._style.fill || 'none'}" stroke="${this._style.stroke || 'none'}" stroke-width="${this._style.strokeWidth || 0}"/>\n`;
+    }
     
     // Render children
     const childrenHTML = this.children

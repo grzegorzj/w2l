@@ -156,5 +156,12 @@ export {
   Legend,
   type LegendConfig,
   type LegendItem,
+  Timeline,
+  TimelinePeriodBar,
+  TimelineEventMarker,
+  type TimelineConfig,
+  type TimelineEvent,
+  type TimelinePeriod,
+  type TimelineBreak,
 } from "./themed-components/index.js";
 

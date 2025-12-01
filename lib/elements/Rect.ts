@@ -369,11 +369,15 @@ export class Rect extends Rectangle {
     const size = this.getBoxSize("border");
     const transform = this.getTransformAttribute();
     
+    // Add border radius if set
+    const radius = (this as any)._borderRadius ?? 0;
+    const radiusAttr = radius > 0 ? `rx="${radius}" ry="${radius}"` : "";
+    
     const childrenHTML = this.children
       .map((child) => child.render())
       .join("\n  ");
     
-    const rectTag = `<rect x="${pos.x}" y="${pos.y}" width="${size.width}" height="${size.height}" ${attrs} ${transform}/>`;
+    const rectTag = `<rect x="${pos.x}" y="${pos.y}" width="${size.width}" height="${size.height}" ${radiusAttr} ${attrs} ${transform}/>`;
     
     if (childrenHTML) {
       return `<g>
