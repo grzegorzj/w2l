@@ -10,6 +10,7 @@ import {
   TextArea,
   Latex,
   Triangle,
+  Quadrilateral,
   Text,
 } from "w2l";
 
@@ -170,6 +171,55 @@ card3Content.add(card3Text2);
 
 card3.add(card3Content);
 mainContainer.add(card3);
+
+// Card 4: Quadrilateral with angles
+const card4 = new Card({
+  width: 600,
+  height: "auto",
+  boxModel: { padding: 30 },
+});
+
+const card4Content = new Container({
+  width: 540,
+  height: "auto",
+  direction: "vertical",
+  spacing: 20,
+  horizontalAlignment: "center",
+});
+
+const card4Title = new Text({
+  content: "Parallelogram",
+  fontSize: 18,
+  style: { fontWeight: "bold" },
+});
+
+card4Content.add(card4Title);
+
+const parallelogram = new Quadrilateral({
+  type: "parallelogram",
+  a: 140,
+  b: 80,
+  angle: 65,
+  style: {
+    fill: "rgba(236, 72, 153, 0.1)",
+    stroke: "#ec4899",
+    strokeWidth: 2,
+  },
+});
+
+card4Content.add(parallelogram);
+
+card4.add(card4Content);
+mainContainer.add(card4);
+
+// IMPORTANT: Create angles and labels AFTER adding to container
+const quadAngles = parallelogram.showAngles({
+  mode: "internal",
+});
+quadAngles.forEach((angle) => artboard.add(angle));
+
+const quadLabels = parallelogram.createSideLabels(["$a$", "$b$", "$a$", "$b$"]);
+quadLabels.forEach((label) => artboard.add(label));
 
 return artboard.render();
 

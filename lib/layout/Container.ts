@@ -765,15 +765,16 @@ export class Container extends Rectangle {
       
       if (this.direction === "vertical") {
         // Vertical stack: align horizontally (left edge, center, or right edge)
+        // Use top edge for main axis positioning
         switch (this.horizontalAlignment) {
           case "left":
-            return element.leftCenter;   // Left edge, vertically centered
+            return element.topLeft;      // Top-left corner
           case "center":
-            return element.center;       // Horizontally and vertically centered
+            return element.topCenter;    // Top-center
           case "right":
-            return element.rightCenter;  // Right edge, vertically centered
+            return element.topRight;     // Top-right corner
           default:
-            return element.leftCenter;
+            return element.topLeft;
         }
       } else {
         // Horizontal stack: align vertically (top edge, center, or bottom edge)
