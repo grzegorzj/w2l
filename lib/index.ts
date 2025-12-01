@@ -184,5 +184,6 @@ export {
   type AlluvialNode,
   type AlluvialFlow,
   type AlluvialStage,
+  type AlluvialNodeBlock,
 } from "./themed-components/index.js";
 

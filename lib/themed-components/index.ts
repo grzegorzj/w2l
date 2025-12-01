@@ -44,5 +44,6 @@ export {
   type AlluvialNode,
   type AlluvialFlow,
   type AlluvialStage,
+  type AlluvialNodeBlock,
 } from "./Alluvial.js";
 

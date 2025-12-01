@@ -59,6 +59,40 @@ export interface AlluvialConfig {
   showFlowValues?: boolean;
   /** Whether to show stage labels */
   showStageLabels?: boolean;
+  /** Margin between node block and label */
+  labelMargin?: number;
+}
+
+/**
+ * Node block with position accessors
+ */
+export interface AlluvialNodeBlock {
+  /** Node ID */
+  id: string;
+  /** Node label */
+  label: string;
+  /** Rectangle element representing the node */
+  rect: Rect;
+  /** Color of the node */
+  color: string;
+  /** Get top-left position */
+  get topLeft(): Position;
+  /** Get top-right position */
+  get topRight(): Position;
+  /** Get bottom-left position */
+  get bottomLeft(): Position;
+  /** Get bottom-right position */
+  get bottomRight(): Position;
+  /** Get center position */
+  get center(): Position;
+  /** Get center-left position */
+  get centerLeft(): Position;
+  /** Get center-right position */
+  get centerRight(): Position;
+  /** Get top-center position */
+  get topCenter(): Position;
+  /** Get bottom-center position */
+  get bottomCenter(): Position;
 }
 
 interface NodeLayout {
@@ -79,12 +113,40 @@ interface FlowLayout {
 }
 
 /**
+ * Internal class for node blocks with position accessors
+ */
+class NodeBlock implements AlluvialNodeBlock {
+  id: string;
+  label: string;
+  rect: Rect;
+  color: string;
+
+  constructor(id: string, label: string, rect: Rect, color: string) {
+    this.id = id;
+    this.label = label;
+    this.rect = rect;
+    this.color = color;
+  }
+
+  get topLeft(): Position { return this.rect.topLeft; }
+  get topRight(): Position { return this.rect.topRight; }
+  get bottomLeft(): Position { return this.rect.bottomLeft; }
+  get bottomRight(): Position { return this.rect.bottomRight; }
+  get center(): Position { return this.rect.center; }
+  get centerLeft(): Position { return this.rect.centerLeft; }
+  get centerRight(): Position { return this.rect.centerRight; }
+  get topCenter(): Position { return this.rect.topCenter; }
+  get bottomCenter(): Position { return this.rect.bottomCenter; }
+}
+
+/**
  * Alluvial diagram component for flow visualization
  */
 export class Alluvial extends Container {
   private config: Required<AlluvialConfig>;
   private colorPalette: string[];
   private nodeLayouts: Map<string, NodeLayout> = new Map();
+  private nodeBlocks: Map<string, AlluvialNodeBlock> = new Map();
   private flowPaths: Path[] = [];
 
   constructor(config: AlluvialConfig) {
@@ -101,6 +163,7 @@ export class Alluvial extends Container {
       nodePadding: config.nodePadding ?? 10,
       showFlowValues: config.showFlowValues ?? false,
       showStageLabels: config.showStageLabels ?? true,
+      labelMargin: config.labelMargin ?? defaultTheme.spacing[2], // 8px
     };
 
     // Swiss theme color palette - using variations
@@ -139,10 +202,42 @@ export class Alluvial extends Container {
       maxStageValue = Math.max(maxStageValue, stageValue);
     });
 
-    // Layout nodes for each stage
+    // First pass: Calculate all node layouts (without creating elements yet)
     stages.forEach((stage, stageIndex) => {
       const x = stagePositions[stageIndex];
       let currentY = stageY;
+
+      // Layout nodes
+      stage.nodes.forEach((node, nodeIndex) => {
+        const nodeValue = nodeValues.get(node.id) || 0;
+        const nodeHeight = Math.max(10, (nodeValue / maxStageValue) * stageHeight * 0.8);
+
+        const color = node.color || this.colorPalette[nodeIndex % this.colorPalette.length];
+
+        const layout: NodeLayout = {
+          id: node.id,
+          label: node.label,
+          x,
+          y: currentY,
+          height: nodeHeight,
+          color,
+          stage: stageIndex,
+        };
+
+        this.nodeLayouts.set(node.id, layout);
+
+        currentY += nodeHeight + nodePadding;
+      });
+    });
+
+    // Second pass: Create flows first (so they render behind nodes and tooltips)
+    flows.forEach((flow) => {
+      this.createFlow(flow);
+    });
+
+    // Third pass: Create stage labels, nodes, and tooltips (so they render on top)
+    stages.forEach((stage, stageIndex) => {
+      const x = stagePositions[stageIndex];
 
       // Add stage label
       if (showStageLabels) {
@@ -163,33 +258,14 @@ export class Alluvial extends Container {
         this.addElement(stageLabel);
       }
 
-      // Layout nodes
-      stage.nodes.forEach((node, nodeIndex) => {
-        const nodeValue = nodeValues.get(node.id) || 0;
-        const nodeHeight = Math.max(10, (nodeValue / maxStageValue) * stageHeight * 0.8);
-
-        const color = node.color || this.colorPalette[nodeIndex % this.colorPalette.length];
-
-        const layout: NodeLayout = {
-          id: node.id,
-          label: node.label,
-          x,
-          y: currentY,
-          height: nodeHeight,
-          color,
-          stage: stageIndex,
-        };
-
-        this.nodeLayouts.set(node.id, layout);
-        this.createNode(layout);
-
-        currentY += nodeHeight + nodePadding;
+      // Create nodes and tooltips
+      stage.nodes.forEach((node) => {
+        const layout = this.nodeLayouts.get(node.id);
+        if (layout) {
+          const nodeValue = nodeValues.get(node.id) || 0;
+          this.createNode(layout, nodeValue, maxStageValue);
+        }
       });
-    });
-
-    // Create flows
-    flows.forEach((flow) => {
-      this.createFlow(flow);
     });
   }
 
@@ -206,9 +282,9 @@ export class Alluvial extends Container {
     return values;
   }
 
-  private createNode(layout: NodeLayout): void {
-    const { nodeWidth } = this.config;
-    const { x, y, height, color, label } = layout;
+  private createNode(layout: NodeLayout, nodeValue: number, maxStageValue: number): void {
+    const { nodeWidth, labelMargin } = this.config;
+    const { id, x, y, height, color, label } = layout;
 
     // Create node rectangle
     const node = new Rect({
@@ -231,26 +307,51 @@ export class Alluvial extends Container {
 
     this.addElement(node);
 
-    // Add label
-    const textColor = this.getContrastColor(color);
+    // Store node block with position accessors
+    const nodeBlock = new NodeBlock(id, label, node, color);
+    this.nodeBlocks.set(id, nodeBlock);
+
+    // Calculate percentage
+    const percentage = Math.round((nodeValue / maxStageValue) * 100);
+
+    // Create tooltip-style container for the label (matching Timeline tooltip styling)
+    const tooltipContainer = new Container({
+      width: "auto",
+      height: "auto",
+      direction: "horizontal",
+      spacing: 0,
+      boxModel: { padding: 8 },
+      style: {
+        fill: defaultTheme.colors.background,
+        stroke: defaultTheme.colors.border,
+        strokeWidth: "1",
+      },
+    });
+
+    // Set border radius (matching Timeline)
+    (tooltipContainer as any)._borderRadius = defaultTheme.borders.radius.sm;
+
+    // Add label text with percentage
     const nodeLabel = new Text({
-      content: label,
+      content: `${label} (${percentage}%)`,
       fontSize: 11,
       style: {
-        fill: textColor,
+        fill: defaultTheme.colors.foreground,
         fontWeight: 500,
       },
     });
 
-    // Position label at center of node
-    nodeLabel.position({
-      relativeTo: node.center,
-      relativeFrom: nodeLabel.center,
-      x: 0,
+    tooltipContainer.add(nodeLabel);
+
+    // Position tooltip to the right of the node, vertically centered
+    tooltipContainer.position({
+      relativeTo: node.centerRight,
+      relativeFrom: tooltipContainer.centerLeft,
+      x: labelMargin,
       y: 0,
     });
 
-    this.addElement(nodeLabel);
+    this.addElement(tooltipContainer);
   }
 
   /**
@@ -345,6 +446,20 @@ export class Alluvial extends Container {
    */
   getAllFlows(): Path[] {
     return this.flowPaths;
+  }
+
+  /**
+   * Get a node block by id with position accessors
+   */
+  getNodeBlock(id: string): AlluvialNodeBlock | undefined {
+    return this.nodeBlocks.get(id);
+  }
+
+  /**
+   * Get all node blocks with position accessors
+   */
+  getAllNodeBlocks(): AlluvialNodeBlock[] {
+    return Array.from(this.nodeBlocks.values());
   }
 
   // Standard position accessors (inherited from Container, but redeclaring for clarity)

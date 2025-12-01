@@ -123,3 +123,4 @@ echo ""
 echo "Generated files:"
 ls -lh test-output.* 2>/dev/null || echo "  No output files generated"
 
+

@@ -1,0 +1,25 @@
+{
+  "id": "legend",
+  "title": "Legend Component Guide",
+  "description": "This guide covers the Legend component for creating color-coded legends with various indicator shapes, orientations, and styling options. Perfect for charts, diagrams, and data visualizations.",
+  "covers": [
+    "Legend",
+    "LegendItem",
+    "LegendConfig",
+    "Card",
+    "Container",
+    "Text"
+  ],
+  "topics": [
+    "Legend Basics",
+    "Color Coding",
+    "Indicator Shapes (Circle vs Square)",
+    "Vertical and Horizontal Orientation",
+    "Legend Sizing",
+    "Legend Styling",
+    "Legend in Cards"
+  ],
+  "content": "# Legend Component Examples\n\nThe Legend component provides flexible, themeable legends for data visualizations. It supports both vertical and horizontal layouts, circle and square indicators, and customizable sizing and spacing.\n\n```javascript\nconst artboard = new Artboard({\n  width: 800,\n  height: \"auto\",\n  boxModel: { padding: 40 },\n});\n\n// Container for examples\nconst mainContainer = new Container({\n  width: 720,\n  height: \"auto\",\n  direction: \"vertical\",\n  spacing: 30,\n});\n\nmainContainer.position({\n  relativeTo: artboard.contentBox.center,\n  relativeFrom: mainContainer.center,\n  x: 0,\n  y: 0,\n});\n\nartboard.add(mainContainer);\n\n// Example 1: Vertical legend with circles\nconst card1 = new Card({\n  width: 720,\n  height: \"auto\",\n  boxModel: { padding: 20 },\n});\n\nconst title1 = new Text({\n  content: \"Vertical Legend with Circles\",\n  fontSize: 16,\n  style: { fontWeight: \"bold\" },\n});\n\nconst legend1 = new Legend({\n  items: [\n    { color: \"#3b82f6\", label: \"Series A\" },\n    { color: \"#ef4444\", label: \"Series B\" },\n    { color: \"#10b981\", label: \"Series C\" },\n  ],\n  direction: \"vertical\",\n  indicatorShape: \"circle\",\n});\n\nconst card1Content = new Container({\n  width: 680,\n  height: \"auto\",\n  direction: \"vertical\",\n  spacing: 15,\n});\n\ncard1Content.add(title1);\ncard1Content.add(legend1.container);\n\ncard1.add(card1Content);\nmainContainer.add(card1);\n\n// Example 2: Horizontal legend with squares\nconst card2 = new Card({\n  width: 720,\n  height: \"auto\",\n  boxModel: { padding: 20 },\n});\n\nconst title2 = new Text({\n  content: \"Horizontal Legend with Squares\",\n  fontSize: 16,\n  style: { fontWeight: \"bold\" },\n});\n\nconst legend2 = new Legend({\n  items: [\n    { color: \"#8b5cf6\", label: \"Category 1\" },\n    { color: \"#ec4899\", label: \"Category 2\" },\n    { color: \"#f59e0b\", label: \"Category 3\" },\n    { color: \"#06b6d4\", label: \"Category 4\" },\n  ],\n  direction: \"horizontal\",\n  indicatorShape: \"square\",\n  spacing: 20,\n});\n\nconst card2Content = new Container({\n  width: 680,\n  height: \"auto\",\n  direction: \"vertical\",\n  spacing: 15,\n});\n\ncard2Content.add(title2);\ncard2Content.add(legend2.container);\n\ncard2.add(card2Content);\nmainContainer.add(card2);\n\n// Example 3: Legend with color swatches\nconst card3 = new Card({\n  width: 720,\n  height: \"auto\",\n  boxModel: { padding: 20 },\n});\n\nconst title3 = new Text({\n  content: \"Legend with Larger Indicators\",\n  fontSize: 16,\n  style: { fontWeight: \"bold\" },\n});\n\nconst legend3 = new Legend({\n  items: [\n    { color: \"#dc2626\", label: \"Critical\" },\n    { color: \"#f97316\", label: \"Warning\" },\n    { color: \"#eab308\", label: \"Caution\" },\n    { color: \"#22c55e\", label: \"Success\" },\n  ],\n  direction: \"vertical\",\n  indicatorShape: \"square\",\n  indicatorSize: 8,\n  itemSpacing: 12,\n  fontSize: 15,\n});\n\nconst card3Content = new Container({\n  width: 680,\n  height: \"auto\",\n  direction: \"vertical\",\n  spacing: 15,\n});\n\ncard3Content.add(title3);\ncard3Content.add(legend3.container);\n\ncard3.add(card3Content);\nmainContainer.add(card3);\n\n// Example 4: Compact legend (smaller)\nconst card4 = new Card({\n  width: 720,\n  height: \"auto\",\n  boxModel: { padding: 20 },\n});\n\nconst title4 = new Text({\n  content: \"Compact Legend\",\n  fontSize: 16,\n  style: { fontWeight: \"bold\" },\n});\n\nconst legend4 = new Legend({\n  items: [\n    { color: \"#0ea5e9\", label: \"Data Point A\" },\n    { color: \"#8b5cf6\", label: \"Data Point B\" },\n    { color: \"#d946ef\", label: \"Data Point C\" },\n    { color: \"#f43f5e\", label: \"Data Point D\" },\n  ],\n  direction: \"horizontal\",\n  indicatorShape: \"circle\",\n  indicatorSize: 5,\n  itemSpacing: 6,\n  spacing: 16,\n  fontSize: 12,\n});\n\nconst card4Content = new Container({\n  width: 680,\n  height: \"auto\",\n  direction: \"vertical\",\n  spacing: 15,\n});\n\ncard4Content.add(title4);\ncard4Content.add(legend4.container);\n\ncard4.add(card4Content);\nmainContainer.add(card4);\n```"
+}
+
+
