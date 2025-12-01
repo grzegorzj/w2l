@@ -193,6 +193,9 @@ export class Timeline {
     this.timelineWidth = this.config.width - 40;
     this.buildTimeSegments();
 
+    // Calculate height based on actual elements we'll create
+    
+    // 1. Periods (tracks above the axis)
     const maxTrack = this.config.periods.reduce(
       (max, p) => Math.max(max, p.track ?? 0),
       0
@@ -200,10 +203,38 @@ export class Timeline {
     const periodsHeight =
       (maxTrack + 1) * this.config.trackHeight +
       maxTrack * this.config.trackSpacing;
-    const eventsHeight = 80; // Space for event markers below
-    const labelsHeight = 30; // Space for year labels
+    
+    // 2. Events (below the axis)
+    let eventsHeight = 0;
+    if (this.config.events && this.config.events.length > 0) {
+      const markerRadius = 5;
+      const tooltipOffset = 15; // Distance from axis to tooltip top
+      const tooltipPadding = 8 * 2; // Top + bottom padding
+      const labelHeight = this.config.fontSize * 1.2; // Font size * line height
+      
+      // Check if any event has a description (which makes tooltip taller)
+      const hasDescriptions = this.config.events.some(e => e.description);
+      const descriptionHeight = hasDescriptions ? 6 + (this.config.fontSize - 1) * 1.4 * 2 : 0; // spacing + ~2 lines
+      
+      eventsHeight = tooltipOffset + tooltipPadding + labelHeight + descriptionHeight;
+    }
+    
+    // 3. Year labels (below events)
+    let labelsHeight = 0;
+    if (this.config.yearMarkers !== false) {
+      const labelFontSize = this.config.fontSize;
+      const labelLineHeight = 1.2;
+      const tickHeight = 8; // Tick extends 8px below axis
+      const labelOffset = 12; // Distance from axis to label top
+      labelsHeight = labelOffset + labelFontSize * labelLineHeight;
+    }
+    
     const totalHeight =
-      periodsHeight + eventsHeight + labelsHeight + this.config.axisHeight + 60;
+      periodsHeight + 
+      this.config.axisHeight + 
+      eventsHeight + 
+      labelsHeight + 
+      10; // Small buffer
 
     this.mainContainer = new Container({
       width: this.config.width,
