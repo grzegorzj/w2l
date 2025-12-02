@@ -71,18 +71,26 @@ grid.container.position({
 
 mainContainer.add(grid.container);
 
-// Card 1: Circle
-const card1 = new Card({
+// Cell 1: Circle - Vertical container with two cards
+const cell1Container = new Container({
   width: 630,
-  height: 380,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard1 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card1Container = new Container({
+const figureContainer1 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
-  spacing: 15,
+  spacing: 10,
 });
 
 const title1 = new Text({
@@ -195,6 +203,17 @@ diameterLabel.position({
 });
 shapeContainer1.add(diameterLabel);
 
+figureContainer1.add(title1);
+figureContainer1.add(shapeContainer1);
+figureCard1.add(figureContainer1);
+
+// Legend card
+const legendCard1 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend1 = new Legend({
   items: [
     { color: "#1e40af", label: "Circumference (blue)" },
@@ -208,24 +227,32 @@ const legend1 = new Legend({
   fontSize: 12,
 });
 
-card1Container.add(title1);
-card1Container.add(shapeContainer1);
-card1Container.add(legend1.container);
-card1.add(card1Container);
-grid.getCell(0, 0).addElement(card1);
+legendCard1.add(legend1.container);
 
-// Card 2: Equilateral Triangle
-const card2 = new Card({
+cell1Container.add(figureCard1);
+cell1Container.add(legendCard1);
+grid.getCell(0, 0).addElement(cell1Container);
+
+// Cell 2: Equilateral Triangle - Vertical container with two cards
+const cell2Container = new Container({
   width: 630,
-  height: 380,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard2 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card2Container = new Container({
+const figureContainer2 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
-  spacing: 15,
+  spacing: 10,
 });
 
 const title2 = new Text({
@@ -296,6 +323,17 @@ for (let i = 0; i < 3; i++) {
 const altitudes2 = equilateralTriangle.getAltitudes();
 altitudes2.forEach(alt => shapeContainer2.add(alt.line));
 
+figureContainer2.add(title2);
+figureContainer2.add(shapeContainer2);
+figureCard2.add(figureContainer2);
+
+// Legend card
+const legendCard2 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend2 = new Legend({
   items: [
     { color: "#047857", label: "Equal sides: a = b = c" },
@@ -310,24 +348,32 @@ const legend2 = new Legend({
   fontSize: 12,
 });
 
-card2Container.add(title2);
-card2Container.add(shapeContainer2);
-card2Container.add(legend2.container);
-card2.add(card2Container);
-grid.getCell(0, 1).addElement(card2);
+legendCard2.add(legend2.container);
 
-// Card 3: Right Triangle
-const card3 = new Card({
+cell2Container.add(figureCard2);
+cell2Container.add(legendCard2);
+grid.getCell(0, 1).addElement(cell2Container);
+
+// Cell 3: Right Triangle - Vertical container with two cards
+const cell3Container = new Container({
   width: 630,
-  height: 380,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard3 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card3Container = new Container({
+const figureContainer3 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
-  spacing: 15,
+  spacing: 10,
 });
 
 const title3 = new Text({
@@ -419,6 +465,17 @@ altLabel3.position({
 });
 shapeContainer3.add(altLabel3);
 
+figureContainer3.add(title3);
+figureContainer3.add(shapeContainer3);
+figureCard3.add(figureContainer3);
+
+// Legend card
+const legendCard3 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend3 = new Legend({
   items: [
     { color: "#dc2626", label: "Right angle (90°, red)" },
@@ -432,24 +489,32 @@ const legend3 = new Legend({
   fontSize: 12,
 });
 
-card3Container.add(title3);
-card3Container.add(shapeContainer3);
-card3Container.add(legend3.container);
-card3.add(card3Container);
-grid.getCell(1, 0).addElement(card3);
+legendCard3.add(legend3.container);
 
-// Card 4: Regular Pentagon
-const card4 = new Card({
+cell3Container.add(figureCard3);
+cell3Container.add(legendCard3);
+grid.getCell(1, 0).addElement(cell3Container);
+
+// Cell 4: Regular Pentagon - Vertical container with two cards
+const cell4Container = new Container({
   width: 630,
-  height: 380,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard4 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card4Container = new Container({
+const figureContainer4 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
-  spacing: 15,
+  spacing: 10,
 });
 
 const title4 = new Text({
@@ -532,6 +597,17 @@ for (const idx of radii4) {
   shapeContainer4.add(radius);
 }
 
+figureContainer4.add(title4);
+figureContainer4.add(shapeContainer4);
+figureCard4.add(figureContainer4);
+
+// Legend card
+const legendCard4 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend4 = new Legend({
   items: [
     { color: "#6d28d9", label: "5 equal sides (purple)" },
@@ -544,24 +620,32 @@ const legend4 = new Legend({
   fontSize: 12,
 });
 
-card4Container.add(title4);
-card4Container.add(shapeContainer4);
-card4Container.add(legend4.container);
-card4.add(card4Container);
-grid.getCell(1, 1).addElement(card4);
+legendCard4.add(legend4.container);
 
-// Card 5: Square (Quadrilateral)
-const card5 = new Card({
+cell4Container.add(figureCard4);
+cell4Container.add(legendCard4);
+grid.getCell(1, 1).addElement(cell4Container);
+
+// Cell 5: Square - Vertical container with two cards
+const cell5Container = new Container({
   width: 630,
-  height: 380,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard5 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card5Container = new Container({
+const figureContainer5 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
-  spacing: 15,
+  spacing: 10,
 });
 
 const title5 = new Text({
@@ -657,6 +741,17 @@ diagLabel.position({
 });
 shapeContainer5.add(diagLabel);
 
+figureContainer5.add(title5);
+figureContainer5.add(shapeContainer5);
+figureCard5.add(figureContainer5);
+
+// Legend card
+const legendCard5 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend5 = new Legend({
   items: [
     { color: "#d97706", label: "4 equal sides (brown)" },
@@ -669,24 +764,32 @@ const legend5 = new Legend({
   fontSize: 12,
 });
 
-card5Container.add(title5);
-card5Container.add(shapeContainer5);
-card5Container.add(legend5.container);
-card5.add(card5Container);
-grid.getCell(2, 0).addElement(card5);
+legendCard5.add(legend5.container);
 
-// Card 6: Regular Hexagon
-const card6 = new Card({
+cell5Container.add(figureCard5);
+cell5Container.add(legendCard5);
+grid.getCell(2, 0).addElement(cell5Container);
+
+// Cell 6: Regular Hexagon - Vertical container with two cards
+const cell6Container = new Container({
   width: 630,
-  height: 380,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard6 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card6Container = new Container({
+const figureContainer6 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
-  spacing: 15,
+  spacing: 10,
 });
 
 const title6 = new Text({
@@ -785,6 +888,17 @@ center6.position({
 });
 shapeContainer6.add(center6);
 
+figureContainer6.add(title6);
+figureContainer6.add(shapeContainer6);
+figureCard6.add(figureContainer6);
+
+// Legend card
+const legendCard6 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend6 = new Legend({
   items: [
     { color: "#0891b2", label: "6 equal sides (cyan)" },
@@ -797,11 +911,11 @@ const legend6 = new Legend({
   fontSize: 12,
 });
 
-card6Container.add(title6);
-card6Container.add(shapeContainer6);
-card6Container.add(legend6.container);
-card6.add(card6Container);
-grid.getCell(2, 1).addElement(card6);
+legendCard6.add(legend6.container);
+
+cell6Container.add(figureCard6);
+cell6Container.add(legendCard6);
+grid.getCell(2, 1).addElement(cell6Container);
 
 return artboard.render();
 

@@ -75,14 +75,22 @@ grid.container.position({
 
 mainContainer.add(grid.container);
 
-// Card 1: 45° Parallelogram
-const card1 = new Card({
+// Cell 1: 45° Parallelogram - Vertical container with two cards
+const cell1Container = new Container({
   width: 630,
-  height: 400,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard1 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card1Container = new Container({
+const figureContainer1 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
@@ -173,6 +181,17 @@ sideLabel1_1.position({
 });
 shapeContainer1.add(sideLabel1_1);
 
+figureContainer1.add(title1);
+figureContainer1.add(shapeContainer1);
+figureCard1.add(figureContainer1);
+
+// Legend card
+const legendCard1 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend1 = new Legend({
   items: [
     { color: "#ef4444", label: "Acute angles: 45° (red)" },
@@ -186,20 +205,28 @@ const legend1 = new Legend({
   fontSize: 12,
 });
 
-card1Container.add(title1);
-card1Container.add(shapeContainer1);
-card1Container.add(legend1.container);
-card1.add(card1Container);
-grid.getCell(0, 0).addElement(card1);
+legendCard1.add(legend1.container);
 
-// Card 2: 60° Parallelogram
-const card2 = new Card({
+cell1Container.add(figureCard1);
+cell1Container.add(legendCard1);
+grid.getCell(0, 0).addElement(cell1Container);
+
+// Cell 2: 60° Parallelogram - Vertical container with two cards
+const cell2Container = new Container({
   width: 630,
-  height: 400,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard2 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card2Container = new Container({
+const figureContainer2 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
@@ -290,6 +317,17 @@ shapeContainer2.add(diagonals2[1].line);
 const altitudes2 = para2.getAltitudes();
 shapeContainer2.add(altitudes2[0].line);
 
+figureContainer2.add(title2);
+figureContainer2.add(shapeContainer2);
+figureCard2.add(figureContainer2);
+
+// Legend card
+const legendCard2 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend2 = new Legend({
   items: [
     { color: "#ef4444", label: "Acute: 60° (red)" },
@@ -303,20 +341,28 @@ const legend2 = new Legend({
   fontSize: 12,
 });
 
-card2Container.add(title2);
-card2Container.add(shapeContainer2);
-card2Container.add(legend2.container);
-card2.add(card2Container);
-grid.getCell(0, 1).addElement(card2);
+legendCard2.add(legend2.container);
 
-// Card 3: 30° Parallelogram (very acute)
-const card3 = new Card({
+cell2Container.add(figureCard2);
+cell2Container.add(legendCard2);
+grid.getCell(0, 1).addElement(cell2Container);
+
+// Cell 3: 30° Parallelogram - Vertical container with two cards
+const cell3Container = new Container({
   width: 630,
-  height: 400,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard3 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card3Container = new Container({
+const figureContainer3 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
@@ -407,6 +453,17 @@ shapeContainer3.add(diagonals3[1].line);
 const altitudes3 = para3.getAltitudes();
 shapeContainer3.add(altitudes3[0].line);
 
+figureContainer3.add(title3);
+figureContainer3.add(shapeContainer3);
+figureCard3.add(figureContainer3);
+
+// Legend card
+const legendCard3 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend3 = new Legend({
   items: [
     { color: "#dc2626", label: "Very acute: 30° (dark red)" },
@@ -420,20 +477,28 @@ const legend3 = new Legend({
   fontSize: 12,
 });
 
-card3Container.add(title3);
-card3Container.add(shapeContainer3);
-card3Container.add(legend3.container);
-card3.add(card3Container);
-grid.getCell(1, 0).addElement(card3);
+legendCard3.add(legend3.container);
 
-// Card 4: 75° Parallelogram
-const card4 = new Card({
+cell3Container.add(figureCard3);
+cell3Container.add(legendCard3);
+grid.getCell(1, 0).addElement(cell3Container);
+
+// Cell 4: 75° Parallelogram - Vertical container with two cards
+const cell4Container = new Container({
   width: 630,
-  height: 400,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard4 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card4Container = new Container({
+const figureContainer4 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
@@ -514,6 +579,17 @@ shapeContainer4.add(diagonals4[1].line);
 const altitudes4 = para4.getAltitudes();
 shapeContainer4.add(altitudes4[0].line);
 
+figureContainer4.add(title4);
+figureContainer4.add(shapeContainer4);
+figureCard4.add(figureContainer4);
+
+// Legend card
+const legendCard4 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend4 = new Legend({
   items: [
     { color: "#ef4444", label: "Angle A & C: 75° (red)" },
@@ -527,20 +603,28 @@ const legend4 = new Legend({
   fontSize: 12,
 });
 
-card4Container.add(title4);
-card4Container.add(shapeContainer4);
-card4Container.add(legend4.container);
-card4.add(card4Container);
-grid.getCell(1, 1).addElement(card4);
+legendCard4.add(legend4.container);
 
-// Card 5: Near-Rectangle (85° Parallelogram)
-const card5 = new Card({
+cell4Container.add(figureCard4);
+cell4Container.add(legendCard4);
+grid.getCell(1, 1).addElement(cell4Container);
+
+// Cell 5: 85° Parallelogram - Vertical container with two cards
+const cell5Container = new Container({
   width: 630,
-  height: 400,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard5 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card5Container = new Container({
+const figureContainer5 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
@@ -628,6 +712,17 @@ diagLabel5_1.position({
 });
 shapeContainer5.add(diagLabel5_1);
 
+figureContainer5.add(title5);
+figureContainer5.add(shapeContainer5);
+figureCard5.add(figureContainer5);
+
+// Legend card
+const legendCard5 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend5 = new Legend({
   items: [
     { color: "#dc2626", label: "Nearly 90°: 85° (red)" },
@@ -641,20 +736,28 @@ const legend5 = new Legend({
   fontSize: 12,
 });
 
-card5Container.add(title5);
-card5Container.add(shapeContainer5);
-card5Container.add(legend5.container);
-card5.add(card5Container);
-grid.getCell(2, 0).addElement(card5);
+legendCard5.add(legend5.container);
 
-// Card 6: Comparison Chart
-const card6 = new Card({
+cell5Container.add(figureCard5);
+cell5Container.add(legendCard5);
+grid.getCell(2, 0).addElement(cell5Container);
+
+// Cell 6: Comparison Chart - Vertical container with two cards
+const cell6Container = new Container({
   width: 630,
-  height: 400,
+  height: "auto",
+  direction: "vertical",
+  spacing: 10,
+});
+
+// Figure card
+const figureCard6 = new Card({
+  width: 630,
+  height: "auto",
   boxModel: { padding: 20 },
 });
 
-const card6Container = new Container({
+const figureContainer6 = new Container({
   width: 590,
   height: "auto",
   direction: "vertical",
@@ -735,6 +838,19 @@ const propertiesTitle = new Text({
   style: { fontWeight: "600", fill: "#374151" },
 });
 
+figureContainer6.add(title6);
+figureContainer6.add(apiExample);
+figureContainer6.add(codeBlock);
+figureContainer6.add(propertiesTitle);
+figureCard6.add(figureContainer6);
+
+// Legend card
+const legendCard6 = new Card({
+  width: 630,
+  height: "auto",
+  boxModel: { padding: 20 },
+});
+
 const legend6 = new Legend({
   items: [
     { color: "#3b82f6", label: "Opposite sides are parallel & equal" },
@@ -745,17 +861,15 @@ const legend6 = new Legend({
   ],
   direction: "vertical",
   indicatorShape: "circle",
-  itemSpacing: 8,
+  itemSpacing: 6,
   fontSize: 12,
 });
 
-card6Container.add(title6);
-card6Container.add(apiExample);
-card6Container.add(codeBlock);
-card6Container.add(propertiesTitle);
-card6Container.add(legend6.container);
-card6.add(card6Container);
-grid.getCell(2, 1).addElement(card6);
+legendCard6.add(legend6.container);
+
+cell6Container.add(figureCard6);
+cell6Container.add(legendCard6);
+grid.getCell(2, 1).addElement(cell6Container);
 
 return artboard.render();
 
