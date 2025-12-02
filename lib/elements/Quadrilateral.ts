@@ -9,6 +9,7 @@ import { type Position } from "../core/Element.js";
 import { Side, type SideLabelConfig } from "./Side.js";
 import { Line } from "./Line.js";
 import { Text } from "./Text.js";
+import { Circle } from "./Circle.js";
 import { Angle, type AngleConfig } from "../components/Angle.js";
 
 export type QuadrilateralType =
@@ -141,8 +142,18 @@ export class Quadrilateral extends Shape {
 
     // Center is the centroid of the quadrilateral
     this._center = {
-      x: (this.vertices[0].x + this.vertices[1].x + this.vertices[2].x + this.vertices[3].x) / 4,
-      y: (this.vertices[0].y + this.vertices[1].y + this.vertices[2].y + this.vertices[3].y) / 4,
+      x:
+        (this.vertices[0].x +
+          this.vertices[1].x +
+          this.vertices[2].x +
+          this.vertices[3].x) /
+        4,
+      y:
+        (this.vertices[0].y +
+          this.vertices[1].y +
+          this.vertices[2].y +
+          this.vertices[3].y) /
+        4,
     };
   }
 
@@ -197,7 +208,7 @@ export class Quadrilateral extends Shape {
       case "trapezoid": {
         const baseBottom = a;
         const baseTop = b ?? a * 0.6;
-        const height = (angle ?? 60); // Reuse angle param for height
+        const height = angle ?? 60; // Reuse angle param for height
         // Counter-clockwise from bottom-left
         return [
           { x: -baseBottom / 2, y: height / 2 },
@@ -210,7 +221,8 @@ export class Quadrilateral extends Shape {
       case "rhombus": {
         const side = a;
         const angleRad = ((angle ?? 60) * Math.PI) / 180;
-        const halfDiag1 = (side * Math.sin(angleRad)) / Math.sin((Math.PI - angleRad) / 2);
+        const halfDiag1 =
+          (side * Math.sin(angleRad)) / Math.sin((Math.PI - angleRad) / 2);
         const halfDiag2 = side * Math.cos(angleRad / 2);
         // Counter-clockwise from left vertex
         return [
@@ -485,7 +497,7 @@ export class Quadrilateral extends Shape {
 
   /**
    * Get the internal angle at a specific vertex (in degrees).
-   * 
+   *
    * @param vertexIndex - Index of the vertex (0-3)
    * @returns Internal angle in degrees
    */
@@ -493,22 +505,22 @@ export class Quadrilateral extends Shape {
     const sides = this.sides;
     const prevSide = sides[(vertexIndex + 3) % 4]; // Previous side
     const nextSide = sides[vertexIndex]; // Current side
-    
+
     // Calculate angle between the two sides
     // Internal angle = difference in angles, normalized
     let angle = nextSide.angle - prevSide.angle;
-    
+
     // Normalize to 0-360 range
     while (angle < 0) angle += 360;
     while (angle >= 360) angle -= 360;
-    
+
     return angle;
   }
 
   /**
    * Get the external angle at a specific vertex (in degrees).
    * External angle = 360° - internal angle
-   * 
+   *
    * @param vertexIndex - Index of the vertex (0-3)
    * @returns External angle in degrees
    */
@@ -518,12 +530,15 @@ export class Quadrilateral extends Shape {
 
   /**
    * Get angle information for drawing an angle marker at a vertex.
-   * 
+   *
    * @param vertexIndex - Index of the vertex (0-3)
    * @param external - Whether to get external angle (default: false for internal)
    * @returns Object with startAngle, endAngle, and angle value in degrees
    */
-  getAngleMarkerAt(vertexIndex: number, external: boolean = false): {
+  getAngleMarkerAt(
+    vertexIndex: number,
+    external: boolean = false
+  ): {
     vertex: Position;
     startAngle: number;
     endAngle: number;
@@ -532,7 +547,7 @@ export class Quadrilateral extends Shape {
     const sides = this.sides;
     const verts = this.absoluteVertices;
     const prevSide = sides[(vertexIndex + 3) % 4];
-    
+
     if (external) {
       // External angle: extends from the previous side outward
       const angleDegrees = this.getExternalAngleAt(vertexIndex);
@@ -560,7 +575,12 @@ export class Quadrilateral extends Shape {
    *
    * @returns Array of four quadrilateral sides with full geometric properties
    */
-  get sides(): [QuadrilateralSide, QuadrilateralSide, QuadrilateralSide, QuadrilateralSide] {
+  get sides(): [
+    QuadrilateralSide,
+    QuadrilateralSide,
+    QuadrilateralSide,
+    QuadrilateralSide,
+  ] {
     const verts = this.absoluteVertices;
 
     const createSide = (start: Position, end: Position): QuadrilateralSide => {
@@ -598,7 +618,7 @@ export class Quadrilateral extends Shape {
    * ```typescript
    * const quad = new Quadrilateral({ type: "rectangle", a: 100, b: 80 });
    * const [line0, line1, line2, line3] = quad.getSideLines();
-   * 
+   *
    * // Create an angle at vertex 0 (between line3 and line0)
    * const angle = new Angle({
    *   line1: line3,
@@ -611,10 +631,26 @@ export class Quadrilateral extends Shape {
   getSideLines(): [Line, Line, Line, Line] {
     const sides = this.sides;
     return [
-      new Line({ start: sides[0].start, end: sides[0].end, style: { stroke: "transparent" } }),
-      new Line({ start: sides[1].start, end: sides[1].end, style: { stroke: "transparent" } }),
-      new Line({ start: sides[2].start, end: sides[2].end, style: { stroke: "transparent" } }),
-      new Line({ start: sides[3].start, end: sides[3].end, style: { stroke: "transparent" } }),
+      new Line({
+        start: sides[0].start,
+        end: sides[0].end,
+        style: { stroke: "transparent" },
+      }),
+      new Line({
+        start: sides[1].start,
+        end: sides[1].end,
+        style: { stroke: "transparent" },
+      }),
+      new Line({
+        start: sides[2].start,
+        end: sides[2].end,
+        style: { stroke: "transparent" },
+      }),
+      new Line({
+        start: sides[3].start,
+        end: sides[3].end,
+        style: { stroke: "transparent" },
+      }),
     ];
   }
 
@@ -629,7 +665,12 @@ export class Quadrilateral extends Shape {
     labels?: [string, string, string, string],
     config?: SideLabelConfig
   ): [Text, Text, Text, Text] {
-    const defaultLabels: [string, string, string, string] = ["$a$", "$b$", "$c$", "$d$"];
+    const defaultLabels: [string, string, string, string] = [
+      "$a$",
+      "$b$",
+      "$c$",
+      "$d$",
+    ];
     const labelTexts = labels ?? defaultLabels;
 
     const sides = this.sides;
@@ -661,7 +702,12 @@ export class Quadrilateral extends Shape {
     offset: number = 25,
     fontSize: number = 16
   ): [Text, Text, Text, Text] {
-    const defaultLabels: [string, string, string, string] = ["$A$", "$B$", "$C$", "$D$"];
+    const defaultLabels: [string, string, string, string] = [
+      "$A$",
+      "$B$",
+      "$C$",
+      "$D$",
+    ];
     const labelTexts = labels ?? defaultLabels;
 
     const verts = this.absoluteVertices;
@@ -739,7 +785,7 @@ export class Quadrilateral extends Shape {
   ): Angle {
     const mode = options?.mode ?? "internal";
     const verts = this.absoluteVertices;
-    
+
     // Get the two sides that meet at this vertex
     // sides[i] goes from vertex i to vertex (i+1)%4
     // So at vertex i:
@@ -747,17 +793,17 @@ export class Quadrilateral extends Shape {
     // - outgoing side is from vertex i to vertex (i+1)%4
     const prevVertexIdx = (vertexIndex + 3) % 4;
     const nextVertexIdx = (vertexIndex + 1) % 4;
-    
+
     const incomingSide = new Side({
       start: verts[prevVertexIdx],
       end: verts[vertexIndex],
     });
-    
+
     const outgoingSide = new Side({
       start: verts[vertexIndex],
       end: verts[nextVertexIdx],
     });
-    
+
     return new Angle({
       from: "vertex",
       segments: [incomingSide, outgoingSide],
@@ -772,19 +818,33 @@ export class Quadrilateral extends Shape {
   /**
    * Creates angle markers for all four vertices of the quadrilateral.
    *
+   * Supports two API styles:
+   * 1. Simple: Apply same configuration to all angles
+   * 2. Per-angle: Configure each angle individually using A, B, C, D properties
+   *
    * @param options - Configuration for the angle markers
-   * @param options.mode - 'internal' for internal angles, 'external' for external angles
-   * @param options.labels - Optional labels for each angle (array of 4 strings)
-   * @param options.radius - Radius of the angle arcs (default: 40)
-   * @param options.style - SVG style for the angle markers
    * @returns Array of four Angle elements
    *
    * @example
+   * Simple API - same style for all angles
    * ```typescript
    * const quad = new Quadrilateral({ type: "parallelogram", a: 100, b: 60, angle: 60 });
-   * const angles = quad.showAngles({ mode: 'internal', labels: ["α", "β", "γ", "δ"] });
-   * artboard.addElement(quad);
-   * angles.forEach(angle => artboard.addElement(angle));
+   * const angles = quad.showAngles({
+   *   mode: 'internal',
+   *   labels: ["α", "β", "γ", "δ"],
+   *   style: { stroke: "#ef4444" }
+   * });
+   * ```
+   *
+   * @example
+   * Per-angle API - different style for each angle
+   * ```typescript
+   * const angles = quad.showAngles({
+   *   A: { color: "#ef4444", radius: 20, label: "60°" },
+   *   B: { color: "#3b82f6", radius: 20, label: "120°" },
+   *   C: { color: "#ef4444", radius: 20, label: "60°" },
+   *   D: { color: "#3b82f6", radius: 20, label: "120°" },
+   * });
    * ```
    */
   showAngles(options?: {
@@ -793,10 +853,54 @@ export class Quadrilateral extends Shape {
     radius?: number;
     style?: Partial<Style>;
     rightAngleMarker?: "square" | "dot" | "arc";
+    // Per-angle configuration
+    A?: { color?: string; radius?: number; label?: string; type?: "right" };
+    B?: { color?: string; radius?: number; label?: string; type?: "right" };
+    C?: { color?: string; radius?: number; label?: string; type?: "right" };
+    D?: { color?: string; radius?: number; label?: string; type?: "right" };
   }): [Angle, Angle, Angle, Angle] {
     const mode = options?.mode ?? "internal";
-    const labels = options?.labels ?? [undefined, undefined, undefined, undefined];
-    
+
+    // Check if using per-angle API (A, B, C, D properties)
+    if (options?.A || options?.B || options?.C || options?.D) {
+      const createAngle = (
+        vertexIndex: number,
+        config?: {
+          color?: string;
+          radius?: number;
+          label?: string;
+          type?: "right";
+        }
+      ) => {
+        const style = config?.color ? { stroke: config.color } : options?.style;
+        const rightMarker =
+          config?.type === "right" ? "square" : options?.rightAngleMarker;
+
+        return this.showAngle(vertexIndex, {
+          mode,
+          label: config?.label,
+          radius: config?.radius ?? options?.radius,
+          style,
+          rightAngleMarker: rightMarker,
+        });
+      };
+
+      return [
+        createAngle(0, options.A),
+        createAngle(1, options.B),
+        createAngle(2, options.C),
+        createAngle(3, options.D),
+      ];
+    }
+
+    // Simple API - same configuration for all angles
+    const labels = options?.labels ?? [
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ];
+
     return [
       this.showAngle(0, { ...options, label: labels[0] }),
       this.showAngle(1, { ...options, label: labels[1] }),
@@ -808,9 +912,9 @@ export class Quadrilateral extends Shape {
   /**
    * Get the two diagonals of the quadrilateral.
    * Returns diagonal information including line objects ready to be drawn.
-   * 
+   *
    * @returns Array of two diagonals: [diagonal 0→2, diagonal 1→3]
-   * 
+   *
    * @example
    * Draw the diagonals of a quadrilateral
    * ```typescript
@@ -822,8 +926,11 @@ export class Quadrilateral extends Shape {
    */
   getDiagonals(): [QuadrilateralDiagonal, QuadrilateralDiagonal] {
     const verts = this.absoluteVertices;
-    
-    const createDiagonal = (start: Position, end: Position): QuadrilateralDiagonal => {
+
+    const createDiagonal = (
+      start: Position,
+      end: Position
+    ): QuadrilateralDiagonal => {
       const dx = end.x - start.x;
       const dy = end.y - start.y;
       const length = Math.sqrt(dx * dx + dy * dy);
@@ -832,21 +939,18 @@ export class Quadrilateral extends Shape {
         x: (start.x + end.x) / 2,
         y: (start.y + end.y) / 2,
       };
-      
-      const lineStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
+
+      const lineStyle: Partial<Style> = {
+        stroke: "#666",
+        strokeWidth: "1",
+        strokeDasharray: "4,4",
+      };
       const line = new Line({
-        start: { x: 0, y: 0 },
-        end: { x: dx, y: dy },
+        start: start,
+        end: end,
         style: lineStyle,
       });
-      
-      line.position({
-        relativeFrom: line.start,
-        relativeTo: start,
-        x: 0,
-        y: 0,
-      });
-      
+
       return {
         start,
         end,
@@ -856,7 +960,7 @@ export class Quadrilateral extends Shape {
         line,
       };
     };
-    
+
     return [
       createDiagonal(verts[0], verts[2]), // Diagonal from vertex 0 to vertex 2
       createDiagonal(verts[1], verts[3]), // Diagonal from vertex 1 to vertex 3
@@ -869,9 +973,9 @@ export class Quadrilateral extends Shape {
    * - Trapezoid: Two altitudes from top base vertices to bottom base (showing the height h)
    * - Parallelogram/Rectangle/Square/Rhombus: Two altitudes showing height between parallel sides
    * - Kite/Custom: All four altitudes from vertices to opposite sides
-   * 
+   *
    * @returns Array of altitude objects with positioning information
-   * 
+   *
    * @example
    * Draw altitudes of a parallelogram
    * ```typescript
@@ -884,39 +988,67 @@ export class Quadrilateral extends Shape {
   getAltitudes(): QuadrilateralAltitude[] {
     const verts = this.absoluteVertices;
     const altitudes: QuadrilateralAltitude[] = [];
-    
+
     // Helper to calculate perpendicular projection of a point onto a line segment
-    const calculateAltitude = (vertex: Position, sideStart: Position, sideEnd: Position): QuadrilateralAltitude => {
+    const calculateAltitude = (
+      vertex: Position,
+      sideStart: Position,
+      sideEnd: Position
+    ): QuadrilateralAltitude => {
       const dx = sideEnd.x - sideStart.x;
       const dy = sideEnd.y - sideStart.y;
-      let t = ((vertex.x - sideStart.x) * dx + (vertex.y - sideStart.y) * dy) / (dx * dx + dy * dy);
-      
+      let t =
+        ((vertex.x - sideStart.x) * dx + (vertex.y - sideStart.y) * dy) /
+        (dx * dx + dy * dy);
+
       // Clamp t to [0, 1] so the foot stays on the actual line segment, not the extended line
       t = Math.max(0, Math.min(1, t));
-      
+
       const foot: Position = {
         x: sideStart.x + t * dx,
         y: sideStart.y + t * dy,
       };
-      
+
       const height = Math.sqrt(
         (vertex.x - foot.x) ** 2 + (vertex.y - foot.y) ** 2
       );
-      
-      const altStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
-      const altitudeLine = new Line({
-        start: { x: 0, y: 0 },
-        end: { x: foot.x - vertex.x, y: foot.y - vertex.y },
-        style: altStyle,
+
+      // DEBUG: Create circles at vertex and foot
+      const vertexCircle = new Circle({
+        radius: 5,
+        style: { fill: "red", stroke: "darkred", strokeWidth: "2" },
       });
-      
-      altitudeLine.position({
-        relativeFrom: altitudeLine.start,
+      vertexCircle.position({
         relativeTo: vertex,
+        relativeFrom: vertexCircle.center,
         x: 0,
         y: 0,
       });
-      
+      this.addElement(vertexCircle);
+
+      const footCircle = new Circle({
+        radius: 5,
+        style: { fill: "green", stroke: "darkgreen", strokeWidth: "2" },
+      });
+      footCircle.position({
+        relativeTo: foot,
+        relativeFrom: footCircle.center,
+        x: 0,
+        y: 0,
+      });
+      this.addElement(footCircle);
+
+      const altStyle: Partial<Style> = {
+        stroke: "#666",
+        strokeWidth: "1",
+        strokeDasharray: "4,4",
+      };
+      const altitudeLine = new Line({
+        start: vertex,
+        end: foot,
+        style: altStyle,
+      });
+
       return {
         foot,
         origin: vertex,
@@ -924,14 +1056,19 @@ export class Quadrilateral extends Shape {
         line: altitudeLine,
       };
     };
-    
+
     // Return altitudes based on quadrilateral type
     if (this._type === "trapezoid") {
       // For trapezoid: only altitudes from top base (vertices 2, 3) to bottom base (side 0-1)
       // These show the height between the two parallel bases
       altitudes.push(calculateAltitude(verts[2], verts[0], verts[1]));
       altitudes.push(calculateAltitude(verts[3], verts[0], verts[1]));
-    } else if (this._type === "parallelogram" || this._type === "rectangle" || this._type === "square" || this._type === "rhombus") {
+    } else if (
+      this._type === "parallelogram" ||
+      this._type === "rectangle" ||
+      this._type === "square" ||
+      this._type === "rhombus"
+    ) {
       // For parallelograms and related shapes: altitudes from one pair of vertices to opposite side
       // Show the height perpendicular to the base
       altitudes.push(calculateAltitude(verts[2], verts[0], verts[1]));
@@ -943,17 +1080,17 @@ export class Quadrilateral extends Shape {
       altitudes.push(calculateAltitude(verts[2], verts[3], verts[0]));
       altitudes.push(calculateAltitude(verts[3], verts[0], verts[1]));
     }
-    
+
     return altitudes;
   }
 
   /**
    * Draw all diagonals of the quadrilateral.
-   * Returns Line elements that can be added to the artboard.
-   * 
+   * Returns Line elements that can be added to the artboard or container.
+   *
    * @param style - Optional style for the diagonal lines
    * @returns Array of two Line elements representing the diagonals
-   * 
+   *
    * @example
    * ```typescript
    * const quad = new Quadrilateral({ type: "rectangle", a: 100, b: 80 });
@@ -964,33 +1101,30 @@ export class Quadrilateral extends Shape {
    */
   drawDiagonals(style?: Partial<Style>): [Line, Line] {
     const diagonals = this.getDiagonals();
-    const defaultStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
-    
-    return diagonals.map(diag => {
-      const line = new Line({
-        start: { x: 0, y: 0 },
-        end: { x: diag.end.x - diag.start.x, y: diag.end.y - diag.start.y },
+    const defaultStyle: Partial<Style> = {
+      stroke: "#666",
+      strokeWidth: "1",
+      strokeDasharray: "4,4",
+    };
+
+    return diagonals.map((diag) => {
+      // Create line using absolute coordinates as "offsets" from origin
+      // Line defaults to position (0,0), so these act as absolute coordinates
+      return new Line({
+        start: diag.start,
+        end: diag.end,
         style: style ?? defaultStyle,
       });
-      
-      line.position({
-        relativeFrom: line.start,
-        relativeTo: diag.start,
-        x: 0,
-        y: 0,
-      });
-      
-      return line;
     }) as [Line, Line];
   }
 
   /**
    * Draw all altitudes of the quadrilateral.
-   * Returns Line elements that can be added to the artboard.
-   * 
+   * Returns Line elements that can be added to the artboard or container.
+   *
    * @param style - Optional style for the altitude lines
    * @returns Array of Line elements representing the altitudes
-   * 
+   *
    * @example
    * ```typescript
    * const para = new Quadrilateral({ type: "parallelogram", a: 100, b: 60, angle: 60 });
@@ -1001,23 +1135,20 @@ export class Quadrilateral extends Shape {
    */
   drawAltitudes(style?: Partial<Style>): Line[] {
     const altitudes = this.getAltitudes();
-    const defaultStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
-    
-    return altitudes.map(alt => {
-      const line = new Line({
-        start: { x: 0, y: 0 },
-        end: { x: alt.foot.x - alt.origin.x, y: alt.foot.y - alt.origin.y },
+    const defaultStyle: Partial<Style> = {
+      stroke: "#666",
+      strokeWidth: "1",
+      strokeDasharray: "4,4",
+    };
+
+    return altitudes.map((alt) => {
+      // Create line using absolute coordinates as "offsets" from origin
+      // Line defaults to position (0,0), so these act as absolute coordinates
+      return new Line({
+        start: alt.origin,
+        end: alt.foot,
         style: style ?? defaultStyle,
       });
-      
-      line.position({
-        relativeFrom: line.start,
-        relativeTo: alt.origin,
-        x: 0,
-        y: 0,
-      });
-      
-      return line;
     });
   }
 
@@ -1075,4 +1206,3 @@ export class Quadrilateral extends Shape {
     });
   }
 }
-

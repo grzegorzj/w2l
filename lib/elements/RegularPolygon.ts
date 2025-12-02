@@ -7,6 +7,8 @@ import { Shape } from "../core/Shape.js";
 import { type Style } from "../core/Stylable.js";
 import { styleToSVGAttributes } from "../core/Stylable.js";
 import { type Position } from "../core/Element.js";
+import { Side } from "./Side.js";
+import { Angle } from "../components/Angle.js";
 
 export interface RegularPolygonConfig {
   sides: number;      // Number of sides (3 = triangle, 4 = square, 5 = pentagon, etc.)
@@ -298,6 +300,163 @@ export class RegularPolygon extends Shape {
    */
   get sideLength(): number {
     return 2 * this.radius * Math.sin(Math.PI / this.sides);
+  }
+
+  /**
+   * Get a specific vertex by index
+   * @param index - Vertex index (0 to sides-1)
+   * @returns Absolute position of the vertex
+   */
+  getVertex(index: number): Position {
+    const verts = this.absoluteVertices;
+    return verts[index % this.sides];
+  }
+
+  /**
+   * Get all sides of the polygon with geometric properties
+   * @returns Array of side objects with center, normals, etc.
+   */
+  getSides(): Array<{
+    length: number;
+    center: Position;
+    start: Position;
+    end: Position;
+    angle: number;
+    outwardNormal: Position;
+    inwardNormal: Position;
+    direction: Position;
+  }> {
+    const verts = this.absoluteVertices;
+    const sides = [];
+
+    for (let i = 0; i < this.sides; i++) {
+      const start = verts[i];
+      const end = verts[(i + 1) % this.sides];
+      const side = new Side({ start, end });
+
+      sides.push({
+        length: side.length,
+        center: side.center,
+        start: side.start,
+        end: side.end,
+        angle: side.angle,
+        outwardNormal: side.outwardNormal,
+        inwardNormal: side.inwardNormal,
+        direction: side.direction,
+      });
+    }
+
+    return sides;
+  }
+
+  /**
+   * Creates an angle marker for a specific vertex of the polygon.
+   *
+   * @param vertexIndex - Index of the vertex (0 to sides-1)
+   * @param options - Configuration for the angle marker
+   * @param options.mode - 'internal' for internal angle, 'external' for external angle
+   * @param options.label - Optional label for the angle (e.g., "108°")
+   * @param options.radius - Radius of the angle arc (default: 40)
+   * @param options.color - Color for the angle marker
+   * @param options.style - SVG style for the angle marker
+   * @returns Angle element
+   *
+   * @example
+   * ```typescript
+   * const pentagon = new RegularPolygon({ sides: 5, radius: 80 });
+   * const angle = pentagon.showAngle(0, { mode: 'internal', label: "108°", color: "#ef4444" });
+   * artboard.add(pentagon);
+   * artboard.add(angle);
+   * ```
+   */
+  showAngle(
+    vertexIndex: number,
+    options?: {
+      mode?: "internal" | "external";
+      label?: string;
+      radius?: number;
+      color?: string;
+      style?: Partial<Style>;
+    }
+  ): Angle {
+    const mode = options?.mode ?? "internal";
+    const verts = this.absoluteVertices;
+    const n = this.sides;
+
+    // Get the two sides that meet at this vertex
+    const prevVertexIdx = (vertexIndex - 1 + n) % n;
+    const nextVertexIdx = (vertexIndex + 1) % n;
+
+    const incomingSide = new Side({
+      start: verts[prevVertexIdx],
+      end: verts[vertexIndex],
+    });
+
+    const outgoingSide = new Side({
+      start: verts[vertexIndex],
+      end: verts[nextVertexIdx],
+    });
+
+    // Merge color into style if provided
+    const finalStyle = options?.color
+      ? { ...options.style, stroke: options.color }
+      : options?.style;
+
+    return new Angle({
+      from: "vertex",
+      segments: [incomingSide, outgoingSide],
+      mode: mode,
+      label: options?.label,
+      radius: options?.radius,
+      style: finalStyle,
+    });
+  }
+
+  /**
+   * Creates angle markers for vertices of the polygon.
+   *
+   * @param options - Configuration for the angle markers
+   * @param options.mode - 'internal' for internal angles, 'external' for external angles
+   * @param options.indices - Optional array of vertex indices to mark (defaults to all)
+   * @param options.label - Label for all marked angles (e.g., "108°")
+   * @param options.radius - Radius of the angle arcs (default: 40)
+   * @param options.color - Color for all angle markers
+   * @param options.style - SVG style for the angle markers
+   * @returns Array of Angle elements
+   *
+   * @example
+   * ```typescript
+   * const hexagon = new RegularPolygon({ sides: 6, radius: 80 });
+   * // Mark only vertices 0, 1, and 2
+   * const angles = hexagon.showAngles({ 
+   *   indices: [0, 1, 2], 
+   *   label: "120°",
+   *   color: "#ef4444"
+   * });
+   * artboard.add(hexagon);
+   * angles.forEach(angle => artboard.add(angle));
+   * ```
+   */
+  showAngles(options?: {
+    mode?: "internal" | "external";
+    indices?: number[];
+    label?: string;
+    radius?: number;
+    color?: string;
+    style?: Partial<Style>;
+  }): Angle[] {
+    const mode = options?.mode ?? "internal";
+    const indices = options?.indices ?? Array.from({ length: this.sides }, (_, i) => i);
+    
+    return indices.map(i => 
+      this.showAngle(i, { 
+        mode,
+        label: options?.label,
+        radius: options?.radius,
+        color: options?.color,
+        style: options?.style
+      })
+    );
   }
 
   render(): string {

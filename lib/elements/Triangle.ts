@@ -10,6 +10,7 @@ import { type Position } from "../core/Element.js";
 import { Side, type SideLabelConfig } from "./Side.js";
 import { Line } from "./Line.js";
 import { Text } from "./Text.js";
+import { Circle } from "./Circle.js";
 import { Angle, type AngleConfig } from "../components/Angle.js";
 
 export type TriangleType = "right" | "equilateral" | "isosceles";
@@ -100,6 +101,7 @@ export class Triangle extends Shape {
       x: (this.vertices[0].x + this.vertices[1].x + this.vertices[2].x) / 3,
       y: (this.vertices[0].y + this.vertices[1].y + this.vertices[2].y) / 3,
     };
+
   }
 
   private calculateVertices(
@@ -521,19 +523,11 @@ export class Triangle extends Shape {
         (vertex.x - foot.x) ** 2 + (vertex.y - foot.y) ** 2
       );
       
-      // Create altitude line
-      const altStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
+      // Create a transparent dummy line (actual altitude lines should be created via getAltitudes())
       const altitudeLine = new Line({
-        start: { x: 0, y: 0 },
-        end: { x: foot.x - vertex.x, y: foot.y - vertex.y },
-        style: altStyle
-      });
-      
-      altitudeLine.position({
-        relativeFrom: altitudeLine.start,
-        relativeTo: vertex,
-        x: 0,
-        y: 0
+        start: vertex,
+        end: foot,
+        style: { stroke: "transparent" }
       });
       
       return {
@@ -568,6 +562,7 @@ export class Triangle extends Shape {
       createSide(verts[2], verts[0], verts[1]), // Side 2: v2→v0, altitude from v1
     ];
   }
+
 
   /**
    * Get the three sides of the triangle as Line objects.
@@ -608,6 +603,89 @@ export class Triangle extends Shape {
         end: sides[2].end,
         style: { stroke: "transparent" },
       }),
+    ];
+  }
+
+  /**
+   * Get the three altitudes of the triangle.
+   * Returns altitude information including line objects ready to be drawn.
+   * 
+   * @returns Array of three altitudes with positioning information
+   * 
+   * @example
+   * Draw the altitudes of a triangle
+   * ```typescript
+   * const triangle = new Triangle({ type: "equilateral", a: 100 });
+   * const altitudes = triangle.getAltitudes();
+   * artboard.add(triangle);
+   * altitudes.forEach(alt => artboard.add(alt.line));
+   * ```
+   */
+  getAltitudes(): [TriangleAltitude, TriangleAltitude, TriangleAltitude] {
+    const verts = this.absoluteVertices;
+    
+    // Helper to calculate altitude from a vertex to a side
+    const calculateAltitude = (vertex: Position, sideStart: Position, sideEnd: Position): TriangleAltitude => {
+      // Calculate perpendicular projection of vertex onto the side
+      const dx = sideEnd.x - sideStart.x;
+      const dy = sideEnd.y - sideStart.y;
+      const t = ((vertex.x - sideStart.x) * dx + (vertex.y - sideStart.y) * dy) / (dx * dx + dy * dy);
+      
+      const foot: Position = {
+        x: sideStart.x + t * dx,
+        y: sideStart.y + t * dy
+      };
+      
+      // Calculate altitude height
+      const height = Math.sqrt(
+        (vertex.x - foot.x) ** 2 + (vertex.y - foot.y) ** 2
+      );
+      
+      // DEBUG: Create circles at vertex and foot
+      const vertexCircle = new Circle({
+        radius: 5,
+        style: { fill: "red", stroke: "darkred", strokeWidth: "2" }
+      });
+      vertexCircle.position({
+        relativeTo: vertex,
+        relativeFrom: vertexCircle.center,
+        x: 0,
+        y: 0
+      });
+      this.addElement(vertexCircle);
+      
+      const footCircle = new Circle({
+        radius: 5,
+        style: { fill: "green", stroke: "darkgreen", strokeWidth: "2" }
+      });
+      footCircle.position({
+        relativeTo: foot,
+        relativeFrom: footCircle.center,
+        x: 0,
+        y: 0
+      });
+      this.addElement(footCircle);
+      
+      const altStyle: Partial<Style> = { stroke: "#666", strokeWidth: "1", strokeDasharray: "4,4" };
+      const altitudeLine = new Line({
+        start: vertex,
+        end: foot,
+        style: altStyle
+      });
+      
+      return {
+        foot,
+        vertex,
+        height,
+        line: altitudeLine
+      };
+    };
+    
+    // Return altitudes for each side: altitude from opposite vertex to each side
+    return [
+      calculateAltitude(verts[2], verts[0], verts[1]), // Altitude from vertex 2 to side 0-1
+      calculateAltitude(verts[0], verts[1], verts[2]), // Altitude from vertex 0 to side 1-2
+      calculateAltitude(verts[1], verts[2], verts[0]), // Altitude from vertex 1 to side 2-0
     ];
   }
 
@@ -786,19 +864,32 @@ export class Triangle extends Shape {
   /**
    * Creates angle markers for all three vertices of the triangle.
    *
+   * Supports two API styles:
+   * 1. Simple: Apply same configuration to all angles
+   * 2. Per-angle: Configure each angle individually using A, B, C properties
+   *
    * @param options - Configuration for the angle markers
-   * @param options.mode - 'internal' for internal angles, 'external' for external angles
-   * @param options.labels - Optional labels for each angle (array of 3 strings)
-   * @param options.radius - Radius of the angle arcs (default: 40)
-   * @param options.style - SVG style for the angle markers
    * @returns Array of three Angle elements
    *
    * @example
+   * Simple API - same style for all angles
    * ```typescript
    * const triangle = new Triangle({ type: "right", a: 100, b: 100 });
-   * const angles = triangle.showAngles({ mode: 'internal', labels: ["α", "β", "γ"] });
-   * artboard.addElement(triangle);
-   * angles.forEach(angle => artboard.addElement(angle));
+   * const angles = triangle.showAngles({ 
+   *   mode: 'internal', 
+   *   labels: ["α", "β", "γ"],
+   *   style: { stroke: "#ef4444" }
+   * });
+   * ```
+   *
+   * @example
+   * Per-angle API - different style for each angle
+   * ```typescript
+   * const angles = triangle.showAngles({
+   *   A: { color: "#ef4444", radius: 20, label: "60°" },
+   *   B: { color: "#3b82f6", radius: 20, label: "60°" },
+   *   C: { color: "#8b5cf6", radius: 20, label: "60°" },
+   * });
    * ```
    */
   showAngles(options?: {
@@ -807,8 +898,36 @@ export class Triangle extends Shape {
     radius?: number;
     style?: Partial<Style>;
     rightAngleMarker?: "square" | "dot" | "arc";
+    // Per-angle configuration
+    A?: { color?: string; radius?: number; label?: string; type?: "right" };
+    B?: { color?: string; radius?: number; label?: string; type?: "right" };
+    C?: { color?: string; radius?: number; label?: string; type?: "right" };
   }): [Angle, Angle, Angle] {
     const mode = options?.mode ?? "internal";
+    
+    // Check if using per-angle API (A, B, C properties)
+    if (options?.A || options?.B || options?.C) {
+      const createAngle = (vertexIndex: number, config?: { color?: string; radius?: number; label?: string; type?: "right" }) => {
+        const style = config?.color ? { stroke: config.color } : options?.style;
+        const rightMarker = config?.type === "right" ? "square" : options?.rightAngleMarker;
+        
+        return this.showAngle(vertexIndex, {
+          mode,
+          label: config?.label,
+          radius: config?.radius ?? options?.radius,
+          style,
+          rightAngleMarker: rightMarker,
+        });
+      };
+      
+      return [
+        createAngle(0, options.A),
+        createAngle(1, options.B),
+        createAngle(2, options.C),
+      ];
+    }
+    
+    // Simple API - same configuration for all angles
     const labels = options?.labels ?? [undefined, undefined, undefined];
     
     return [

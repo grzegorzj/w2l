@@ -603,6 +603,31 @@ export class Angle extends Element {
     };
   }
 
+  /**
+   * Sets or updates the style of the angle marker.
+   * Merges with existing style properties.
+   * 
+   * @param style - Style properties to apply
+   * 
+   * @example
+   * ```typescript
+   * const angle = triangle.showAngle(0);
+   * angle.setStyle({ stroke: "#ef4444", strokeWidth: 2 });
+   * ```
+   */
+  setStyle(style: Partial<Style>): void {
+    this.resolved.style = { ...this.resolved.style, ...style };
+  }
+
+  /**
+   * Gets the current style of the angle marker.
+   * 
+   * @returns Current style object
+   */
+  getStyle(): Partial<Style> | undefined {
+    return this.resolved.style;
+  }
+
   render(): string {
     const { vertex, startAngle, endAngle, radius, style, rightAngleMarker } =
       this.resolved;

@@ -282,5 +282,13 @@
   "test-treemap.js": {
     "status": "pending",
     "timestamp": "2025-12-01T08:22:50.843Z"
+  },
+  "test-geometry-with-legends.js": {
+    "status": "pending",
+    "timestamp": "2025-12-02T00:14:28.623Z"
+  },
+  "test-parallelograms-angles.js": {
+    "status": "pending",
+    "timestamp": "2025-12-02T00:14:31.855Z"
   }
 }
