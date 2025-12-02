@@ -926,10 +926,19 @@ export class Quadrilateral extends Shape {
    */
   getDiagonals(): [QuadrilateralDiagonal, QuadrilateralDiagonal] {
     const verts = this.absoluteVertices;
+    console.log(
+      "🔵 getDiagonals() - absoluteVertices:",
+      JSON.stringify(verts, null, 2)
+    );
+    console.log(
+      "🔵 getDiagonals() - this position:",
+      JSON.stringify(this.getAbsolutePosition(), null, 2)
+    );
 
     const createDiagonal = (
       start: Position,
-      end: Position
+      end: Position,
+      index: number
     ): QuadrilateralDiagonal => {
       const dx = end.x - start.x;
       const dy = end.y - start.y;
@@ -939,6 +948,11 @@ export class Quadrilateral extends Shape {
         x: (start.x + end.x) / 2,
         y: (start.y + end.y) / 2,
       };
+
+      console.log(
+        `🔵 Diagonal ${index}:`,
+        JSON.stringify({ start, end, length }, null, 2)
+      );
 
       const lineStyle: Partial<Style> = {
         stroke: "#666",
@@ -962,8 +976,8 @@ export class Quadrilateral extends Shape {
     };
 
     return [
-      createDiagonal(verts[0], verts[2]), // Diagonal from vertex 0 to vertex 2
-      createDiagonal(verts[1], verts[3]), // Diagonal from vertex 1 to vertex 3
+      createDiagonal(verts[0], verts[2], 0), // Diagonal from vertex 0 to vertex 2
+      createDiagonal(verts[1], verts[3], 1), // Diagonal from vertex 1 to vertex 3
     ];
   }
 
@@ -987,71 +1001,91 @@ export class Quadrilateral extends Shape {
    */
   getAltitudes(): QuadrilateralAltitude[] {
     const verts = this.absoluteVertices;
+    const relativeVerts = this.vertices; // Relative coordinates for child elements
     const altitudes: QuadrilateralAltitude[] = [];
+
+    console.log(
+      "🟠 getAltitudes() - absoluteVertices:",
+      JSON.stringify(verts, null, 2)
+    );
+    console.log(
+      "🟠 getAltitudes() - relativeVertices:",
+      JSON.stringify(relativeVerts, null, 2)
+    );
+    console.log(
+      "🟠 getAltitudes() - this position:",
+      JSON.stringify(this.getAbsolutePosition(), null, 2)
+    );
 
     // Helper to calculate perpendicular projection of a point onto a line segment
     const calculateAltitude = (
-      vertex: Position,
-      sideStart: Position,
-      sideEnd: Position
+      vertexAbs: Position,
+      vertexRel: Position,
+      sideStartAbs: Position,
+      sideStartRel: Position,
+      sideEndAbs: Position,
+      sideEndRel: Position,
+      index: number
     ): QuadrilateralAltitude => {
-      const dx = sideEnd.x - sideStart.x;
-      const dy = sideEnd.y - sideStart.y;
+      const dx = sideEndAbs.x - sideStartAbs.x;
+      const dy = sideEndAbs.y - sideStartAbs.y;
       let t =
-        ((vertex.x - sideStart.x) * dx + (vertex.y - sideStart.y) * dy) /
+        ((vertexAbs.x - sideStartAbs.x) * dx +
+          (vertexAbs.y - sideStartAbs.y) * dy) /
         (dx * dx + dy * dy);
 
-      // Clamp t to [0, 1] so the foot stays on the actual line segment, not the extended line
-      t = Math.max(0, Math.min(1, t));
+      // For parallelograms, DON'T clamp t - let the perpendicular land where it naturally falls
+      // This shows the true height even if it extends beyond the base segment
+      // (For other shapes like trapezoids, we might want to clamp, but for now we don't)
 
-      const foot: Position = {
-        x: sideStart.x + t * dx,
-        y: sideStart.y + t * dy,
+      const footAbs: Position = {
+        x: sideStartAbs.x + t * dx,
+        y: sideStartAbs.y + t * dy,
+      };
+
+      // Calculate foot in relative coordinates
+      const dxRel = sideEndRel.x - sideStartRel.x;
+      const dyRel = sideEndRel.y - sideStartRel.y;
+      const footRel: Position = {
+        x: sideStartRel.x + t * dxRel,
+        y: sideStartRel.y + t * dyRel,
       };
 
       const height = Math.sqrt(
-        (vertex.x - foot.x) ** 2 + (vertex.y - foot.y) ** 2
+        (vertexAbs.x - footAbs.x) ** 2 + (vertexAbs.y - footAbs.y) ** 2
       );
 
-      // DEBUG: Create circles at vertex and foot
-      const vertexCircle = new Circle({
-        radius: 5,
-        style: { fill: "red", stroke: "darkred", strokeWidth: "2" },
-      });
-      vertexCircle.position({
-        relativeTo: vertex,
-        relativeFrom: vertexCircle.center,
-        x: 0,
-        y: 0,
-      });
-      this.addElement(vertexCircle);
+      console.log(
+        `🟠 Altitude ${index}:`,
+        JSON.stringify(
+          {
+            vertexAbs,
+            vertexRel,
+            footAbs,
+            footRel,
+            height,
+            t,
+          },
+          null,
+          2
+        )
+      );
 
-      const footCircle = new Circle({
-        radius: 5,
-        style: { fill: "green", stroke: "darkgreen", strokeWidth: "2" },
-      });
-      footCircle.position({
-        relativeTo: foot,
-        relativeFrom: footCircle.center,
-        x: 0,
-        y: 0,
-      });
-      this.addElement(footCircle);
-
+      // Create altitude line with absolute coordinates (same pattern as getDiagonals)
       const altStyle: Partial<Style> = {
         stroke: "#666",
         strokeWidth: "1",
         strokeDasharray: "4,4",
       };
       const altitudeLine = new Line({
-        start: vertex,
-        end: foot,
+        start: vertexAbs,
+        end: footAbs,
         style: altStyle,
       });
 
       return {
-        foot,
-        origin: vertex,
+        foot: footAbs,
+        origin: vertexAbs,
         height,
         line: altitudeLine,
       };
@@ -1061,24 +1095,94 @@ export class Quadrilateral extends Shape {
     if (this._type === "trapezoid") {
       // For trapezoid: only altitudes from top base (vertices 2, 3) to bottom base (side 0-1)
       // These show the height between the two parallel bases
-      altitudes.push(calculateAltitude(verts[2], verts[0], verts[1]));
-      altitudes.push(calculateAltitude(verts[3], verts[0], verts[1]));
+      altitudes.push(
+        calculateAltitude(
+          verts[2],
+          relativeVerts[2],
+          verts[0],
+          relativeVerts[0],
+          verts[1],
+          relativeVerts[1],
+          0
+        )
+      );
+      altitudes.push(
+        calculateAltitude(
+          verts[3],
+          relativeVerts[3],
+          verts[0],
+          relativeVerts[0],
+          verts[1],
+          relativeVerts[1],
+          1
+        )
+      );
     } else if (
       this._type === "parallelogram" ||
       this._type === "rectangle" ||
       this._type === "square" ||
       this._type === "rhombus"
     ) {
-      // For parallelograms and related shapes: altitudes from one pair of vertices to opposite side
-      // Show the height perpendicular to the base
-      altitudes.push(calculateAltitude(verts[2], verts[0], verts[1]));
-      altitudes.push(calculateAltitude(verts[3], verts[0], verts[1]));
+      // For parallelograms: altitude from vertex 3 perpendicular to base (side 0-1)
+      // Vertex 3 is chosen because it's typically "above" the base
+      // We only need ONE altitude to show the height of the parallelogram
+      altitudes.push(
+        calculateAltitude(
+          verts[3],
+          relativeVerts[3],
+          verts[0],
+          relativeVerts[0],
+          verts[1],
+          relativeVerts[1],
+          0
+        )
+      );
     } else {
       // For kite and custom: return all four altitudes
-      altitudes.push(calculateAltitude(verts[0], verts[1], verts[2]));
-      altitudes.push(calculateAltitude(verts[1], verts[2], verts[3]));
-      altitudes.push(calculateAltitude(verts[2], verts[3], verts[0]));
-      altitudes.push(calculateAltitude(verts[3], verts[0], verts[1]));
+      altitudes.push(
+        calculateAltitude(
+          verts[0],
+          relativeVerts[0],
+          verts[1],
+          relativeVerts[1],
+          verts[2],
+          relativeVerts[2],
+          0
+        )
+      );
+      altitudes.push(
+        calculateAltitude(
+          verts[1],
+          relativeVerts[1],
+          verts[2],
+          relativeVerts[2],
+          verts[3],
+          relativeVerts[3],
+          1
+        )
+      );
+      altitudes.push(
+        calculateAltitude(
+          verts[2],
+          relativeVerts[2],
+          verts[3],
+          relativeVerts[3],
+          verts[0],
+          relativeVerts[0],
+          2
+        )
+      );
+      altitudes.push(
+        calculateAltitude(
+          verts[3],
+          relativeVerts[3],
+          verts[0],
+          relativeVerts[0],
+          verts[1],
+          relativeVerts[1],
+          3
+        )
+      );
     }
 
     return altitudes;
